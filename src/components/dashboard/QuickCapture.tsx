@@ -37,10 +37,10 @@ export const QuickCapture = () => {
 
       toast.success('Procesando...');
 
-      // Procesar con edge function
+      // Procesar con edge function - Sparky clasifica automáticamente
       const { data, error } = await supabase.functions.invoke('process-text-capture', {
         body: {
-          content: content.trim(),
+          text: content.trim(),
           userId: user.id,
         },
       });
@@ -49,13 +49,25 @@ export const QuickCapture = () => {
         throw error;
       }
 
-      toast.success('¡Idea procesada y guardada!');
+      // Mostrar mensaje según el tipo de contenido clasificado
+      const typeMessages: Record<string, string> = {
+        idea: '💡 ¡Idea guardada!',
+        task: '✅ ¡Tarea creada!',
+        diary: '📔 ¡Entrada de diario guardada!',
+        person: '👤 ¡Contacto añadido!',
+      };
+      
+      const message = typeMessages[data?.type] || '¡Guardado!';
+      toast.success(message);
       
       setContent('');
       setIsFocused(false);
       
-      // Refrescar las listas
+      // Refrescar todas las listas relevantes
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['diary'] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
     } catch (error: any) {
       console.error('Error en handleSubmit:', error);
       toast.error(error.message || 'Error al procesar el contenido');
@@ -235,7 +247,7 @@ export const QuickCapture = () => {
               icon={<PaperAirplaneIcon className="h-4 w-4" />}
               iconPosition="right"
             >
-              {isLoading ? 'Guardando...' : 'Guardar idea'}
+              {isLoading ? 'Analizando...' : 'Guardar'}
             </Button>
           </div>
         </div>
