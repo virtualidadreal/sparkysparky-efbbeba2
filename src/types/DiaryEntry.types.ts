@@ -1,11 +1,7 @@
 /**
  * Tipos TypeScript para el módulo de Diario
+ * Alineados con la tabla diary_entries en Supabase
  */
-
-/**
- * Tipo de momento del día
- */
-export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
 
 /**
  * Tipo de sentimiento
@@ -13,52 +9,21 @@ export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
 export type Sentiment = 'positive' | 'neutral' | 'negative';
 
 /**
- * Interfaz para emociones
+ * Tipo de momento del día
  */
-export interface Emotion {
-  name: string;
-  intensity: number; // 1-10
-}
+export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
 
 /**
- * Interfaz principal de DiaryEntry
+ * Interfaz principal de DiaryEntry - alineada con DB actual
+ * La tabla solo tiene: id, user_id, title, content, mood, entry_date, created_at, updated_at
  */
 export interface DiaryEntry {
   id: string;
   user_id: string;
   content: string;
   title: string | null;
-  audio_url: string | null;
-  transcription: string | null;
-  
-  // Análisis emocional
-  sentiment: Sentiment | null;
-  mood_score: number | null;
-  emotions: Emotion[];
-  
-  // Metadatos temporales
-  time_of_day: TimeOfDay | null;
-  
-  // Geolocalización
-  location_name: string | null;
-  location_coordinates: {
-    lat: number;
-    lng: number;
-  } | null;
-  
-  // Relaciones
-  mentioned_people: string[];
-  related_ideas: string[];
-  related_projects: string[];
-  
-  // Superresúmenes
-  daily_summary: string | null;
-  weekly_summary: string | null;
-  monthly_summary: string | null;
-  
-  // Metadata
-  metadata: Record<string, any>;
-  
+  mood: string | null;
+  entry_date: string;
   created_at: string;
   updated_at: string;
 }
@@ -69,13 +34,7 @@ export interface DiaryEntry {
 export interface CreateDiaryEntryInput {
   content: string;
   title?: string;
-  audio_url?: string;
-  transcription?: string;
-  location_name?: string;
-  location_coordinates?: {
-    lat: number;
-    lng: number;
-  };
+  mood?: string;
 }
 
 /**
@@ -84,18 +43,14 @@ export interface CreateDiaryEntryInput {
 export interface UpdateDiaryEntryInput {
   content?: string;
   title?: string;
-  sentiment?: Sentiment;
-  mood_score?: number;
-  emotions?: Emotion[];
-  time_of_day?: TimeOfDay;
+  mood?: string;
 }
 
 /**
  * Filtros para listar entradas de diario
  */
 export interface DiaryEntriesFilters {
-  sentiment?: Sentiment;
-  time_of_day?: TimeOfDay;
+  mood?: string;
   date_from?: string;
   date_to?: string;
   search?: string;

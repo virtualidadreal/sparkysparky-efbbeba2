@@ -1,183 +1,67 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import type { Person, CreatePersonInput, UpdatePersonInput, PeopleFilters } from '@/types/Person.types';
-import toast from 'react-hot-toast';
-
 /**
- * Keys para React Query
- */
-const QUERY_KEYS = {
-  people: (filters?: PeopleFilters) => ['people', filters],
-  person: (id: string) => ['person', id],
-};
-
-/**
- * Hook para listar personas del usuario
+ * Hook placeholder para People
  * 
- * @param filters - Filtros opcionales (category, needs_attention, search)
- * @returns Query de React Query con lista de personas
+ * La tabla 'people' aún no existe en la base de datos.
+ * Este archivo se actualizará cuando se cree la tabla.
+ */
+
+import { useQuery } from '@tanstack/react-query';
+
+export interface Person {
+  id: string;
+  user_id: string;
+  full_name: string;
+  nickname: string | null;
+  email: string | null;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PeopleFilters {
+  category?: string;
+  search?: string;
+}
+
+/**
+ * Hook placeholder - retorna lista vacía hasta que se cree la tabla
  */
 export const usePeople = (filters?: PeopleFilters) => {
   return useQuery({
-    queryKey: QUERY_KEYS.people(filters),
+    queryKey: ['people', filters],
     queryFn: async () => {
-      let query = supabase
-        .from('people')
-        .select('*')
-        .order('full_name', { ascending: true });
-
-      // Aplicar filtros
-      if (filters?.category) {
-        query = query.eq('category', filters.category);
-      }
-
-      if (filters?.needs_attention !== undefined) {
-        query = query.eq('needs_attention', filters.needs_attention);
-      }
-
-      if (filters?.search) {
-        query = query.or(
-          `full_name.ilike.%${filters.search}%,nickname.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
-        );
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as Person[];
+      // Tabla 'people' no existe aún
+      console.log('Tabla people no implementada aún');
+      return [] as Person[];
     },
   });
 };
 
 /**
- * Hook para obtener una persona por ID
- * 
- * @param id - UUID de la persona
- * @returns Query de React Query con la persona
+ * Hook placeholder para obtener una persona
  */
 export const usePerson = (id: string) => {
   return useQuery({
-    queryKey: QUERY_KEYS.person(id),
+    queryKey: ['person', id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('people')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data) throw new Error('Persona no encontrada');
-      return data as Person;
+      return null as Person | null;
     },
     enabled: !!id,
   });
 };
 
-/**
- * Hook para crear una nueva persona
- * 
- * @returns Mutation de React Query
- */
-export const useCreatePerson = () => {
-  const queryClient = useQueryClient();
+// Placeholders para mutaciones
+export const useCreatePerson = () => ({
+  mutateAsync: async () => { throw new Error('No implementado'); },
+  isPending: false,
+});
 
-  return useMutation({
-    mutationFn: async (input: CreatePersonInput) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('Usuario no autenticado');
-      }
+export const useUpdatePerson = () => ({
+  mutateAsync: async () => { throw new Error('No implementado'); },
+  isPending: false,
+});
 
-      const { data, error } = await supabase
-        .from('people')
-        .insert([
-          {
-            user_id: user.id,
-            full_name: input.full_name,
-            nickname: input.nickname,
-            email: input.email,
-            category: input.category,
-            importance_level: input.importance_level || 3,
-            desired_contact_frequency: input.desired_contact_frequency,
-            birthday: input.birthday,
-            interests: input.interests || [],
-            tags: input.tags || [],
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as Person;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['people'] });
-      toast.success('Contacto añadido exitosamente');
-    },
-    onError: (error: Error) => {
-      console.error('Error al crear persona:', error);
-      toast.error('Error al añadir el contacto');
-    },
-  });
-};
-
-/**
- * Hook para actualizar una persona
- * 
- * @returns Mutation de React Query
- */
-export const useUpdatePerson = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: UpdatePersonInput }) => {
-      const { data, error } = await supabase
-        .from('people')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as Person;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['people'] });
-      queryClient.invalidateQueries({ queryKey: ['person', data.id] });
-      toast.success('Contacto actualizado');
-    },
-    onError: (error: Error) => {
-      console.error('Error al actualizar persona:', error);
-      toast.error('Error al actualizar el contacto');
-    },
-  });
-};
-
-/**
- * Hook para eliminar una persona
- * 
- * @returns Mutation de React Query
- */
-export const useDeletePerson = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('people')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['people'] });
-      toast.success('Contacto eliminado');
-    },
-    onError: (error: Error) => {
-      console.error('Error al eliminar persona:', error);
-      toast.error('Error al eliminar el contacto');
-    },
-  });
-};
+export const useDeletePerson = () => ({
+  mutateAsync: async () => { throw new Error('No implementado'); },
+  isPending: false,
+});

@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { Button, VoiceRecordButton } from '@/components/common';
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
@@ -9,22 +10,13 @@ import toast from 'react-hot-toast';
  * Componente QuickCapture
  * 
  * Widget para captura rápida de ideas por texto y voz.
- * Features:
- * - Textarea expandible
- * - Grabación de voz con almacenamiento en Supabase
- * - Loading state
- * - Auto-limpieza después de guardar
- * 
- * @example
- * ```tsx
- * <QuickCapture />
- * ```
  */
 export const QuickCapture = () => {
   const [content, setContent] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isProcessingText, setIsProcessingText] = useState(false);
+  const queryClient = useQueryClient();
 
   /**
    * Manejar envío del formulario (texto)
@@ -37,7 +29,6 @@ export const QuickCapture = () => {
     setIsProcessingText(true);
     
     try {
-      // 1. Obtener usuario actual
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -46,7 +37,7 @@ export const QuickCapture = () => {
 
       toast.success('Procesando...');
 
-      // 2. Procesar con edge function
+      // Procesar con edge function
       const { data, error } = await supabase.functions.invoke('process-text-capture', {
         body: {
           content: content.trim(),
@@ -58,22 +49,13 @@ export const QuickCapture = () => {
         throw error;
       }
 
-      // Mostrar mensaje según el tipo detectado
-      const typeMessages = {
-        task: '¡Tarea creada y analizada!',
-        idea: '¡Idea procesada y etiquetada!',
-        project: '¡Proyecto creado exitosamente!',
-        diary: '¡Entrada de diario guardada!',
-      };
+      toast.success('¡Idea procesada y guardada!');
       
-      toast.success(typeMessages[data.type as keyof typeof typeMessages] || '¡Procesado exitosamente!');
-      
-      // Limpiar textarea después de guardar
       setContent('');
       setIsFocused(false);
       
-      // Refrescar las listas correspondientes
-      window.dispatchEvent(new CustomEvent('refresh-lists'));
+      // Refrescar las listas
+      queryClient.invalidateQueries({ queryKey: ['ideas'] });
     } catch (error: any) {
       console.error('Error en handleSubmit:', error);
       toast.error(error.message || 'Error al procesar el contenido');
@@ -89,19 +71,18 @@ export const QuickCapture = () => {
     setIsProcessingAudio(true);
     
     try {
-      // 1. Obtener usuario actual
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error('Usuario no autenticado');
       }
 
-      // 2. Crear nombre de archivo único
+      // Crear nombre de archivo único
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(7);
       const fileName = `${user.id}/${timestamp}-${random}.webm`;
 
-      // 3. Subir audio a Supabase Storage
+      // Subir audio a Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('audio-recordings')
         .upload(fileName, audioBlob, {
@@ -113,19 +94,21 @@ export const QuickCapture = () => {
         throw uploadError;
       }
 
-      // 4. Obtener URL pública del audio
+      // Obtener URL pública del audio
       const { data: { publicUrl } } = supabase.storage
         .from('audio-recordings')
         .getPublicUrl(fileName);
 
-      // 5. Crear idea temporal con audio_url
+      // Crear idea temporal
       const { data: newIdea, error: createError } = await supabase
         .from('ideas')
         .insert([
           {
             user_id: user.id,
-            original_content: 'Transcribiendo...',
+            title: 'Transcribiendo...',
+            original_content: 'Procesando audio...',
             audio_url: publicUrl,
+            status: 'draft',
           },
         ])
         .select()
@@ -135,7 +118,7 @@ export const QuickCapture = () => {
 
       toast.success('Procesando audio...');
 
-      // 6. Convertir audio a base64 para enviar a la edge function
+      // Convertir audio a base64 para enviar a la edge function
       const arrayBuffer = await audioBlob.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
       let binary = '';
@@ -148,7 +131,7 @@ export const QuickCapture = () => {
       
       const audioBase64 = btoa(binary);
 
-      // 7. Procesar con edge function en background
+      // Procesar con edge function en background
       supabase.functions
         .invoke('process-voice-capture', {
           body: {
@@ -161,7 +144,8 @@ export const QuickCapture = () => {
             console.error('Error processing audio:', error);
             toast.error('Error al procesar el audio');
           } else {
-            toast.success('¡Idea procesada exitosamente!');
+            toast.success('¡Idea transcrita y procesada!');
+            queryClient.invalidateQueries({ queryKey: ['ideas'] });
           }
         });
       

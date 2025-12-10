@@ -14,9 +14,6 @@ const QUERY_KEYS = {
 
 /**
  * Hook para listar proyectos del usuario
- * 
- * @param filters - Filtros opcionales (status, category, tags, search)
- * @returns Query de React Query con lista de proyectos
  */
 export const useProjects = (filters?: ProjectsFilters) => {
   return useQuery({
@@ -27,38 +24,26 @@ export const useProjects = (filters?: ProjectsFilters) => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Aplicar filtros
       if (filters?.status) {
         query = query.eq('status', filters.status);
       }
 
-      if (filters?.category) {
-        query = query.eq('category', filters.category);
-      }
-
-      if (filters?.tags && filters.tags.length > 0) {
-        query = query.contains('tags', filters.tags);
-      }
-
       if (filters?.search) {
         query = query.or(
-          `name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
+          `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
         );
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as Project[];
+      return (data || []) as Project[];
     },
   });
 };
 
 /**
  * Hook para obtener un proyecto por ID
- * 
- * @param id - UUID del proyecto
- * @returns Query de React Query con el proyecto
  */
 export const useProject = (id: string) => {
   return useQuery({
@@ -98,10 +83,6 @@ export const useActiveProjectsCount = () => {
 
 /**
  * Hook para crear un nuevo proyecto
- * 
- * Valida que no haya más de 5 proyectos activos
- * 
- * @returns Mutation de React Query
  */
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
@@ -130,13 +111,10 @@ export const useCreateProject = () => {
         .insert([
           {
             user_id: user.id,
-            name: input.name,
+            title: input.title,
             description: input.description,
-            category: input.category,
-            priority: input.priority || 3,
-            start_date: input.start_date,
-            target_end_date: input.target_end_date,
-            tags: input.tags || [],
+            status: input.status || 'active',
+            due_date: input.due_date,
           },
         ])
         .select()
@@ -158,8 +136,6 @@ export const useCreateProject = () => {
 
 /**
  * Hook para actualizar un proyecto
- * 
- * @returns Mutation de React Query
  */
 export const useUpdateProject = () => {
   const queryClient = useQueryClient();
@@ -190,8 +166,6 @@ export const useUpdateProject = () => {
 
 /**
  * Hook para archivar un proyecto
- * 
- * @returns Mutation de React Query
  */
 export const useArchiveProject = () => {
   const queryClient = useQueryClient();
@@ -221,8 +195,6 @@ export const useArchiveProject = () => {
 
 /**
  * Hook para eliminar un proyecto
- * 
- * @returns Mutation de React Query
  */
 export const useDeleteProject = () => {
   const queryClient = useQueryClient();

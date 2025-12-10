@@ -28,21 +28,16 @@ export const useDiaryEntries = (filters?: DiaryEntriesFilters) => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Aplicar filtros
-      if (filters?.sentiment) {
-        query = query.eq('sentiment', filters.sentiment);
-      }
-
-      if (filters?.time_of_day) {
-        query = query.eq('time_of_day', filters.time_of_day);
+      if (filters?.mood) {
+        query = query.eq('mood', filters.mood);
       }
 
       if (filters?.date_from) {
-        query = query.gte('created_at', filters.date_from);
+        query = query.gte('entry_date', filters.date_from);
       }
 
       if (filters?.date_to) {
-        query = query.lte('created_at', filters.date_to);
+        query = query.lte('entry_date', filters.date_to);
       }
 
       if (filters?.search) {
@@ -54,11 +49,7 @@ export const useDiaryEntries = (filters?: DiaryEntriesFilters) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []).map((entry: any) => ({
-        ...entry,
-        emotions: (entry.emotions as any) || [],
-        location_coordinates: entry.location_coordinates || null,
-      })) as unknown as DiaryEntry[];
+      return (data || []) as DiaryEntry[];
     },
   });
 };
@@ -78,11 +69,7 @@ export const useDiaryEntry = (id: string) => {
 
       if (error) throw error;
       if (!data) throw new Error('Entrada de diario no encontrada');
-      return {
-        ...data,
-        emotions: (data.emotions as any) || [],
-        location_coordinates: data.location_coordinates || null,
-      } as unknown as DiaryEntry;
+      return data as DiaryEntry;
     },
     enabled: !!id,
   });
@@ -102,14 +89,6 @@ export const useCreateDiaryEntry = () => {
         throw new Error('Usuario no autenticado');
       }
 
-      // Determinar el momento del día basado en la hora actual
-      const hour = new Date().getHours();
-      let timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
-      if (hour >= 5 && hour < 12) timeOfDay = 'morning';
-      else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
-      else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
-      else timeOfDay = 'night';
-
       const { data, error } = await supabase
         .from('diary_entries')
         .insert([
@@ -117,24 +96,16 @@ export const useCreateDiaryEntry = () => {
             user_id: user.id,
             content: input.content,
             title: input.title,
-            audio_url: input.audio_url,
-            transcription: input.transcription,
-            location_name: input.location_name,
-            location_coordinates: input.location_coordinates,
-            time_of_day: timeOfDay,
+            mood: input.mood,
           },
         ])
         .select()
         .single();
 
       if (error) throw error;
-      return {
-        ...data,
-        emotions: (data.emotions as any) || [],
-        location_coordinates: data.location_coordinates || null,
-      } as unknown as DiaryEntry;
+      return data as DiaryEntry;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['diary-entries'] });
       toast.success('Entrada de diario guardada');
     },
@@ -155,17 +126,13 @@ export const useUpdateDiaryEntry = () => {
     mutationFn: async ({ id, updates }: { id: string; updates: UpdateDiaryEntryInput }) => {
       const { data, error } = await supabase
         .from('diary_entries')
-        .update(updates as any)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return {
-        ...data,
-        emotions: (data.emotions as any) || [],
-        location_coordinates: data.location_coordinates || null,
-      } as unknown as DiaryEntry;
+      return data as DiaryEntry;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['diary-entries'] });

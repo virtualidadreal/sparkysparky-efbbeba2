@@ -13,9 +13,6 @@ const QUERY_KEYS = {
 
 /**
  * Hook para listar tareas del usuario
- * 
- * @param filters - Filtros opcionales (status, project_id, due_date, tags, search)
- * @returns Query de React Query con lista de tareas
  */
 export const useTasks = (filters?: TasksFilters) => {
   return useQuery({
@@ -26,7 +23,6 @@ export const useTasks = (filters?: TasksFilters) => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Aplicar filtros
       if (filters?.status) {
         query = query.eq('status', filters.status);
       }
@@ -35,12 +31,12 @@ export const useTasks = (filters?: TasksFilters) => {
         query = query.eq('project_id', filters.project_id);
       }
 
-      if (filters?.due_date) {
-        query = query.eq('due_date', filters.due_date);
+      if (filters?.priority) {
+        query = query.eq('priority', filters.priority);
       }
 
-      if (filters?.tags && filters.tags.length > 0) {
-        query = query.contains('tags', filters.tags);
+      if (filters?.due_date) {
+        query = query.eq('due_date', filters.due_date);
       }
 
       if (filters?.search) {
@@ -52,16 +48,13 @@ export const useTasks = (filters?: TasksFilters) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as Task[];
+      return (data || []) as Task[];
     },
   });
 };
 
 /**
  * Hook para obtener una tarea por ID
- * 
- * @param id - UUID de la tarea
- * @returns Query de React Query con la tarea
  */
 export const useTask = (id: string) => {
   return useQuery({
@@ -83,8 +76,6 @@ export const useTask = (id: string) => {
 
 /**
  * Hook para crear una nueva tarea
- * 
- * @returns Mutation de React Query
  */
 export const useCreateTask = () => {
   const queryClient = useQueryClient();
@@ -104,10 +95,10 @@ export const useCreateTask = () => {
             user_id: user.id,
             title: input.title,
             description: input.description,
-            priority: input.priority || 3,
+            priority: input.priority || 'medium',
+            status: input.status || 'todo',
             due_date: input.due_date,
             project_id: input.project_id,
-            tags: input.tags || [],
           },
         ])
         .select()
@@ -129,8 +120,6 @@ export const useCreateTask = () => {
 
 /**
  * Hook para actualizar una tarea
- * 
- * @returns Mutation de React Query
  */
 export const useUpdateTask = () => {
   const queryClient = useQueryClient();
@@ -161,24 +150,15 @@ export const useUpdateTask = () => {
 
 /**
  * Hook para actualizar el estado de una tarea (cambiar columna en Kanban)
- * 
- * @returns Mutation de React Query
  */
 export const useUpdateTaskStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'todo' | 'doing' | 'done' }) => {
-      const updates: UpdateTaskInput = { status };
-      
-      // Si se marca como done, registrar completed_at
-      if (status === 'done') {
-        updates.completed_at = new Date().toISOString();
-      }
-
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { data, error } = await supabase
         .from('tasks')
-        .update(updates)
+        .update({ status })
         .eq('id', id)
         .select()
         .single();
@@ -198,8 +178,6 @@ export const useUpdateTaskStatus = () => {
 
 /**
  * Hook para eliminar una tarea
- * 
- * @returns Mutation de React Query
  */
 export const useDeleteTask = () => {
   const queryClient = useQueryClient();
