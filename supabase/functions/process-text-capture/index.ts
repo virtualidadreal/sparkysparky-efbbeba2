@@ -34,7 +34,29 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     console.log('Processing and classifying text for user:', userId);
+
+    // Get the system prompt from database
+    const { data: promptData, error: promptError } = await supabase
+      .from('system_prompts')
+      .select('prompt')
+      .eq('key', 'text_classification')
+      .eq('is_active', true)
+      .single();
+
+    if (promptError) {
+      console.error('Error fetching system prompt:', promptError);
+    }
+
+    // Fallback prompt if not found in DB
+    const systemPrompt = promptData?.prompt || `Eres Sparky, un asistente inteligente que clasifica contenido.
+Clasifica el texto como: idea, task, diary, o person.
+Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
 
     // Process with AI to classify and extract insights
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -46,73 +68,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          {
-            role: 'system',
-            content: `Eres Sparky, un asistente inteligente que clasifica y analiza contenido del usuario. Tu trabajo es:
-
-1. CLASIFICAR el tipo de contenido entre:
-   - "idea": pensamientos, conceptos, proyectos, reflexiones, inspiraciones
-   - "task": tareas pendientes, cosas por hacer, recordatorios de acciones
-   - "diary": entradas de diario, reflexiones personales del día, cómo se siente el usuario
-   - "person": información sobre una persona (nuevo contacto, datos de alguien)
-
-2. EXTRAER información estructurada según el tipo.
-
-Responde SOLO con un JSON válido con esta estructura:
-
-{
-  "type": "idea|task|diary|person",
-  "confidence": 0.0-1.0,
-  "data": {
-    // Para IDEA:
-    "title": "título breve (máx 50 chars)",
-    "summary": "resumen (máx 200 chars)",
-    "category": "personal|trabajo|proyecto|aprendizaje|salud|finanzas|relaciones|creatividad|general",
-    "priority": "low|medium|high",
-    "sentiment": "positive|neutral|negative",
-    "detected_emotions": ["emociones"],
-    "related_people": ["nombres mencionados"],
-    "suggested_improvements": ["sugerencias"],
-    "next_steps": ["pasos a seguir"],
-    "tags": ["etiquetas"]
-    
-    // Para TASK:
-    "title": "título de la tarea (máx 100 chars)",
-    "description": "descripción detallada",
-    "priority": "low|medium|high",
-    "due_date": "YYYY-MM-DD si se menciona, null si no",
-    "project_name": "nombre del proyecto si aplica"
-    
-    // Para DIARY:
-    "title": "título del día (máx 100 chars)",
-    "content": "contenido completo",
-    "mood": "happy|sad|neutral|excited|anxious|calm|angry|grateful"
-    
-    // Para PERSON:
-    "full_name": "nombre completo",
-    "nickname": "apodo si lo hay",
-    "email": "email si se menciona",
-    "phone": "teléfono si se menciona",
-    "company": "empresa",
-    "role": "cargo/rol",
-    "how_we_met": "cómo se conocieron",
-    "category": "friend|family|colleague|client|other",
-    "notes": "notas adicionales"
-  }
-}
-
-EJEMPLOS:
-- "Tengo que llamar a Juan mañana" → task
-- "Hoy fue un día increíble, me siento muy feliz" → diary
-- "Se me ocurrió una app para..." → idea
-- "Conocí a María García, trabaja en Google como PM" → person
-- "Recordatorio: comprar leche" → task
-- "Me pregunto si sería buena idea aprender piano" → idea`
-          },
-          {
-            role: 'user',
-            content: text
-          }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text }
         ],
       }),
     });
@@ -175,11 +132,6 @@ EJEMPLOS:
         }
       };
     }
-
-    // Save to database based on classification
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     let savedRecord: any;
     let tableName: string;
