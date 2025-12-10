@@ -3,17 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Task, CreateTaskInput, UpdateTaskInput, TasksFilters } from '@/types/Task.types';
 import toast from 'react-hot-toast';
 
-/**
- * Keys para React Query
- */
 const QUERY_KEYS = {
   tasks: (filters?: TasksFilters) => ['tasks', filters],
   task: (id: string) => ['task', id],
 };
 
-/**
- * Hook para listar tareas del usuario
- */
 export const useTasks = (filters?: TasksFilters) => {
   return useQuery({
     queryKey: QUERY_KEYS.tasks(filters),
@@ -53,9 +47,6 @@ export const useTasks = (filters?: TasksFilters) => {
   });
 };
 
-/**
- * Hook para obtener una tarea por ID
- */
 export const useTask = (id: string) => {
   return useQuery({
     queryKey: QUERY_KEYS.task(id),
@@ -74,9 +65,6 @@ export const useTask = (id: string) => {
   });
 };
 
-/**
- * Hook para crear una nueva tarea
- */
 export const useCreateTask = () => {
   const queryClient = useQueryClient();
 
@@ -118,9 +106,6 @@ export const useCreateTask = () => {
   });
 };
 
-/**
- * Hook para actualizar una tarea
- */
 export const useUpdateTask = () => {
   const queryClient = useQueryClient();
 
@@ -148,9 +133,6 @@ export const useUpdateTask = () => {
   });
 };
 
-/**
- * Hook para actualizar el estado de una tarea (cambiar columna en Kanban)
- */
 export const useUpdateTaskStatus = () => {
   const queryClient = useQueryClient();
 
@@ -176,9 +158,6 @@ export const useUpdateTaskStatus = () => {
   });
 };
 
-/**
- * Hook para eliminar una tarea
- */
 export const useDeleteTask = () => {
   const queryClient = useQueryClient();
 
