@@ -53,7 +53,12 @@ serve(async (req) => {
       );
     }
 
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not configured');
+    }
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
@@ -82,24 +87,58 @@ serve(async (req) => {
     const binaryAudio = processBase64Chunks(audioBase64);
     console.log('Binary audio size:', binaryAudio.length);
 
-    // Transcribe using Lovable AI (Gemini with audio capability)
-    // For now, we'll use a simpler approach - send the audio URL to be analyzed
-    // Since Lovable AI doesn't support direct audio transcription, 
-    // we'll process the text content if available or create a placeholder
+    // Transcribe using OpenAI Whisper
+    console.log('Transcribing with Whisper...');
     
-    let transcription = '';
-    
-    // Try to use the audio URL for context
-    if (existingIdea.audio_url) {
-      // Use Lovable AI to analyze what we know about the audio
-      // For a proper solution, we'd need an audio transcription service
-      // For now, we'll update the idea with placeholder text indicating audio processing
-      transcription = 'Audio capturado - Transcripción pendiente de servicio de voz';
-      
-      console.log('Audio URL available:', existingIdea.audio_url);
+    const formData = new FormData();
+    // Create a new ArrayBuffer copy to avoid type issues
+    const audioArrayBuffer = new ArrayBuffer(binaryAudio.length);
+    const audioView = new Uint8Array(audioArrayBuffer);
+    audioView.set(binaryAudio);
+    const blob = new Blob([audioArrayBuffer], { type: 'audio/webm' });
+    formData.append('file', blob, 'audio.webm');
+    formData.append('model', 'whisper-1');
+    formData.append('language', 'es'); // Spanish by default
+
+    const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: formData,
+    });
+
+    if (!whisperResponse.ok) {
+      const errorText = await whisperResponse.text();
+      console.error('Whisper API error:', whisperResponse.status, errorText);
+      throw new Error(`Whisper transcription failed: ${errorText}`);
     }
 
-    // If we have transcription, process with AI for insights
+    const whisperResult = await whisperResponse.json();
+    const transcription = whisperResult.text;
+    
+    console.log('Transcription result:', transcription?.substring(0, 100));
+
+    if (!transcription || transcription.trim().length === 0) {
+      // Update idea with error state
+      await supabase
+        .from('ideas')
+        .update({
+          title: 'Audio sin contenido',
+          original_content: 'No se detectó audio válido',
+          status: 'draft',
+        })
+        .eq('id', ideaId);
+
+      return new Response(
+        JSON.stringify({ success: false, error: 'No speech detected in audio' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Process with Lovable AI to extract insights
+    console.log('Processing transcription with AI...');
+    
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -111,27 +150,25 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Eres un asistente que genera contenido estructurado para notas de voz.
+            content: `Eres un asistente que analiza transcripciones de notas de voz. Debes extraer información estructurada.
             
-Como la transcripción está pendiente, genera un placeholder apropiado.
-
 Responde SOLO con un JSON válido con esta estructura exacta:
 {
-  "title": "Nota de voz",
-  "summary": "Nota de voz capturada correctamente",
-  "category": "general",
-  "priority": "medium",
-  "sentiment": "neutral",
-  "detected_emotions": [],
-  "related_people": [],
-  "suggested_improvements": [],
-  "next_steps": ["Revisar nota de voz"],
-  "tags": ["voz", "audio"]
+  "title": "título breve de la idea (máx 50 caracteres)",
+  "summary": "resumen conciso de la idea (máx 200 caracteres)",
+  "category": "una de: personal, trabajo, proyecto, aprendizaje, salud, finanzas, relaciones, creatividad, general",
+  "priority": "una de: low, medium, high",
+  "sentiment": "una de: positive, neutral, negative",
+  "detected_emotions": ["array de emociones detectadas"],
+  "related_people": ["nombres de personas mencionadas"],
+  "suggested_improvements": ["sugerencias para mejorar o desarrollar la idea"],
+  "next_steps": ["pasos concretos a seguir"],
+  "tags": ["etiquetas relevantes"]
 }`
           },
           {
             role: 'user',
-            content: 'Genera datos para una nota de voz recién capturada'
+            content: `Transcripción de nota de voz:\n\n${transcription}`
           }
         ],
       }),
@@ -178,24 +215,24 @@ Responde SOLO con un JSON válido con esta estructura exacta:
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       parsedData = {
-        title: 'Nota de voz',
-        summary: 'Nota de voz capturada',
+        title: transcription.substring(0, 50),
+        summary: transcription.substring(0, 200),
         category: 'general',
         priority: 'medium',
         sentiment: 'neutral',
         detected_emotions: [],
         related_people: [],
         suggested_improvements: [],
-        next_steps: ['Revisar nota de voz'],
-        tags: ['voz', 'audio']
+        next_steps: [],
+        tags: ['voz']
       };
     }
 
-    // Update the existing idea
+    // Update the existing idea with transcription and analysis
     const { data: updatedIdea, error: updateError } = await supabase
       .from('ideas')
       .update({
-        title: parsedData.title || 'Nota de voz',
+        title: parsedData.title || transcription.substring(0, 50),
         description: transcription,
         original_content: transcription,
         improved_content: parsedData.summary,
@@ -209,8 +246,8 @@ Responde SOLO con un JSON válido con esta estructura exacta:
         related_people: parsedData.related_people || [],
         suggested_improvements: parsedData.suggested_improvements || [],
         next_steps: parsedData.next_steps || [],
-        tags: parsedData.tags || [],
-        metadata: { source: 'voice', processed: true }
+        tags: parsedData.tags || ['voz'],
+        metadata: { source: 'voice', processed: true, whisper_model: 'whisper-1' }
       })
       .eq('id', ideaId)
       .select()
@@ -221,10 +258,10 @@ Responde SOLO con un JSON válido con esta estructura exacta:
       throw new Error('Failed to update idea');
     }
 
-    console.log('Voice idea updated successfully:', updatedIdea.id);
+    console.log('Voice idea processed successfully:', updatedIdea.id);
 
     return new Response(
-      JSON.stringify({ success: true, idea: updatedIdea }),
+      JSON.stringify({ success: true, idea: updatedIdea, transcription }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
