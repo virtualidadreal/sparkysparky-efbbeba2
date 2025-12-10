@@ -32,6 +32,54 @@ export type Database = {
         }
         Relationships: []
       }
+      detected_patterns: {
+        Row: {
+          created_at: string
+          description: string | null
+          evidence: Json | null
+          first_detected_at: string
+          id: string
+          last_detected_at: string
+          occurrences: number | null
+          pattern_type: string
+          status: string | null
+          suggestions: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          evidence?: Json | null
+          first_detected_at?: string
+          id?: string
+          last_detected_at?: string
+          occurrences?: number | null
+          pattern_type: string
+          status?: string | null
+          suggestions?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          evidence?: Json | null
+          first_detected_at?: string
+          id?: string
+          last_detected_at?: string
+          occurrences?: number | null
+          pattern_type?: string
+          status?: string | null
+          suggestions?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       diary_entries: {
         Row: {
           content: string
@@ -147,6 +195,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      memory_entries: {
+        Row: {
+          category: string | null
+          confidence: number | null
+          content: string
+          created_at: string
+          entry_type: string
+          id: string
+          is_active: boolean | null
+          last_referenced_at: string | null
+          metadata: Json | null
+          reference_count: number | null
+          source_id: string | null
+          source_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          confidence?: number | null
+          content: string
+          created_at?: string
+          entry_type: string
+          id?: string
+          is_active?: boolean | null
+          last_referenced_at?: string | null
+          metadata?: Json | null
+          reference_count?: number | null
+          source_id?: string | null
+          source_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          confidence?: number | null
+          content?: string
+          created_at?: string
+          entry_type?: string
+          id?: string
+          is_active?: boolean | null
+          last_referenced_at?: string | null
+          metadata?: Json | null
+          reference_count?: number | null
+          source_id?: string | null
+          source_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       people: {
         Row: {
@@ -270,6 +369,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      summaries: {
+        Row: {
+          action_items: Json | null
+          content: string
+          created_at: string
+          id: string
+          key_insights: Json | null
+          metrics: Json | null
+          patterns_detected: Json | null
+          period_end: string | null
+          period_start: string | null
+          project_id: string | null
+          sources: Json | null
+          summary_type: string
+          title: string
+          topic: string | null
+          user_id: string
+        }
+        Insert: {
+          action_items?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          key_insights?: Json | null
+          metrics?: Json | null
+          patterns_detected?: Json | null
+          period_end?: string | null
+          period_start?: string | null
+          project_id?: string | null
+          sources?: Json | null
+          summary_type: string
+          title: string
+          topic?: string | null
+          user_id: string
+        }
+        Update: {
+          action_items?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          key_insights?: Json | null
+          metrics?: Json | null
+          patterns_detected?: Json | null
+          period_end?: string | null
+          period_start?: string | null
+          project_id?: string | null
+          sources?: Json | null
+          summary_type?: string
+          title?: string
+          topic?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summaries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_prompts: {
         Row: {

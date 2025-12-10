@@ -9,6 +9,7 @@ import {
   Cog6ToothIcon,
   BookOpenIcon,
   ShieldCheckIcon,
+  CpuChipIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useIsAdmin } from '@/hooks/useAdmin';
@@ -31,6 +32,7 @@ const navigationItems = [
   { name: 'Tareas', href: '/tasks', icon: CheckIcon },
   { name: 'Personas', href: '/people', icon: UsersIcon },
   { name: 'Diario', href: '/diary', icon: BookOpenIcon },
+  { name: 'Memoria', href: '/memory', icon: CpuChipIcon },
   { name: 'Insights', href: '/insights', icon: ChartBarIcon },
   { name: 'Configuración', href: '/settings', icon: Cog6ToothIcon },
 ];

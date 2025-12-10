@@ -16,6 +16,7 @@ const Diary = lazy(() => import('@/pages/Diary'));
 const Insights = lazy(() => import('@/pages/Insights'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const Admin = lazy(() => import('@/pages/Admin'));
+const Memory = lazy(() => import('@/pages/Memory'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading fallback component
@@ -48,6 +49,7 @@ const App = () => {
               <Route path="/diary" element={<ProtectedRoute><Diary /></ProtectedRoute>} />
               <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/memory" element={<ProtectedRoute><Memory /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
 
               {/* Catch-all para 404 */}
