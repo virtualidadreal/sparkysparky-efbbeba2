@@ -6,7 +6,9 @@ import { useIdeas } from '@/hooks/useIdeas';
 import {
   CalendarIcon,
   CheckCircleIcon,
+  FireIcon,
 } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 /**
  * Página Dashboard
@@ -87,17 +89,15 @@ const Dashboard = () => {
               <CheckCircleIcon className="h-6 w-6 text-success" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 MITs del Día
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Most Important Tasks de hoy
               </p>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">
-                  No hay tareas pendientes
-                </p>
-              </div>
+              <Link to="/tasks" className="text-sm text-primary hover:underline">
+                Ver todas las tareas →
+              </Link>
             </div>
           </div>
         </Card>

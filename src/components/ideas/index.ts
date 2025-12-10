@@ -3,3 +3,4 @@ export { MemoizedIdeaCard } from './IdeaCard.memo';
 export { IdeaList } from './IdeaList';
 export { IdeaPreviewModal } from './IdeaPreviewModal';
 export { TagSelector } from './TagSelector';
+export { ConvertToTaskModal } from './ConvertToTaskModal';
