@@ -1,0 +1,17 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from '@/App';
+import '@/index.css';
+
+/**
+ * Entry point de Sparky
+ * 
+ * Providers:
+ * - StrictMode: Detección de problemas en desarrollo
+ * - App: QueryClient y Router configurados internamente
+ */
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
