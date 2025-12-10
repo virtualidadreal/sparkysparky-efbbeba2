@@ -10,7 +10,7 @@ Sistema de crítica constructiva que:
 - Genera críticas con IA (Lovable AI - google/gemini-2.5-flash)
 - Presenta **alternativas concretas** siempre
 - Respeta safe-words del usuario
-- 4 niveles de asertividad configurables
+- 4 niveles de asertividad configurables.
 
 ---
 
