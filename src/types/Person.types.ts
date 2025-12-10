@@ -5,9 +5,6 @@
  * Este archivo define tipos placeholder para uso futuro.
  */
 
-/**
- * Interfaz placeholder de Person
- */
 export interface Person {
   id: string;
   user_id: string;
@@ -15,33 +12,27 @@ export interface Person {
   nickname: string | null;
   email: string | null;
   category: string;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 }
 
-/**
- * Input para crear una nueva persona
- */
 export interface CreatePersonInput {
   full_name: string;
   nickname?: string;
   email?: string;
   category?: string;
+  notes?: string;
 }
 
-/**
- * Input para actualizar una persona
- */
 export interface UpdatePersonInput {
   full_name?: string;
   nickname?: string;
   email?: string;
   category?: string;
+  notes?: string;
 }
 
-/**
- * Filtros para listar personas
- */
 export interface PeopleFilters {
   category?: string;
   search?: string;

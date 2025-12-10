@@ -3,9 +3,6 @@
  * Alineados con la tabla tasks en Supabase
  */
 
-/**
- * Interfaz principal de Task - alineada con DB actual
- */
 export interface Task {
   id: string;
   user_id: string;
@@ -19,20 +16,15 @@ export interface Task {
   updated_at: string;
 }
 
-/**
- * Input para crear una nueva tarea
- */
 export interface CreateTaskInput {
   title: string;
   description?: string;
   priority?: string;
+  status?: string;
   due_date?: string;
   project_id?: string;
 }
 
-/**
- * Input para actualizar una tarea
- */
 export interface UpdateTaskInput {
   title?: string;
   description?: string;
@@ -42,12 +34,10 @@ export interface UpdateTaskInput {
   project_id?: string;
 }
 
-/**
- * Filtros para listar tareas
- */
 export interface TasksFilters {
   status?: string;
   project_id?: string;
+  priority?: string;
   due_date?: string;
   search?: string;
 }

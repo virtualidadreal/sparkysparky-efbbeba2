@@ -2,26 +2,10 @@
  * Hook placeholder para People
  * 
  * La tabla 'people' aún no existe en la base de datos.
- * Este archivo se actualizará cuando se cree la tabla.
  */
 
-import { useQuery } from '@tanstack/react-query';
-
-export interface Person {
-  id: string;
-  user_id: string;
-  full_name: string;
-  nickname: string | null;
-  email: string | null;
-  category: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PeopleFilters {
-  category?: string;
-  search?: string;
-}
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Person, CreatePersonInput, UpdatePersonInput, PeopleFilters } from '@/types/Person.types';
 
 /**
  * Hook placeholder - retorna lista vacía hasta que se cree la tabla
@@ -30,7 +14,6 @@ export const usePeople = (filters?: PeopleFilters) => {
   return useQuery({
     queryKey: ['people', filters],
     queryFn: async () => {
-      // Tabla 'people' no existe aún
       console.log('Tabla people no implementada aún');
       return [] as Person[];
     },
@@ -50,18 +33,50 @@ export const usePerson = (id: string) => {
   });
 };
 
-// Placeholders para mutaciones
-export const useCreatePerson = () => ({
-  mutateAsync: async () => { throw new Error('No implementado'); },
-  isPending: false,
-});
+/**
+ * Hook placeholder para crear persona
+ */
+export const useCreatePerson = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreatePersonInput) => {
+      console.warn('Tabla people no implementada');
+      throw new Error('No implementado');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+    },
+  });
+};
 
-export const useUpdatePerson = () => ({
-  mutateAsync: async () => { throw new Error('No implementado'); },
-  isPending: false,
-});
+/**
+ * Hook placeholder para actualizar persona
+ */
+export const useUpdatePerson = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: UpdatePersonInput }) => {
+      console.warn('Tabla people no implementada');
+      throw new Error('No implementado');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+    },
+  });
+};
 
-export const useDeletePerson = () => ({
-  mutateAsync: async () => { throw new Error('No implementado'); },
-  isPending: false,
-});
+/**
+ * Hook placeholder para eliminar persona
+ */
+export const useDeletePerson = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      console.warn('Tabla people no implementada');
+      throw new Error('No implementado');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+    },
+  });
+};

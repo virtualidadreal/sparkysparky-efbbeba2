@@ -7,30 +7,22 @@ import type { TasksFilters } from '@/types/Task.types';
 
 /**
  * Página Tasks
- * 
- * Vista principal del módulo de tareas con:
- * - Filtro por proyecto
- * - Kanban board con drag & drop
- * - Modal de formulario
  */
 const Tasks = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [defaultStatus, setDefaultStatus] = useState<'todo' | 'doing' | 'done'>('todo');
+  const [defaultStatus, setDefaultStatus] = useState<string>('todo');
 
   const { data: activeProjects } = useProjects({ status: 'active' });
   const deleteTask = useDeleteTask();
-  
-  // Cargar tarea si se está editando
   const { data: editingTask } = useTask(editingTaskId || '');
 
-  // Construir filtros
   const filters: TasksFilters = {
     ...(selectedProjectId && { project_id: selectedProjectId }),
   };
 
-  const handleCreateTask = (status: 'todo' | 'doing' | 'done') => {
+  const handleCreateTask = (status: string) => {
     setDefaultStatus(status);
     setEditingTaskId(null);
     setIsFormOpen(true);
@@ -45,9 +37,7 @@ const Tasks = () => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
       try {
         await deleteTask.mutateAsync(taskId);
-      } catch (error) {
-        // Error ya manejado en el hook
-      }
+      } catch (error) {}
     }
   };
 
@@ -63,12 +53,9 @@ const Tasks = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Tareas</h1>
-            <p className="text-gray-600">
-              Organiza tus tareas con el tablero Kanban
-            </p>
+            <p className="text-gray-600">Organiza tus tareas con el tablero Kanban</p>
           </div>
 
-          {/* Filtro por proyecto */}
           <div className="w-64">
             <select
               value={selectedProjectId}
@@ -78,14 +65,13 @@ const Tasks = () => {
               <option value="">Todos los proyectos</option>
               {activeProjects?.map((project) => (
                 <option key={project.id} value={project.id}>
-                  {project.name}
+                  {project.title}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Kanban Board */}
         <TaskKanban
           filters={filters}
           onCreateTask={handleCreateTask}
@@ -93,7 +79,6 @@ const Tasks = () => {
           onDeleteTask={handleDeleteTask}
         />
 
-        {/* Modal de formulario */}
         <TaskForm
           isOpen={isFormOpen}
           onClose={handleCloseForm}

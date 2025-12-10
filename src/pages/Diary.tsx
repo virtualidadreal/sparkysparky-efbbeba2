@@ -5,22 +5,15 @@ import { DiaryEntryList, DiaryEntryForm } from '@/components/diary';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useCreateDiaryEntry, useDiaryEntry } from '@/hooks/useDiaryEntries';
 import { supabase } from '@/integrations/supabase/client';
-import type { DiaryEntriesFilters, Sentiment, TimeOfDay } from '@/types/DiaryEntry.types';
+import type { DiaryEntriesFilters } from '@/types/DiaryEntry.types';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
 
 /**
  * Página Diary (Diario Personal)
- * 
- * Features:
- * - Captura de entradas por texto y voz
- * - Timeline cronológica
- * - Filtros por sentimiento y momento del día
- * - Análisis emocional automático
  */
 const Diary = () => {
-  const [activeFilter, setActiveFilter] = useState<'all' | Sentiment>('all');
-  const [timeFilter, setTimeFilter] = useState<'all' | TimeOfDay>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showNewEntry, setShowNewEntry] = useState(false);
   const [newEntryContent, setNewEntryContent] = useState('');
@@ -29,14 +22,11 @@ const Diary = () => {
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   
   const createEntry = useCreateDiaryEntry();
-  
-  // Cargar entrada si se está editando
   const { data: editingEntry } = useDiaryEntry(editingEntryId || '');
 
   // Construir filtros
   const filters: DiaryEntriesFilters = {
-    ...(activeFilter !== 'all' && { sentiment: activeFilter }),
-    ...(timeFilter !== 'all' && { time_of_day: timeFilter }),
+    ...(activeFilter !== 'all' && { mood: activeFilter }),
     ...(searchTerm && { search: searchTerm }),
   };
 
@@ -47,15 +37,9 @@ const Diary = () => {
     if (!newEntryContent.trim()) return;
 
     try {
-      const newEntry = await createEntry.mutateAsync({
+      await createEntry.mutateAsync({
         content: newEntryContent.trim(),
       });
-
-      // Procesar con IA en background
-      supabase.functions.invoke('process-diary-entry', {
-        body: { entryId: newEntry.id },
-      });
-
       setNewEntryContent('');
       setShowNewEntry(false);
     } catch (error) {
@@ -90,15 +74,9 @@ const Diary = () => {
 
       if (uploadError) throw uploadError;
 
-      // Obtener URL pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('audio-recordings')
-        .getPublicUrl(fileName);
-
       // Crear entrada de diario temporal
       const newEntry = await createEntry.mutateAsync({
         content: 'Transcribiendo audio...',
-        audio_url: publicUrl,
       });
 
       // Convertir audio a base64 para transcripción
@@ -114,32 +92,20 @@ const Diary = () => {
       
       const audioBase64 = btoa(binary);
 
-      // Procesar con edge function (incluye Whisper + GPT)
       toast.success('Procesando audio...');
       
-      // Primero transcribir con Whisper
       const { data: transcriptionData } = await supabase.functions.invoke('process-voice-capture', {
         body: {
-          ideaId: newEntry.id, // Usamos la misma función temporalmente
+          ideaId: newEntry.id,
           audioBase64,
         },
       });
 
       if (transcriptionData?.transcription) {
-        // Actualizar entrada con transcripción
         await supabase
           .from('diary_entries')
-          .update({
-            content: transcriptionData.transcription,
-            transcription: transcriptionData.transcription,
-          })
+          .update({ content: transcriptionData.transcription })
           .eq('id', newEntry.id);
-
-        // Procesar análisis emocional
-        await supabase.functions.invoke('process-diary-entry', {
-          body: { entryId: newEntry.id },
-        });
-
         toast.success('¡Entrada procesada!');
       }
       
@@ -151,17 +117,11 @@ const Diary = () => {
     }
   };
 
-  /**
-   * Manejar edición de entrada
-   */
   const handleEditEntry = (entryId: string) => {
     setEditingEntryId(entryId);
     setIsFormOpen(true);
   };
 
-  /**
-   * Cerrar modal de edición
-   */
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingEntryId(null);
@@ -229,15 +189,12 @@ const Diary = () => {
 
         {/* Filtros */}
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Filtro de sentimiento */}
           <div className="flex gap-2">
             <button
               onClick={() => setActiveFilter('all')}
               className={clsx(
                 'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeFilter === 'all'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                activeFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               )}
             >
               Todas
@@ -246,9 +203,7 @@ const Diary = () => {
               onClick={() => setActiveFilter('positive')}
               className={clsx(
                 'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeFilter === 'positive'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                activeFilter === 'positive' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               )}
             >
               Positivas
@@ -257,9 +212,7 @@ const Diary = () => {
               onClick={() => setActiveFilter('neutral')}
               className={clsx(
                 'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeFilter === 'neutral'
-                  ? 'bg-gray-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                activeFilter === 'neutral' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               )}
             >
               Neutrales
@@ -268,16 +221,13 @@ const Diary = () => {
               onClick={() => setActiveFilter('negative')}
               className={clsx(
                 'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeFilter === 'negative'
-                  ? 'bg-red-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                activeFilter === 'negative' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               )}
             >
               Negativas
             </button>
           </div>
 
-          {/* Buscador */}
           <div className="flex-1">
             <input
               type="text"
@@ -290,10 +240,8 @@ const Diary = () => {
         </div>
       </div>
 
-      {/* Lista de entradas */}
       <DiaryEntryList filters={filters} onEdit={handleEditEntry} />
 
-      {/* Modal de edición */}
       <DiaryEntryForm
         isOpen={isFormOpen}
         onClose={handleCloseForm}
