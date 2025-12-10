@@ -1,1 +1,7 @@
 project_id = "osupgbsaashqhspbuafb"
+
+[functions.process-text-capture]
+verify_jwt = false
+
+[functions.process-voice-capture]
+verify_jwt = false
