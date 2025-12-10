@@ -49,35 +49,71 @@ export type Database = {
       }
       ideas: {
         Row: {
+          audio_url: string | null
           category: string | null
           created_at: string
           description: string | null
+          detected_emotions: string[] | null
           id: string
+          improved_content: string | null
+          metadata: Json | null
+          next_steps: Json | null
+          original_content: string | null
           priority: string | null
+          related_people: string[] | null
+          sentiment: string | null
           status: string | null
+          suggested_improvements: Json | null
+          summary: string | null
+          tags: string[] | null
           title: string
+          transcription: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          audio_url?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
+          detected_emotions?: string[] | null
           id?: string
+          improved_content?: string | null
+          metadata?: Json | null
+          next_steps?: Json | null
+          original_content?: string | null
           priority?: string | null
+          related_people?: string[] | null
+          sentiment?: string | null
           status?: string | null
+          suggested_improvements?: Json | null
+          summary?: string | null
+          tags?: string[] | null
           title: string
+          transcription?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          audio_url?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
+          detected_emotions?: string[] | null
           id?: string
+          improved_content?: string | null
+          metadata?: Json | null
+          next_steps?: Json | null
+          original_content?: string | null
           priority?: string | null
+          related_people?: string[] | null
+          sentiment?: string | null
           status?: string | null
+          suggested_improvements?: Json | null
+          summary?: string | null
+          tags?: string[] | null
           title?: string
+          transcription?: string | null
           updated_at?: string
           user_id?: string
         }
