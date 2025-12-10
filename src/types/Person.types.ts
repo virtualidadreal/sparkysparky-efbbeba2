@@ -11,8 +11,13 @@ export interface Person {
   full_name: string;
   nickname: string | null;
   email: string | null;
+  phone: string | null;
   category: string;
   notes: string | null;
+  company: string | null;
+  role: string | null;
+  how_we_met: string | null;
+  last_contact_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -21,16 +26,26 @@ export interface CreatePersonInput {
   full_name: string;
   nickname?: string;
   email?: string;
+  phone?: string;
   category?: string;
   notes?: string;
+  company?: string;
+  role?: string;
+  how_we_met?: string;
+  last_contact_date?: string;
 }
 
 export interface UpdatePersonInput {
   full_name?: string;
   nickname?: string;
   email?: string;
+  phone?: string;
   category?: string;
   notes?: string;
+  company?: string;
+  role?: string;
+  how_we_met?: string;
+  last_contact_date?: string;
 }
 
 export interface PeopleFilters {

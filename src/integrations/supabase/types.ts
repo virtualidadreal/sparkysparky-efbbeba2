@@ -119,6 +119,57 @@ export type Database = {
         }
         Relationships: []
       }
+      people: {
+        Row: {
+          category: string | null
+          company: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          how_we_met: string | null
+          id: string
+          last_contact_date: string | null
+          nickname: string | null
+          notes: string | null
+          phone: string | null
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          how_we_met?: string | null
+          id?: string
+          last_contact_date?: string | null
+          nickname?: string | null
+          notes?: string | null
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          how_we_met?: string | null
+          id?: string
+          last_contact_date?: string | null
+          nickname?: string | null
+          notes?: string | null
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
