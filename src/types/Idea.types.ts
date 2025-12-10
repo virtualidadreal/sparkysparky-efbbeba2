@@ -55,6 +55,7 @@ export interface Idea {
   sentiment: IdeaSentiment | null;
   detected_emotions: string[];
   metadata: Record<string, unknown>;
+  project_id: string | null;
   created_at: string;
   updated_at: string;
 }

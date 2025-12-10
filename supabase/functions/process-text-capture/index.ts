@@ -14,6 +14,55 @@ interface ClassificationResult {
   data: Record<string, any>;
 }
 
+interface Project {
+  id: string;
+  title: string;
+  tags: string[];
+  keywords: string[];
+}
+
+// Function to find matching project based on tags and keywords
+function findMatchingProject(
+  projects: Project[],
+  ideaTags: string[],
+  ideaTitle: string,
+  ideaContent: string
+): string | null {
+  if (!projects || projects.length === 0) return null;
+  
+  const contentLower = `${ideaTitle} ${ideaContent}`.toLowerCase();
+  
+  let bestMatch: { projectId: string; score: number } | null = null;
+  
+  for (const project of projects) {
+    let score = 0;
+    
+    // Score by matching tags
+    const projectTags = (project.tags || []).map(t => t.toLowerCase());
+    const matchingTags = ideaTags.filter(t => projectTags.includes(t.toLowerCase()));
+    score += matchingTags.length * 10;
+    
+    // Score by matching keywords in content
+    const keywords = (project.keywords || []).map(k => k.toLowerCase());
+    for (const keyword of keywords) {
+      if (contentLower.includes(keyword)) {
+        score += 5;
+      }
+    }
+    
+    // Score by project title appearing in content
+    if (contentLower.includes(project.title.toLowerCase())) {
+      score += 15;
+    }
+    
+    if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+      bestMatch = { projectId: project.id, score };
+    }
+  }
+  
+  return bestMatch?.projectId || null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -57,6 +106,13 @@ serve(async (req) => {
     const systemPrompt = promptData?.prompt || `Eres Sparky, un asistente inteligente que clasifica contenido.
 Clasifica el texto como: idea, task, diary, o person.
 Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
+
+    // Get user's projects for auto-matching
+    const { data: userProjects } = await supabase
+      .from('projects')
+      .select('id, title, tags, keywords')
+      .eq('user_id', userId)
+      .eq('status', 'active');
 
     // Process with AI to classify and extract insights
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -135,10 +191,22 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
 
     let savedRecord: any;
     let tableName: string;
+    let matchedProjectId: string | null = null;
 
     switch (classification.type) {
       case 'task':
         tableName = 'tasks';
+        
+        // Try to match task to a project
+        if (userProjects && userProjects.length > 0) {
+          matchedProjectId = findMatchingProject(
+            userProjects as Project[],
+            [],
+            classification.data.title || '',
+            text
+          );
+        }
+        
         const { data: task, error: taskError } = await supabase
           .from('tasks')
           .insert({
@@ -148,13 +216,14 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
             priority: classification.data.priority || 'medium',
             due_date: classification.data.due_date || null,
             status: 'todo',
+            project_id: matchedProjectId,
           })
           .select()
           .single();
         
         if (taskError) throw taskError;
         savedRecord = task;
-        console.log('Task saved successfully:', task.id);
+        console.log('Task saved successfully:', task.id, 'Project:', matchedProjectId);
         break;
 
       case 'diary':
@@ -203,6 +272,22 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
       case 'idea':
       default:
         tableName = 'ideas';
+        const ideaTags = classification.data.tags || [];
+        
+        // Auto-match idea to project based on tags and keywords
+        if (userProjects && userProjects.length > 0) {
+          matchedProjectId = findMatchingProject(
+            userProjects as Project[],
+            ideaTags,
+            classification.data.title || '',
+            text
+          );
+          
+          if (matchedProjectId) {
+            console.log('Auto-matched idea to project:', matchedProjectId);
+          }
+        }
+        
         const { data: idea, error: ideaError } = await supabase
           .from('ideas')
           .insert({
@@ -220,7 +305,8 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
             related_people: classification.data.related_people || [],
             suggested_improvements: classification.data.suggested_improvements || [],
             next_steps: classification.data.next_steps || [],
-            tags: classification.data.tags || [],
+            tags: ideaTags,
+            project_id: matchedProjectId,
             metadata: {}
           })
           .select()
@@ -228,7 +314,7 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
         
         if (ideaError) throw ideaError;
         savedRecord = idea;
-        console.log('Idea saved successfully:', idea.id);
+        console.log('Idea saved successfully:', idea.id, 'Project:', matchedProjectId);
         break;
     }
 
@@ -238,7 +324,8 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
         type: classification.type,
         confidence: classification.confidence,
         record: savedRecord,
-        table: tableName
+        table: tableName,
+        matchedProjectId
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
