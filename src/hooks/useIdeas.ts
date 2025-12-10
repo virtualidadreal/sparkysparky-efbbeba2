@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { Idea, CreateIdeaInput, UpdateIdeaInput, IdeasFilters } from '@/types/Idea.types';
+import type { Idea, CreateIdeaInput, UpdateIdeaInput, IdeasFilters, parseIdea } from '@/types/Idea.types';
 import toast from 'react-hot-toast';
 
 /**
@@ -12,10 +12,20 @@ const QUERY_KEYS = {
 };
 
 /**
+ * Helper para transformar datos de DB a tipo Idea
+ */
+const transformIdea = (data: any): Idea => ({
+  ...data,
+  tags: data.tags || [],
+  suggested_improvements: data.suggested_improvements || [],
+  next_steps: data.next_steps || [],
+  related_people: data.related_people || [],
+  detected_emotions: data.detected_emotions || [],
+  metadata: data.metadata || {},
+});
+
+/**
  * Hook para listar ideas del usuario
- * 
- * @param filters - Filtros opcionales (status, category, tags, search)
- * @returns Query de React Query con lista de ideas
  */
 export const useIdeas = (filters?: IdeasFilters) => {
   return useQuery({
@@ -26,7 +36,6 @@ export const useIdeas = (filters?: IdeasFilters) => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Aplicar filtros
       if (filters?.status) {
         query = query.eq('status', filters.status);
       }
@@ -41,23 +50,20 @@ export const useIdeas = (filters?: IdeasFilters) => {
 
       if (filters?.search) {
         query = query.or(
-          `original_content.ilike.%${filters.search}%,title.ilike.%${filters.search}%`
+          `original_content.ilike.%${filters.search}%,title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
         );
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as Idea[];
+      return (data || []).map(transformIdea);
     },
   });
 };
 
 /**
  * Hook para obtener una idea por ID
- * 
- * @param id - UUID de la idea
- * @returns Query de React Query con la idea
  */
 export const useIdea = (id: string) => {
   return useQuery({
@@ -71,7 +77,7 @@ export const useIdea = (id: string) => {
 
       if (error) throw error;
       if (!data) throw new Error('Idea no encontrada');
-      return data as Idea;
+      return transformIdea(data);
     },
     enabled: !!id,
   });
@@ -79,8 +85,6 @@ export const useIdea = (id: string) => {
 
 /**
  * Hook para crear una nueva idea
- * 
- * @returns Mutation de React Query
  */
 export const useCreateIdea = () => {
   const queryClient = useQueryClient();
@@ -98,20 +102,23 @@ export const useCreateIdea = () => {
         .insert([
           {
             user_id: user.id,
+            title: input.title || 'Nueva idea',
+            description: input.description,
             original_content: input.original_content,
             audio_url: input.audio_url,
             transcription: input.transcription,
-            title: input.title,
+            category: input.category || 'general',
+            priority: input.priority || 'medium',
+            status: 'active',
           },
         ])
         .select()
         .single();
 
       if (error) throw error;
-      return data as Idea;
+      return transformIdea(data);
     },
-    onSuccess: (data) => {
-      // Invalidar queries para refrescar la lista
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
       toast.success('Idea guardada exitosamente');
     },
@@ -124,8 +131,6 @@ export const useCreateIdea = () => {
 
 /**
  * Hook para actualizar una idea
- * 
- * @returns Mutation de React Query
  */
 export const useUpdateIdea = () => {
   const queryClient = useQueryClient();
@@ -134,16 +139,15 @@ export const useUpdateIdea = () => {
     mutationFn: async ({ id, updates }: { id: string; updates: UpdateIdeaInput }) => {
       const { data, error } = await supabase
         .from('ideas')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data as Idea;
+      return transformIdea(data);
     },
     onSuccess: (data) => {
-      // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
       queryClient.invalidateQueries({ queryKey: ['idea', data.id] });
       toast.success('Idea actualizada');
@@ -157,8 +161,6 @@ export const useUpdateIdea = () => {
 
 /**
  * Hook para archivar una idea
- * 
- * @returns Mutation de React Query
  */
 export const useArchiveIdea = () => {
   const queryClient = useQueryClient();
@@ -173,7 +175,7 @@ export const useArchiveIdea = () => {
         .single();
 
       if (error) throw error;
-      return data as Idea;
+      return transformIdea(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
@@ -188,8 +190,6 @@ export const useArchiveIdea = () => {
 
 /**
  * Hook para eliminar una idea
- * 
- * @returns Mutation de React Query
  */
 export const useDeleteIdea = () => {
   const queryClient = useQueryClient();

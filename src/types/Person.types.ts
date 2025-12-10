@@ -1,9 +1,12 @@
 /**
  * Tipos TypeScript para el módulo de People (CRM Personal)
+ * 
+ * NOTA: La tabla 'people' no existe en la base de datos actual.
+ * Este archivo define tipos placeholder para uso futuro.
  */
 
 /**
- * Interfaz principal de Person
+ * Interfaz placeholder de Person
  */
 export interface Person {
   id: string;
@@ -11,15 +14,7 @@ export interface Person {
   full_name: string;
   nickname: string | null;
   email: string | null;
-  category: 'family' | 'friend' | 'colleague' | 'mentor' | 'client';
-  importance_level: number; // 1-5
-  last_contact_date: string | null;
-  last_contact_summary: string | null;
-  desired_contact_frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | null;
-  needs_attention: boolean;
-  tags: string[];
-  interests: string[];
-  birthday: string | null;
+  category: string;
   created_at: string;
   updated_at: string;
 }
@@ -31,12 +26,7 @@ export interface CreatePersonInput {
   full_name: string;
   nickname?: string;
   email?: string;
-  category: 'family' | 'friend' | 'colleague' | 'mentor' | 'client';
-  importance_level?: number;
-  desired_contact_frequency?: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
-  birthday?: string;
-  interests?: string[];
-  tags?: string[];
+  category?: string;
 }
 
 /**
@@ -46,22 +36,13 @@ export interface UpdatePersonInput {
   full_name?: string;
   nickname?: string;
   email?: string;
-  category?: 'family' | 'friend' | 'colleague' | 'mentor' | 'client';
-  importance_level?: number;
-  last_contact_date?: string;
-  last_contact_summary?: string;
-  desired_contact_frequency?: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | null;
-  needs_attention?: boolean;
-  birthday?: string;
-  interests?: string[];
-  tags?: string[];
+  category?: string;
 }
 
 /**
  * Filtros para listar personas
  */
 export interface PeopleFilters {
-  category?: 'family' | 'friend' | 'colleague' | 'mentor' | 'client';
-  needs_attention?: boolean;
+  category?: string;
   search?: string;
 }

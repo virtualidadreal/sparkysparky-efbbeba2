@@ -1,42 +1,20 @@
 /**
  * Tipos TypeScript para el módulo de Projects
+ * Alineados con la tabla projects en Supabase
  */
 
 /**
- * Interfaz principal de Project
+ * Interfaz principal de Project - alineada con DB
+ * La tabla tiene: id, user_id, title, description, status, progress, due_date, created_at, updated_at
  */
 export interface Project {
   id: string;
   user_id: string;
-  name: string;
+  title: string;
   description: string | null;
-  category: string | null;
-  status: 'active' | 'paused' | 'completed' | 'archived';
-  priority: number; // 1-5
-  start_date: string | null;
-  target_end_date: string | null;
-  progress_percentage: number; // 0-100
-  tags: string[];
-  metadata: {
-    analysis?: {
-      viability_score: number;
-      strengths: string[];
-      weaknesses: string[];
-      opportunities: string[];
-      threats: string[];
-      key_success_factors: string[];
-      critical_questions: Array<{ question: string; why_important: string }>;
-      recommended_next_steps: string[];
-      estimated_effort: string;
-      estimated_timeline: string;
-    };
-    materials?: {
-      outline: any;
-      briefing: string;
-      checklist: any[];
-      key_questions: string[];
-    };
-  } | null;
+  status: string | null;
+  progress: number | null;
+  due_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,36 +23,27 @@ export interface Project {
  * Input para crear un nuevo proyecto
  */
 export interface CreateProjectInput {
-  name: string;
+  title: string;
   description?: string;
-  category?: string;
-  priority?: number;
-  start_date?: string;
-  target_end_date?: string;
-  tags?: string[];
+  status?: string;
+  due_date?: string;
 }
 
 /**
  * Input para actualizar un proyecto
  */
 export interface UpdateProjectInput {
-  name?: string;
+  title?: string;
   description?: string;
-  category?: string;
-  status?: 'active' | 'paused' | 'completed' | 'archived';
-  priority?: number;
-  start_date?: string;
-  target_end_date?: string;
-  progress_percentage?: number;
-  tags?: string[];
+  status?: string;
+  progress?: number;
+  due_date?: string;
 }
 
 /**
  * Filtros para listar proyectos
  */
 export interface ProjectsFilters {
-  status?: 'active' | 'paused' | 'completed' | 'archived';
-  category?: string;
-  tags?: string[];
+  status?: string;
   search?: string;
 }
