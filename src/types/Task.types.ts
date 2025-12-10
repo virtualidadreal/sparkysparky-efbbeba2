@@ -1,22 +1,20 @@
 /**
  * Tipos TypeScript para el módulo de Tasks
+ * Alineados con la tabla tasks en Supabase
  */
 
 /**
- * Interfaz principal de Task
+ * Interfaz principal de Task - alineada con DB actual
  */
 export interface Task {
   id: string;
   user_id: string;
   title: string;
   description: string | null;
-  status: 'todo' | 'doing' | 'done';
-  priority: number; // 1-5
-  urgency_score: number | null;
+  status: string | null;
+  priority: string | null;
   due_date: string | null;
-  completed_at: string | null;
   project_id: string | null;
-  tags: string[];
   created_at: string;
   updated_at: string;
 }
@@ -27,10 +25,9 @@ export interface Task {
 export interface CreateTaskInput {
   title: string;
   description?: string;
-  priority?: number;
+  priority?: string;
   due_date?: string;
   project_id?: string;
-  tags?: string[];
 }
 
 /**
@@ -39,21 +36,18 @@ export interface CreateTaskInput {
 export interface UpdateTaskInput {
   title?: string;
   description?: string;
-  status?: 'todo' | 'doing' | 'done';
-  priority?: number;
+  status?: string;
+  priority?: string;
   due_date?: string;
-  completed_at?: string;
   project_id?: string;
-  tags?: string[];
 }
 
 /**
  * Filtros para listar tareas
  */
 export interface TasksFilters {
-  status?: 'todo' | 'doing' | 'done';
+  status?: string;
   project_id?: string;
   due_date?: string;
-  tags?: string[];
   search?: string;
 }

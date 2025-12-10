@@ -120,15 +120,6 @@ export const DiaryEntryForm = ({ isOpen, onClose, entry }: DiaryEntryFormProps) 
               />
             </div>
 
-            {/* Info sobre análisis de IA */}
-            {entry.mood_score && (
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                <p className="text-sm text-blue-800">
-                  <strong>Nota:</strong> El análisis emocional de IA se mantiene del original.
-                </p>
-              </div>
-            )}
-
             {/* Acciones */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
