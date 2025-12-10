@@ -172,8 +172,8 @@ export const QuickCapture = () => {
   return (
     <div
       className={clsx(
-        'bg-white rounded-lg border-2 transition-all duration-200',
-        isFocused ? 'border-primary shadow-md' : 'border-gray-200'
+        'bg-card rounded-lg border-2 transition-all duration-200',
+        isFocused ? 'border-primary shadow-md' : 'border-border'
       )}
     >
       <form onSubmit={handleSubmit} className="p-4">
@@ -189,11 +189,11 @@ export const QuickCapture = () => {
             rows={isFocused ? 4 : 2}
             disabled={isLoading}
             className={clsx(
-              'w-full px-3 py-2 border-0 rounded-md resize-none',
-              'text-gray-900 placeholder-gray-400',
+              'w-full px-3 py-2 border-0 rounded-md resize-none bg-transparent',
+              'text-foreground placeholder-muted-foreground',
               'focus:outline-none focus:ring-0',
               'transition-all duration-200',
-              'disabled:bg-gray-50 disabled:cursor-not-allowed'
+              'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
           />
         </div>
@@ -211,7 +211,7 @@ export const QuickCapture = () => {
                 Analizando contenido...
               </span>
             ) : content.length > 0 ? (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 {content.length} caracteres
               </span>
             ) : null}
@@ -242,8 +242,8 @@ export const QuickCapture = () => {
 
         {/* Hint */}
         {isFocused && !isLoading && (
-          <div className="mt-2 text-xs text-gray-500">
-            Presiona <kbd className="px-1.5 py-0.5 bg-gray-100 rounded border border-gray-300">⌘</kbd> + <kbd className="px-1.5 py-0.5 bg-gray-100 rounded border border-gray-300">Enter</kbd> para guardar
+          <div className="mt-2 text-xs text-muted-foreground">
+            Presiona <kbd className="px-1.5 py-0.5 bg-muted rounded border border-border">⌘</kbd> + <kbd className="px-1.5 py-0.5 bg-muted rounded border border-border">Enter</kbd> para guardar
           </div>
         )}
       </form>

@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '@/components/layout';
 import { useAuth } from '@/hooks/useAuth';
-import { useProfile, useUpdateProfile, useUpdatePassword } from '@/hooks/useProfile';
+import { 
+  useProfile, 
+  useUpdateProfile, 
+  useUpdatePassword, 
+  useUploadAvatar,
+  type UserPreferences 
+} from '@/hooks/useProfile';
 import {
   UserCircleIcon,
   KeyIcon,
@@ -9,6 +15,7 @@ import {
   PaintBrushIcon,
   ShieldCheckIcon,
   ArrowRightOnRectangleIcon,
+  CameraIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,22 +45,36 @@ const SettingsSection = ({
   </div>
 );
 
+const defaultPreferences: UserPreferences = {
+  notifications: {
+    task_reminders: true,
+    weekly_summary: true,
+    product_updates: false,
+  },
+  theme: 'light',
+};
+
 const Settings = () => {
   const { user, signOut } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const updatePassword = useUpdatePassword();
+  const uploadAvatar = useUploadAvatar();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [displayName, setDisplayName] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
 
   useEffect(() => {
     if (profile?.display_name) {
       setDisplayName(profile.display_name);
+    }
+    if (profile?.preferences) {
+      setPreferences(profile.preferences);
     }
   }, [profile]);
 
@@ -81,14 +102,14 @@ const Settings = () => {
       return;
     }
     await updatePassword.mutateAsync(newPassword);
-    setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
   };
 
-  const handleToggleDarkMode = () => {
+  const handleToggleDarkMode = async () => {
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
+    
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
@@ -96,6 +117,49 @@ const Settings = () => {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+
+    // Save to database
+    const newPreferences = {
+      ...preferences,
+      theme: newDarkMode ? 'dark' as const : 'light' as const,
+    };
+    setPreferences(newPreferences);
+    await updateProfile.mutateAsync({ preferences: newPreferences });
+  };
+
+  const handleNotificationChange = async (key: keyof typeof preferences.notifications, value: boolean) => {
+    const newPreferences = {
+      ...preferences,
+      notifications: {
+        ...preferences.notifications,
+        [key]: value,
+      },
+    };
+    setPreferences(newPreferences);
+    await updateProfile.mutateAsync({ preferences: newPreferences });
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor selecciona una imagen');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('La imagen debe ser menor a 2MB');
+      return;
+    }
+
+    await uploadAvatar.mutateAsync(file);
   };
 
   const handleSignOut = async () => {
@@ -151,15 +215,47 @@ const Settings = () => {
               description="Actualiza tu información personal"
             >
               <div className="space-y-4">
+                {/* Avatar */}
                 <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                    <UserCircleIcon className="h-12 w-12 text-primary" />
+                  <div className="relative group">
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                      />
+                    ) : (
+                      <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                        <UserCircleIcon className="h-12 w-12 text-primary" />
+                      </div>
+                    )}
+                    <button
+                      onClick={handleAvatarClick}
+                      disabled={uploadAvatar.isPending}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <CameraIcon className="h-6 w-6 text-white" />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
                   </div>
                   <div>
                     <p className="font-medium text-foreground">
                       {profile?.display_name || user?.email?.split('@')[0]}
                     </p>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    <button
+                      onClick={handleAvatarClick}
+                      disabled={uploadAvatar.isPending}
+                      className="text-sm text-primary hover:underline mt-1"
+                    >
+                      {uploadAvatar.isPending ? 'Subiendo...' : 'Cambiar foto'}
+                    </button>
                   </div>
                 </div>
 
@@ -311,7 +407,10 @@ const Settings = () => {
                       Recibe recordatorios de tareas pendientes
                     </p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={preferences.notifications.task_reminders}
+                    onCheckedChange={(checked) => handleNotificationChange('task_reminders', checked)}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -321,7 +420,10 @@ const Settings = () => {
                       Recibe un resumen de tu actividad semanal
                     </p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={preferences.notifications.weekly_summary}
+                    onCheckedChange={(checked) => handleNotificationChange('weekly_summary', checked)}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -331,7 +433,10 @@ const Settings = () => {
                       Recibe noticias sobre nuevas funcionalidades
                     </p>
                   </div>
-                  <Switch />
+                  <Switch 
+                    checked={preferences.notifications.product_updates}
+                    onCheckedChange={(checked) => handleNotificationChange('product_updates', checked)}
+                  />
                 </div>
               </div>
             </SettingsSection>
