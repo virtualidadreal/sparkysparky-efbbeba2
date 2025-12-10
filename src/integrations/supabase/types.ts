@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_emails: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       diary_entries: {
         Row: {
           content: string
@@ -236,6 +254,39 @@ export type Database = {
         }
         Relationships: []
       }
+      system_prompts: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          key: string
+          name: string
+          prompt: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          key: string
+          name: string
+          prompt: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          key?: string
+          name?: string
+          prompt?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string
@@ -288,7 +339,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

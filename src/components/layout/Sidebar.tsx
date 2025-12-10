@@ -8,8 +8,10 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   BookOpenIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+import { useIsAdmin } from '@/hooks/useAdmin';
 
 /**
  * Props del componente Sidebar
@@ -37,6 +39,8 @@ const navigationItems = [
  * Componente Sidebar
  */
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+  const { data: isAdmin } = useIsAdmin();
+
   return (
     <>
       {/* Overlay en móvil */}
@@ -100,6 +104,34 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               )}
             </NavLink>
           ))}
+
+          {/* Admin link - solo visible para admins */}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              onClick={onClose}
+              className={({ isActive }) =>
+                clsx(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors mt-4 border-t border-border pt-4',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <ShieldCheckIcon
+                    className={clsx(
+                      'h-5 w-5',
+                      isActive ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  />
+                  <span>Admin</span>
+                </>
+              )}
+            </NavLink>
+          )}
         </nav>
 
         {/* Footer del sidebar */}

@@ -136,8 +136,35 @@ serve(async (req) => {
       );
     }
 
-    // Process with Lovable AI to extract insights
+    // Get the system prompt from database
     console.log('Processing transcription with AI...');
+    
+    const { data: promptData, error: promptError } = await supabase
+      .from('system_prompts')
+      .select('prompt')
+      .eq('key', 'voice_processing')
+      .eq('is_active', true)
+      .single();
+
+    if (promptError) {
+      console.error('Error fetching system prompt:', promptError);
+    }
+
+    // Fallback prompt if not found in DB
+    const systemPrompt = promptData?.prompt || `Eres un asistente que analiza transcripciones de notas de voz.
+Responde SOLO con un JSON válido:
+{
+  "title": "título breve (máx 50 chars)",
+  "summary": "resumen (máx 200 chars)",
+  "category": "personal|trabajo|proyecto|aprendizaje|salud|finanzas|relaciones|creatividad|general",
+  "priority": "low|medium|high",
+  "sentiment": "positive|neutral|negative",
+  "detected_emotions": [],
+  "related_people": [],
+  "suggested_improvements": [],
+  "next_steps": [],
+  "tags": []
+}`;
     
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -148,28 +175,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          {
-            role: 'system',
-            content: `Eres un asistente que analiza transcripciones de notas de voz. Debes extraer información estructurada.
-            
-Responde SOLO con un JSON válido con esta estructura exacta:
-{
-  "title": "título breve de la idea (máx 50 caracteres)",
-  "summary": "resumen conciso de la idea (máx 200 caracteres)",
-  "category": "una de: personal, trabajo, proyecto, aprendizaje, salud, finanzas, relaciones, creatividad, general",
-  "priority": "una de: low, medium, high",
-  "sentiment": "una de: positive, neutral, negative",
-  "detected_emotions": ["array de emociones detectadas"],
-  "related_people": ["nombres de personas mencionadas"],
-  "suggested_improvements": ["sugerencias para mejorar o desarrollar la idea"],
-  "next_steps": ["pasos concretos a seguir"],
-  "tags": ["etiquetas relevantes"]
-}`
-          },
-          {
-            role: 'user',
-            content: `Transcripción de nota de voz:\n\n${transcription}`
-          }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Transcripción de nota de voz:\n\n${transcription}` }
         ],
       }),
     });
