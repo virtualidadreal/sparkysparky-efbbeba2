@@ -7,6 +7,7 @@ import {
   UsersIcon,
   ChartBarIcon,
   Cog6ToothIcon,
+  BookOpenIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -27,19 +28,13 @@ const navigationItems = [
   { name: 'Proyectos', href: '/projects', icon: FolderIcon },
   { name: 'Tareas', href: '/tasks', icon: CheckIcon },
   { name: 'Personas', href: '/people', icon: UsersIcon },
-  { name: 'Diario', href: '/diary', icon: HomeIcon }, // Usamos HomeIcon temporalmente, podríamos usar BookOpenIcon
+  { name: 'Diario', href: '/diary', icon: BookOpenIcon },
   { name: 'Insights', href: '/insights', icon: ChartBarIcon },
   { name: 'Configuración', href: '/settings', icon: Cog6ToothIcon },
 ];
 
 /**
  * Componente Sidebar
- * 
- * Navegación lateral de la aplicación con:
- * - Links a módulos principales
- * - Indicador visual de ruta activa
- * - Responsive: overlay en móvil, fixed en desktop
- * - Iconos de Heroicons
  */
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   return (
@@ -56,18 +51,18 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-0 left-0 z-50 h-full bg-white border-r border-gray-200',
+          'fixed top-0 left-0 z-50 h-full bg-card border-r border-border',
           'w-64 transform transition-transform duration-300 ease-in-out',
           'lg:translate-x-0 lg:static lg:z-auto',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Header del sidebar (solo móvil) */}
-        <div className="lg:hidden flex items-center justify-between h-16 px-4 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Menú</h2>
+        <div className="lg:hidden flex items-center justify-between h-16 px-4 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground">Menú</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
             aria-label="Cerrar menú"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +83,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-primary/10 text-primary'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )
               }
             >
@@ -97,7 +92,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   <item.icon
                     className={clsx(
                       'h-5 w-5',
-                      isActive ? 'text-primary' : 'text-gray-400'
+                      isActive ? 'text-primary' : 'text-muted-foreground'
                     )}
                   />
                   <span>{item.name}</span>
@@ -107,9 +102,9 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           ))}
         </nav>
 
-        {/* Footer del sidebar (opcional) */}
-        <div className="px-4 py-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center">
+        {/* Footer del sidebar */}
+        <div className="px-4 py-4 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center">
             Sparky v1.0
           </p>
         </div>

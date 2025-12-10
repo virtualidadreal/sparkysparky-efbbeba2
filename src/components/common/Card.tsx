@@ -17,14 +17,6 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 /**
  * Componente Card para contenedores de contenido
- * 
- * @example
- * ```tsx
- * <Card variant="hoverable" onClick={() => handleClick()}>
- *   <h3 className="text-lg font-semibold">Título</h3>
- *   <p className="text-gray-600">Contenido de la tarjeta</p>
- * </Card>
- * ```
  */
 export const Card = ({
   children,
@@ -34,9 +26,9 @@ export const Card = ({
   className,
   ...props
 }: CardProps) => {
-  // Clases base
+  // Clases base con tokens semánticos
   const baseClasses = clsx(
-    'bg-white border border-gray-200 rounded-lg',
+    'bg-card border border-border rounded-lg',
     'shadow-sm transition-all duration-200'
   );
 

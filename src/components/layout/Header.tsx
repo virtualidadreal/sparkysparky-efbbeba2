@@ -20,12 +20,6 @@ interface HeaderProps {
 
 /**
  * Componente Header
- * 
- * Header principal del dashboard con:
- * - Botón hamburguesa (móvil)
- * - Logo Sparky
- * - Barra de búsqueda global (placeholder)
- * - Dropdown de usuario con avatar
  */
 export const Header = ({ onMenuToggle }: HeaderProps) => {
   const navigate = useNavigate();
@@ -55,7 +49,7 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
       toast.error('Error al cerrar sesión');
     } else {
       toast.success('Sesión cerrada');
-      navigate('/login');
+      navigate('/auth');
     }
   };
 
@@ -74,13 +68,13 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-30 bg-card border-b border-border">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left: Hamburger + Logo */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuToggle}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+            className="lg:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
             aria-label="Abrir menú"
           >
             <Bars3Icon className="h-6 w-6" />
@@ -91,14 +85,14 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
           </Link>
         </div>
 
-        {/* Center: Búsqueda global (placeholder) */}
+        {/* Center: Búsqueda global */}
         <div className="hidden md:flex flex-1 max-w-lg mx-8">
           <div className="relative w-full">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
               type="search"
               placeholder="Buscar ideas, proyectos, personas..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-border bg-background rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               disabled
             />
           </div>
@@ -108,52 +102,52 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 p-1 rounded-full hover:bg-muted transition-colors"
             aria-label="Menú de usuario"
             aria-expanded={isDropdownOpen}
           >
-            <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
+            <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
               {getUserInitials()}
             </div>
           </button>
 
           {/* Dropdown */}
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+            <div className="absolute right-0 mt-2 w-56 bg-card rounded-lg shadow-lg border border-border py-1 z-50">
               {/* User info */}
-              <div className="px-4 py-3 border-b border-gray-200">
-                <p className="text-sm font-medium text-gray-900">
+              <div className="px-4 py-3 border-b border-border">
+                <p className="text-sm font-medium text-foreground">
                   {user?.user_metadata?.full_name || 'Usuario'}
                 </p>
-                <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+                <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
               </div>
 
               {/* Menu items */}
               <div className="py-1">
                 <Link
-                  to="/profile"
+                  to="/settings"
                   onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted"
                 >
-                  <UserCircleIcon className="h-5 w-5 text-gray-400" />
+                  <UserCircleIcon className="h-5 w-5 text-muted-foreground" />
                   Ver perfil
                 </Link>
 
                 <Link
                   to="/settings"
                   onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted"
                 >
-                  <Cog6ToothIcon className="h-5 w-5 text-gray-400" />
+                  <Cog6ToothIcon className="h-5 w-5 text-muted-foreground" />
                   Configuración
                 </Link>
               </div>
 
               {/* Sign out */}
-              <div className="border-t border-gray-200 py-1">
+              <div className="border-t border-border py-1">
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-error hover:bg-gray-100"
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-destructive hover:bg-muted"
                 >
                   <ArrowRightOnRectangleIcon className="h-5 w-5" />
                   Cerrar sesión

@@ -16,14 +16,6 @@ interface DashboardLayoutProps {
  * - Header fijo superior
  * - Sidebar de navegación (responsive)
  * - Área de contenido principal
- * 
- * @example
- * ```tsx
- * <DashboardLayout>
- *   <h1>Dashboard</h1>
- *   <p>Contenido...</p>
- * </DashboardLayout>
- * ```
  */
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -37,7 +29,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <Header onMenuToggle={toggleSidebar} />
 
