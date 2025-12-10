@@ -5,7 +5,7 @@
 
 /**
  * Interfaz principal de Project - alineada con DB
- * La tabla tiene: id, user_id, title, description, status, progress, due_date, created_at, updated_at
+ * La tabla tiene: id, user_id, title, description, status, progress, due_date, tags, keywords, created_at, updated_at
  */
 export interface Project {
   id: string;
@@ -15,6 +15,8 @@ export interface Project {
   status: string | null;
   progress: number | null;
   due_date: string | null;
+  tags: string[];
+  keywords: string[];
   created_at: string;
   updated_at: string;
 }
@@ -27,6 +29,8 @@ export interface CreateProjectInput {
   description?: string;
   status?: string;
   due_date?: string;
+  tags?: string[];
+  keywords?: string[];
 }
 
 /**
@@ -38,6 +42,8 @@ export interface UpdateProjectInput {
   status?: string;
   progress?: number;
   due_date?: string;
+  tags?: string[];
+  keywords?: string[];
 }
 
 /**

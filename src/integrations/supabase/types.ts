@@ -78,6 +78,7 @@ export type Database = {
           next_steps: Json | null
           original_content: string | null
           priority: string | null
+          project_id: string | null
           related_people: string[] | null
           sentiment: string | null
           status: string | null
@@ -101,6 +102,7 @@ export type Database = {
           next_steps?: Json | null
           original_content?: string | null
           priority?: string | null
+          project_id?: string | null
           related_people?: string[] | null
           sentiment?: string | null
           status?: string | null
@@ -124,6 +126,7 @@ export type Database = {
           next_steps?: Json | null
           original_content?: string | null
           priority?: string | null
+          project_id?: string | null
           related_people?: string[] | null
           sentiment?: string | null
           status?: string | null
@@ -135,7 +138,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ideas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       people: {
         Row: {
@@ -224,8 +235,10 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          keywords: string[] | null
           progress: number | null
           status: string | null
+          tags: string[] | null
           title: string
           updated_at: string
           user_id: string
@@ -235,8 +248,10 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          keywords?: string[] | null
           progress?: number | null
           status?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string
           user_id: string
@@ -246,8 +261,10 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          keywords?: string[] | null
           progress?: number | null
           status?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string
           user_id?: string

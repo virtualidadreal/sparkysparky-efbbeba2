@@ -37,7 +37,12 @@ export const useProjects = (filters?: ProjectsFilters) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []) as Project[];
+      // Ensure tags and keywords have defaults
+      return (data || []).map((p: any) => ({
+        ...p,
+        tags: p.tags || [],
+        keywords: p.keywords || [],
+      })) as Project[];
     },
   });
 };
@@ -57,7 +62,11 @@ export const useProject = (id: string) => {
 
       if (error) throw error;
       if (!data) throw new Error('Proyecto no encontrado');
-      return data as Project;
+      return {
+        ...data,
+        tags: data.tags || [],
+        keywords: data.keywords || [],
+      } as Project;
     },
     enabled: !!id,
   });
@@ -115,13 +124,19 @@ export const useCreateProject = () => {
             description: input.description,
             status: input.status || 'active',
             due_date: input.due_date,
+            tags: input.tags || [],
+            keywords: input.keywords || [],
           },
         ])
         .select()
         .single();
 
       if (error) throw error;
-      return data as Project;
+      return {
+        ...data,
+        tags: data.tags || [],
+        keywords: data.keywords || [],
+      } as Project;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });

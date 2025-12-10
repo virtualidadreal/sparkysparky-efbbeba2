@@ -1,8 +1,9 @@
 import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon, SparklesIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, SparklesIcon, LightBulbIcon, FolderIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/common/Badge';
 import type { Idea } from '@/types/Idea.types';
+import { useRelatedIdeas, useIdeaProject } from '@/hooks/useRelatedIdeas';
 
 interface IdeaPreviewModalProps {
   isOpen: boolean;
@@ -14,6 +15,9 @@ interface IdeaPreviewModalProps {
  * Modal para previsualizar idea procesada por IA
  */
 export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProps) => {
+  const { data: relatedIdeas } = useRelatedIdeas(idea.id, idea.tags || []);
+  const { data: linkedProject } = useIdeaProject(idea.project_id);
+
   const sentimentColors = {
     positive: 'success',
     neutral: 'neutral',
@@ -52,24 +56,32 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-lg bg-card border border-border shadow-xl transition-all">
                 <div className="relative p-6">
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-6 pb-4 border-b border-gray-200">
+                  <div className="flex items-start justify-between mb-6 pb-4 border-b border-border">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <SparklesIcon className="h-6 w-6 text-primary" />
-                        <h2 className="text-2xl font-bold text-gray-900">
+                        <h2 className="text-2xl font-bold text-foreground">
                           {idea.title || 'Idea capturada'}
                         </h2>
                       </div>
-                      {idea.category && (
-                        <Badge text={idea.category} variant="primary" />
-                      )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {idea.category && (
+                          <Badge text={idea.category} variant="primary" />
+                        )}
+                        {linkedProject && (
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                            <FolderIcon className="h-3 w-3" />
+                            {linkedProject.title}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <button
                       onClick={onClose}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                       aria-label="Cerrar"
                     >
                       <XMarkIcon className="h-6 w-6" />
@@ -81,10 +93,10 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                     {/* Transcripción original */}
                     {idea.transcription && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        <h3 className="text-sm font-semibold text-foreground mb-2">
                           Transcripción original
                         </h3>
-                        <p className="text-gray-600 bg-gray-50 p-4 rounded-lg">
+                        <p className="text-muted-foreground bg-muted p-4 rounded-lg">
                           {idea.transcription}
                         </p>
                       </div>
@@ -93,17 +105,17 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                     {/* Resumen */}
                     {idea.summary && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        <h3 className="text-sm font-semibold text-foreground mb-2">
                           Resumen
                         </h3>
-                        <p className="text-gray-800">{idea.summary}</p>
+                        <p className="text-foreground">{idea.summary}</p>
                       </div>
                     )}
 
                     {/* Sentimiento y emociones */}
                     {(idea.sentiment || idea.detected_emotions.length > 0) && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        <h3 className="text-sm font-semibold text-foreground mb-2">
                           Análisis emocional
                         </h3>
                         <div className="flex flex-wrap gap-2">
@@ -127,12 +139,44 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                     {/* Etiquetas */}
                     {idea.tags.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        <h3 className="text-sm font-semibold text-foreground mb-2">
                           Etiquetas
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {idea.tags.map((tag, idx) => (
-                            <Badge key={idx} text={tag} variant="neutral" />
+                            <Badge key={idx} text={`#${tag}`} variant="neutral" />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ideas relacionadas */}
+                    {relatedIdeas && relatedIdeas.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                          <LinkIcon className="h-5 w-5 text-primary" />
+                          Ideas relacionadas
+                        </h3>
+                        <div className="space-y-2">
+                          {relatedIdeas.map((related) => (
+                            <div
+                              key={related.id}
+                              className="p-3 bg-muted/50 border border-border rounded-lg hover:bg-muted transition-colors"
+                            >
+                              <p className="font-medium text-foreground text-sm">
+                                {related.title}
+                              </p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {related.tags.slice(0, 3).map((tag, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary"
+                                  >
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -141,7 +185,7 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                     {/* Variantes mejoradas */}
                     {idea.suggested_improvements.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                           <LightBulbIcon className="h-5 w-5 text-warning" />
                           Variantes mejoradas
                         </h3>
@@ -149,16 +193,16 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                           {idea.suggested_improvements.map((improvement) => (
                             <div
                               key={improvement.version}
-                              className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg"
+                              className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg"
                             >
                               <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-bold text-yellow-700 bg-yellow-200 px-2 py-0.5 rounded">
+                                <span className="text-xs font-bold text-yellow-700 dark:text-yellow-400 bg-yellow-200 dark:bg-yellow-900 px-2 py-0.5 rounded">
                                   V{improvement.version}
                                 </span>
                               </div>
-                              <p className="text-gray-800 mb-2">{improvement.content}</p>
+                              <p className="text-foreground mb-2">{improvement.content}</p>
                               {improvement.reasoning && (
-                                <p className="text-sm text-gray-600 italic">
+                                <p className="text-sm text-muted-foreground italic">
                                   → {improvement.reasoning}
                                 </p>
                               )}
@@ -171,17 +215,17 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                     {/* Próximos pasos */}
                     {idea.next_steps.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                        <h3 className="text-sm font-semibold text-foreground mb-3">
                           Próximos pasos sugeridos
                         </h3>
                         <ul className="space-y-2">
                           {idea.next_steps.map((step, idx) => (
                             <li key={idx} className="flex items-start gap-3">
-                              <span className="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-medium">
+                              <span className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
                                 {idx + 1}
                               </span>
                               <div className="flex-1">
-                                <p className="text-gray-800">{step.step}</p>
+                                <p className="text-foreground">{step.step}</p>
                                 {step.priority && (
                                   <Badge
                                     text={
@@ -203,7 +247,7 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                     {/* Personas relacionadas */}
                     {idea.related_people.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        <h3 className="text-sm font-semibold text-foreground mb-2">
                           Personas mencionadas
                         </h3>
                         <div className="flex flex-wrap gap-2">
@@ -217,7 +261,7 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                     {/* Audio */}
                     {idea.audio_url && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        <h3 className="text-sm font-semibold text-foreground mb-2">
                           Audio original
                         </h3>
                         <audio
@@ -232,10 +276,10 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                   </div>
 
                   {/* Footer */}
-                  <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end">
+                  <div className="mt-6 pt-4 border-t border-border flex justify-end">
                     <button
                       onClick={onClose}
-                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                     >
                       Cerrar
                     </button>

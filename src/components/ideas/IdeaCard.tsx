@@ -10,10 +10,12 @@ import {
   TrashIcon,
   UserIcon,
   FaceSmileIcon,
+  FolderIcon,
 } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState } from 'react';
+import { useIdeaProject } from '@/hooks/useRelatedIdeas';
 
 /**
  * Props del componente IdeaCard
@@ -40,6 +42,7 @@ const sentimentConfig = {
 export const IdeaCard = ({ idea, onEdit, onArchive, onDelete }: IdeaCardProps) => {
   const [showActions, setShowActions] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { data: linkedProject } = useIdeaProject(idea.project_id);
   const displayTitle = idea.title || idea.original_content;
   const hasAudio = !!idea.audio_url;
 
@@ -120,6 +123,16 @@ export const IdeaCard = ({ idea, onEdit, onArchive, onDelete }: IdeaCardProps) =
           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
             {idea.original_content}
           </p>
+        )}
+
+        {/* Proyecto vinculado */}
+        {linkedProject && (
+          <div className="flex items-center gap-2 mb-3">
+            <FolderIcon className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              {linkedProject.title}
+            </span>
+          </div>
         )}
 
         {/* Emociones detectadas */}
