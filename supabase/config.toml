@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.analyze-patterns]
 verify_jwt = false
+
+[functions.proactive-insights]
+verify_jwt = true
