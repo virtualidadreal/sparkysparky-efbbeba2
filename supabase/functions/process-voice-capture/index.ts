@@ -7,6 +7,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation constants
+const MAX_AUDIO_BASE64_LENGTH = 10485760; // ~10MB in base64
+const MIN_AUDIO_BASE64_LENGTH = 100; // Minimum valid audio
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Validation functions
+function validateUUID(value: unknown, fieldName: string): { valid: boolean; error?: string } {
+  if (typeof value !== 'string') {
+    return { valid: false, error: `${fieldName} must be a string` };
+  }
+  
+  if (!UUID_REGEX.test(value)) {
+    return { valid: false, error: `${fieldName} must be a valid UUID` };
+  }
+  
+  return { valid: true };
+}
+
+function validateAudioBase64(audioBase64: unknown): { valid: boolean; error?: string } {
+  if (typeof audioBase64 !== 'string') {
+    return { valid: false, error: 'audioBase64 must be a string' };
+  }
+  
+  if (audioBase64.length < MIN_AUDIO_BASE64_LENGTH) {
+    return { valid: false, error: 'Audio data too short or empty' };
+  }
+  
+  if (audioBase64.length > MAX_AUDIO_BASE64_LENGTH) {
+    return { valid: false, error: `Audio exceeds maximum size of ~10MB` };
+  }
+  
+  // Basic base64 validation
+  const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+  if (!base64Regex.test(audioBase64)) {
+    return { valid: false, error: 'Invalid base64 encoding' };
+  }
+  
+  return { valid: true };
+}
+
 // Process base64 in chunks to prevent memory issues
 function processBase64Chunks(base64String: string, chunkSize = 32768): Uint8Array {
   const chunks: Uint8Array[] = [];
@@ -43,12 +83,43 @@ serve(async (req) => {
   }
 
   try {
-    const { ideaId, audioBase64 } = await req.json();
-
-    if (!ideaId || !audioBase64) {
-      console.error('Missing required fields:', { hasIdeaId: !!ideaId, hasAudioBase64: !!audioBase64 });
+    // Parse request body
+    let requestBody;
+    try {
+      const bodyText = await req.text();
+      // Check body size before parsing (base64 + overhead)
+      if (bodyText.length > 15000000) { // ~15MB max request
+        return new Response(
+          JSON.stringify({ error: 'Request body too large' }),
+          { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      requestBody = JSON.parse(bodyText);
+    } catch {
       return new Response(
-        JSON.stringify({ error: 'ideaId and audioBase64 are required' }),
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { ideaId, audioBase64 } = requestBody;
+
+    // Validate ideaId
+    const ideaIdValidation = validateUUID(ideaId, 'ideaId');
+    if (!ideaIdValidation.valid) {
+      console.error('Invalid ideaId:', ideaIdValidation.error);
+      return new Response(
+        JSON.stringify({ error: ideaIdValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate audioBase64
+    const audioValidation = validateAudioBase64(audioBase64);
+    if (!audioValidation.valid) {
+      console.error('Invalid audio:', audioValidation.error);
+      return new Response(
+        JSON.stringify({ error: audioValidation.error }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

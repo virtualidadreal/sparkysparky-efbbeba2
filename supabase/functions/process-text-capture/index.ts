@@ -6,6 +6,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation constants
+const MAX_TEXT_LENGTH = 10000;
+const MIN_TEXT_LENGTH = 1;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Validation functions
+function validateTextInput(text: unknown): { valid: boolean; error?: string; sanitized?: string } {
+  if (typeof text !== 'string') {
+    return { valid: false, error: 'Text must be a string' };
+  }
+  
+  const trimmed = text.trim();
+  
+  if (trimmed.length < MIN_TEXT_LENGTH) {
+    return { valid: false, error: 'Text cannot be empty' };
+  }
+  
+  if (trimmed.length > MAX_TEXT_LENGTH) {
+    return { valid: false, error: `Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters` };
+  }
+  
+  return { valid: true, sanitized: trimmed };
+}
+
+function validateUserId(userId: unknown): { valid: boolean; error?: string } {
+  if (typeof userId !== 'string') {
+    return { valid: false, error: 'userId must be a string' };
+  }
+  
+  if (!UUID_REGEX.test(userId)) {
+    return { valid: false, error: 'userId must be a valid UUID' };
+  }
+  
+  return { valid: true };
+}
+
 type ContentType = 'idea' | 'task' | 'diary' | 'person';
 
 interface ClassificationResult {
@@ -69,14 +105,45 @@ serve(async (req) => {
   }
 
   try {
-    const { text, userId } = await req.json();
-
-    if (!text || !userId) {
+    // Parse request body with size check
+    let requestBody;
+    try {
+      const bodyText = await req.text();
+      if (bodyText.length > 50000) { // ~50KB max request size
+        return new Response(
+          JSON.stringify({ error: 'Request body too large' }),
+          { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      requestBody = JSON.parse(bodyText);
+    } catch {
       return new Response(
-        JSON.stringify({ error: 'Text and userId are required' }),
+        JSON.stringify({ error: 'Invalid JSON body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const { text, userId } = requestBody;
+
+    // Validate userId
+    const userIdValidation = validateUserId(userId);
+    if (!userIdValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: userIdValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate and sanitize text input
+    const textValidation = validateTextInput(text);
+    if (!textValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: textValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const sanitizedText = textValidation.sanitized!;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -173,7 +240,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: text }
+          { role: 'user', content: sanitizedText }
         ],
         tools: [classificationTool],
         tool_choice: { type: "function", function: { name: "classify_content" } }
@@ -224,7 +291,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
       console.error('Raw AI response:', JSON.stringify(aiData).substring(0, 500));
       
       // Heuristic fallback: detect diary entries by keywords
-      const textLower = text.toLowerCase();
+      const textLower = sanitizedText.toLowerCase();
       const diaryKeywords = ['hoy', 'hoy está', 'hoy ha sido', 'me siento', 'mi día', 'esta mañana', 'esta noche', 'diario'];
       const isDiary = diaryKeywords.some(kw => textLower.includes(kw));
       
@@ -234,7 +301,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
           confidence: 0.6,
           data: {
             title: `Entrada del ${new Date().toLocaleDateString('es-ES')}`,
-            content: text,
+            content: sanitizedText,
             mood: 'neutral'
           }
         };
@@ -244,8 +311,8 @@ Clasifica el texto como: idea, task, diary, o person.`;
           type: 'idea',
           confidence: 0.5,
           data: {
-            title: text.substring(0, 50),
-            summary: text.substring(0, 200),
+            title: sanitizedText.substring(0, 50),
+            summary: sanitizedText.substring(0, 200),
             category: 'general',
             priority: 'medium',
             sentiment: 'neutral',
@@ -273,7 +340,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
             userProjects as Project[],
             [],
             classification.data.title || '',
-            text
+            sanitizedText
           );
         }
         
@@ -281,8 +348,8 @@ Clasifica el texto como: idea, task, diary, o person.`;
           .from('tasks')
           .insert({
             user_id: userId,
-            title: classification.data.title || text.substring(0, 100),
-            description: classification.data.description || text,
+            title: classification.data.title || sanitizedText.substring(0, 100),
+            description: classification.data.description || sanitizedText,
             priority: classification.data.priority || 'medium',
             due_date: classification.data.due_date || null,
             status: 'todo',
@@ -303,7 +370,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
           .insert({
             user_id: userId,
             title: classification.data.title || `Entrada del ${new Date().toLocaleDateString('es-ES')}`,
-            content: classification.data.content || text,
+            content: classification.data.content || sanitizedText,
             mood: classification.data.mood || 'neutral',
             entry_date: new Date().toISOString().split('T')[0],
           })
@@ -329,7 +396,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
             role: classification.data.role || null,
             how_we_met: classification.data.how_we_met || null,
             category: classification.data.category || 'other',
-            notes: classification.data.notes || text,
+            notes: classification.data.notes || sanitizedText,
           })
           .select()
           .single();
@@ -350,7 +417,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
             userProjects as Project[],
             ideaTags,
             classification.data.title || '',
-            text
+            sanitizedText
           );
           
           if (matchedProjectId) {
@@ -362,9 +429,9 @@ Clasifica el texto como: idea, task, diary, o person.`;
           .from('ideas')
           .insert({
             user_id: userId,
-            title: classification.data.title || text.substring(0, 50),
-            description: text,
-            original_content: text,
+            title: classification.data.title || sanitizedText.substring(0, 50),
+            description: sanitizedText,
+            original_content: sanitizedText,
             improved_content: classification.data.summary,
             summary: classification.data.summary,
             category: classification.data.category || 'general',
