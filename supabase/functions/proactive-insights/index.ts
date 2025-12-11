@@ -82,52 +82,8 @@ serve(async (req) => {
       });
     }
 
-    // Check and update daily usage
+    // No daily limits - cache on frontend handles once-per-day generation
     const today = new Date().toISOString().split('T')[0];
-    
-    // Get or create usage record
-    let { data: usageRecord } = await supabaseClient
-      .from('user_daily_usage')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('usage_date', today)
-      .maybeSingle();
-
-    if (!usageRecord) {
-      // Create new record for today
-      const { data: newRecord, error: insertError } = await supabaseClient
-        .from('user_daily_usage')
-        .insert({
-          user_id: user.id,
-          usage_date: today,
-          suggestions_count: 0,
-          alerts_count: 0,
-          briefings_count: 0
-        })
-        .select()
-        .single();
-      
-      if (insertError) {
-        console.error('Error creating usage record:', insertError);
-      }
-      usageRecord = newRecord;
-    }
-
-    // Check limits - return 200 with error in body to avoid client-side exceptions
-    if (type === 'suggestions' && usageRecord) {
-      if (usageRecord.suggestions_count >= dailyLimit) {
-        return new Response(JSON.stringify({ 
-          success: false, 
-          error: `Has alcanzado el límite diario de ${dailyLimit} generaciones de sugerencias`,
-          limit_reached: true,
-          current_count: usageRecord.suggestions_count,
-          limit: dailyLimit
-        }), {
-          status: 200, // Use 200 to avoid supabase client throwing exceptions
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
 
     // Fetch user data for context
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -374,30 +330,10 @@ Genera 3-5 recordatorios útiles basados en patrones y contexto.`;
       }
     }
 
-    // Update usage count after successful generation
-    if (usageRecord) {
-      const updateField = type === 'suggestions' ? 'suggestions_count' :
-                         type === 'alerts' ? 'alerts_count' : 'briefings_count';
-      
-      await supabaseClient
-        .from('user_daily_usage')
-        .update({ [updateField]: (usageRecord[updateField] || 0) + 1 })
-        .eq('id', usageRecord.id);
-    }
-
-    // Return result with usage info
-    const updatedCount = (usageRecord?.[type === 'suggestions' ? 'suggestions_count' : 
-                          type === 'alerts' ? 'alerts_count' : 'briefings_count'] || 0) + 1;
-
     return new Response(JSON.stringify({ 
       success: true, 
       data: result, 
-      type,
-      usage: {
-        current: updatedCount,
-        limit: dailyLimit,
-        remaining: Math.max(0, dailyLimit - updatedCount)
-      }
+      type
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
