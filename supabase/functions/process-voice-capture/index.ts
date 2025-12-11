@@ -83,6 +83,35 @@ serve(async (req) => {
   }
 
   try {
+    // SECURITY: Require authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create authenticated client to get user
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get authenticated user from JWT
+    const { data: { user }, error: userError } = await authClient.auth.getUser();
+    if (userError || !user) {
+      console.error('Authentication failed:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const authenticatedUserId = user.id;
+    console.log('Authenticated user:', authenticatedUserId);
+
     // Parse request body
     let requestBody;
     try {
@@ -136,12 +165,11 @@ serve(async (req) => {
 
     console.log('Processing voice capture for idea:', ideaId);
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    // Initialize Supabase client with service role for database operations
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get the idea to verify it exists
+    // Get the idea to verify it exists AND check ownership
     const { data: existingIdea, error: fetchError } = await supabase
       .from('ideas')
       .select('*')
@@ -151,6 +179,15 @@ serve(async (req) => {
     if (fetchError || !existingIdea) {
       console.error('Failed to fetch idea:', fetchError);
       throw new Error('Idea not found');
+    }
+
+    // SECURITY: Verify ownership - user can only process their own ideas
+    if (existingIdea.user_id !== authenticatedUserId) {
+      console.error('Ownership check failed:', existingIdea.user_id, '!==', authenticatedUserId);
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: You do not own this idea' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Process audio to binary

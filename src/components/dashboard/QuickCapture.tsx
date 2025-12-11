@@ -38,10 +38,10 @@ export const QuickCapture = () => {
       toast.success('Procesando...');
 
       // Procesar con edge function - Sparky clasifica automáticamente
+      // userId is derived from JWT on the server
       const { data, error } = await supabase.functions.invoke('process-text-capture', {
         body: {
           text: content.trim(),
-          userId: user.id,
         },
       });
 
@@ -106,12 +106,10 @@ export const QuickCapture = () => {
         throw uploadError;
       }
 
-      // Obtener URL pública del audio
-      const { data: { publicUrl } } = supabase.storage
-        .from('audio-recordings')
-        .getPublicUrl(fileName);
+      // Store the file path (not public URL) - audio is now private
+      // Signed URLs will be generated on-demand when viewing
 
-      // Crear idea temporal
+      // Create idea with file path instead of public URL
       const { data: newIdea, error: createError } = await supabase
         .from('ideas')
         .insert([
@@ -119,7 +117,7 @@ export const QuickCapture = () => {
             user_id: user.id,
             title: 'Transcribiendo...',
             original_content: 'Procesando audio...',
-            audio_url: publicUrl,
+            audio_url: fileName, // Store file path, not public URL
             status: 'draft',
           },
         ])
