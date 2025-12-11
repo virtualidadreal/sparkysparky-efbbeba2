@@ -10,6 +10,7 @@ export interface ChatMessage {
   brain?: string;
   brainName?: string;
   timestamp: Date;
+  isStreaming?: boolean;
 }
 
 interface DbMessage {
@@ -26,13 +27,18 @@ const brainNames: Record<string, string> = {
   'sparky_brain_mentor': 'Mentor',
   'sparky_brain_creative': 'Creativo',
   'sparky_brain_business': 'Empresarial',
+  'organizer': 'Organizador',
+  'mentor': 'Mentor',
+  'creative': 'Creativo',
+  'business': 'Empresarial',
 };
 
 export const useSparkyChat = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
+  const [streamingMessage, setStreamingMessage] = useState<ChatMessage | null>(null);
   const queryClient = useQueryClient();
   const messageIdCounter = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fetch persistent messages from database
   const { data: dbMessages, isLoading: isLoadingMessages } = useQuery({
@@ -42,7 +48,7 @@ export const useSparkyChat = () => {
         .from('sparky_messages')
         .select('*')
         .order('created_at', { ascending: true })
-        .limit(500); // Limit to last 500 messages for performance
+        .limit(500);
 
       if (error) {
         console.error('Error loading messages:', error);
@@ -54,7 +60,7 @@ export const useSparkyChat = () => {
   });
 
   // Convert DB messages to ChatMessage format
-  const messages: ChatMessage[] = (dbMessages || []).map(msg => ({
+  const persistedMessages: ChatMessage[] = (dbMessages || []).map(msg => ({
     id: msg.id,
     role: msg.role,
     content: msg.content,
@@ -63,15 +69,17 @@ export const useSparkyChat = () => {
     timestamp: new Date(msg.created_at),
   }));
 
-  // Combine persisted messages with any local pending messages
-  const allMessages = [...messages, ...localMessages];
+  // Combine persisted messages with streaming message
+  const messages = streamingMessage 
+    ? [...persistedMessages, streamingMessage]
+    : persistedMessages;
 
   const generateId = () => {
     messageIdCounter.current += 1;
     return `msg-${Date.now()}-${messageIdCounter.current}`;
   };
 
-  const saveMessage = async (msg: ChatMessage) => {
+  const saveMessage = async (msg: Omit<ChatMessage, 'id' | 'timestamp' | 'isStreaming'> & { id?: string }) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
@@ -97,75 +105,140 @@ export const useSparkyChat = () => {
   const sendMessage = useCallback(async (userMessage: string) => {
     if (!userMessage.trim()) return;
 
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      role: 'user',
-      content: userMessage.trim(),
-      timestamp: new Date(),
-    };
+    // Cancel any existing stream
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
 
-    // Add to local messages immediately for responsiveness
-    setLocalMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
     try {
-      // Save user message to DB
-      await saveMessage(userMsg);
+      // Save user message to DB first
+      await saveMessage({
+        role: 'user',
+        content: userMessage.trim(),
+      });
 
-      // Build conversation history from persisted messages (last 20 for context)
-      const historyMessages = messages.slice(-20).map(m => ({
+      // Refresh to show user message
+      await queryClient.invalidateQueries({ queryKey: ['sparky-messages'] });
+
+      // Build conversation history from persisted messages
+      const historyMessages = persistedMessages.slice(-20).map(m => ({
         role: m.role,
         content: m.content,
       }));
-
-      // Add current message to history
       historyMessages.push({ role: 'user', content: userMessage.trim() });
 
-      const { data, error } = await supabase.functions.invoke('sparky-chat', {
-        body: { 
-          message: userMessage.trim(),
-          conversationHistory: historyMessages
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      // Call edge function with streaming
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sparky-chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            message: userMessage.trim(),
+            conversationHistory: historyMessages,
+          }),
+          signal: abortControllerRef.current.signal,
         }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al procesar mensaje');
+      }
+
+      // Get brain info from headers
+      const brain = response.headers.get('X-Sparky-Brain') || undefined;
+      const brainName = response.headers.get('X-Sparky-Brain-Name') || undefined;
+
+      // Initialize streaming message
+      const streamingId = generateId();
+      setStreamingMessage({
+        id: streamingId,
+        role: 'assistant',
+        content: '',
+        brain,
+        brainName: brainName || (brain ? brainNames[brain] : undefined),
+        timestamp: new Date(),
+        isStreaming: true,
       });
 
-      if (error) {
-        throw error;
-      }
+      // Process SSE stream
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
 
-      if (!data?.success) {
-        throw new Error(data?.error || 'Error al procesar mensaje');
-      }
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      let buffer = '';
 
-      const assistantMsg: ChatMessage = {
-        id: generateId(),
-        role: 'assistant',
-        content: data.response,
-        brain: data.brain,
-        brainName: data.brainName,
-        timestamp: new Date(),
-      };
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete lines
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || line.startsWith(':')) continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullContent += delta;
+              setStreamingMessage(prev => prev ? {
+                ...prev,
+                content: fullContent,
+              } : null);
+            }
+          } catch {
+            // Incomplete JSON, will be handled with next chunk
+          }
+        }
+      }
 
       // Save assistant message to DB
-      await saveMessage(assistantMsg);
+      if (fullContent) {
+        await saveMessage({
+          role: 'assistant',
+          content: fullContent,
+          brain,
+        });
+      }
 
-      // Clear local messages and refetch from DB
-      setLocalMessages([]);
+      // Clear streaming message and refresh
+      setStreamingMessage(null);
       queryClient.invalidateQueries({ queryKey: ['sparky-messages'] });
+
     } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Request aborted');
+        return;
+      }
+      
       console.error('Sparky chat error:', error);
       toast.error(error.message || 'Error al comunicarse con Sparky');
-      
-      // Add error message (not saved to DB)
-      setLocalMessages(prev => [...prev.filter(m => m.id !== userMsg.id), {
-        id: generateId(),
-        role: 'assistant',
-        content: 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.',
-        timestamp: new Date(),
-      }]);
+      setStreamingMessage(null);
     } finally {
       setIsLoading(false);
     }
-  }, [messages, queryClient]);
+  }, [persistedMessages, queryClient]);
 
   const clearChat = useCallback(async () => {
     try {
@@ -179,7 +252,7 @@ export const useSparkyChat = () => {
 
       if (error) throw error;
 
-      setLocalMessages([]);
+      setStreamingMessage(null);
       queryClient.invalidateQueries({ queryKey: ['sparky-messages'] });
       toast.success('Conversación limpiada');
     } catch (error) {
@@ -188,8 +261,17 @@ export const useSparkyChat = () => {
     }
   }, [queryClient]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   return {
-    messages: allMessages,
+    messages,
     isLoading: isLoading || isLoadingMessages,
     sendMessage,
     clearChat,

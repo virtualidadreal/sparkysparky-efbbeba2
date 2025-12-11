@@ -14,10 +14,11 @@ import {
   SparklesIcon, 
   PaperAirplaneIcon,
   TrashIcon,
-  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const brainColors: Record<string, string> = {
   organizer: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
@@ -33,38 +34,88 @@ const brainLabels: Record<string, string> = {
   business: '💼 Empresarial',
 };
 
+// Format timestamp with context (today, yesterday, or full date)
+const formatMessageTime = (date: Date): string => {
+  if (isToday(date)) {
+    return format(date, 'HH:mm', { locale: es });
+  } else if (isYesterday(date)) {
+    return `Ayer ${format(date, 'HH:mm', { locale: es })}`;
+  } else {
+    return format(date, "d MMM 'a las' HH:mm", { locale: es });
+  }
+};
+
+// Group messages by date for date separators
+const getDateLabel = (date: Date): string => {
+  if (isToday(date)) {
+    return 'Hoy';
+  } else if (isYesterday(date)) {
+    return 'Ayer';
+  } else {
+    return format(date, "EEEE, d 'de' MMMM", { locale: es });
+  }
+};
+
 interface MessageBubbleProps {
   message: ChatMessage;
+  showDateSeparator?: boolean;
+  dateSeparatorLabel?: string;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ 
+  message, 
+  showDateSeparator, 
+  dateSeparatorLabel 
+}) => {
   const isUser = message.role === 'user';
   
   return (
-    <div className={cn(
-      'flex w-full mb-4',
-      isUser ? 'justify-end' : 'justify-start'
-    )}>
-      <div className={cn(
-        'max-w-[85%] rounded-2xl px-4 py-3',
-        isUser 
-          ? 'bg-primary text-primary-foreground rounded-br-md' 
-          : 'bg-muted text-foreground rounded-bl-md'
-      )}>
-        {!isUser && message.brain && (
-          <div className={cn(
-            'text-xs font-medium mb-1 px-2 py-0.5 rounded-full inline-block',
-            brainColors[message.brain] || 'bg-muted-foreground/10'
-          )}>
-            {brainLabels[message.brain] || message.brainName}
+    <>
+      {showDateSeparator && dateSeparatorLabel && (
+        <div className="flex items-center justify-center my-4">
+          <div className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground font-medium">
+            {dateSeparatorLabel}
           </div>
-        )}
-        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-        <span className="text-[10px] opacity-60 mt-1 block">
-          {message.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-        </span>
+        </div>
+      )}
+      <div className={cn(
+        'flex w-full mb-3',
+        isUser ? 'justify-end' : 'justify-start'
+      )}>
+        <div className={cn(
+          'max-w-[85%] rounded-2xl px-4 py-3',
+          isUser 
+            ? 'bg-primary text-primary-foreground rounded-br-md' 
+            : 'bg-muted text-foreground rounded-bl-md'
+        )}>
+          {!isUser && message.brain && (
+            <div className={cn(
+              'text-xs font-medium mb-1.5 px-2 py-0.5 rounded-full inline-block',
+              brainColors[message.brain] || 'bg-muted-foreground/10'
+            )}>
+              {brainLabels[message.brain] || message.brainName}
+            </div>
+          )}
+          <p className="text-sm whitespace-pre-wrap leading-relaxed">
+            {message.content}
+            {message.isStreaming && (
+              <span className="inline-block w-1.5 h-4 bg-current ml-0.5 animate-pulse" />
+            )}
+          </p>
+          <div className={cn(
+            "flex items-center gap-1 mt-1.5",
+            isUser ? "justify-end" : "justify-start"
+          )}>
+            <span className={cn(
+              "text-[10px]",
+              isUser ? "text-primary-foreground/70" : "text-muted-foreground"
+            )}>
+              {formatMessageTime(message.timestamp)}
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -82,7 +133,10 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
     }
   }, [messages]);
 
@@ -100,6 +154,22 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
       setInput('');
     }
   };
+
+  // Calculate date separators
+  const messagesWithSeparators = messages.map((message, index) => {
+    const prevMessage = index > 0 ? messages[index - 1] : null;
+    const currentDate = message.timestamp;
+    const prevDate = prevMessage?.timestamp;
+    
+    const showSeparator = !prevDate || 
+      getDateLabel(currentDate) !== getDateLabel(prevDate);
+    
+    return {
+      message,
+      showDateSeparator: showSeparator,
+      dateSeparatorLabel: showSeparator ? getDateLabel(currentDate) : undefined,
+    };
+  });
 
   const defaultTrigger = (
     <Button
@@ -128,7 +198,11 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
               </div>
               <div>
                 <SheetTitle className="text-left">Sparky</SheetTitle>
-                <p className="text-xs text-muted-foreground">Tu asistente personal IA</p>
+                <p className="text-xs text-muted-foreground">
+                  {messages.length > 0 
+                    ? `${messages.length} mensajes` 
+                    : 'Tu asistente personal IA'}
+                </p>
               </div>
             </div>
             <Button
@@ -137,6 +211,7 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
               onClick={clearChat}
               className="h-8 w-8"
               title="Limpiar chat"
+              disabled={messages.length === 0}
             >
               <TrashIcon className="h-4 w-4" />
             </Button>
@@ -147,17 +222,17 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
           ref={scrollRef}
           className="flex-1 p-4"
         >
-          {messages.length === 0 ? (
+          {messages.length === 0 && !isLoading ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-8">
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                 <SparklesIcon className="h-8 w-8 text-primary" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">¡Hola! Soy Sparky</h3>
               <p className="text-sm text-muted-foreground max-w-[250px]">
-                Tu asistente personal que conoce todas tus ideas, tareas y proyectos. ¿En qué puedo ayudarte?
+                Tu asistente personal que conoce <strong>todas</strong> tus ideas, tareas y proyectos con detalle completo. ¿En qué puedo ayudarte?
               </p>
               <div className="flex flex-wrap gap-2 mt-4 justify-center">
-                {['¿Qué tengo pendiente?', '¿Alguna idea para hoy?', 'Ayúdame a priorizar'].map((suggestion) => (
+                {['¿Qué tengo pendiente?', 'Cuéntame mis ideas', 'Ayúdame a priorizar'].map((suggestion) => (
                   <Button
                     key={suggestion}
                     variant="outline"
@@ -175,10 +250,15 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
             </div>
           ) : (
             <div className="space-y-1">
-              {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
+              {messagesWithSeparators.map(({ message, showDateSeparator, dateSeparatorLabel }) => (
+                <MessageBubble 
+                  key={message.id} 
+                  message={message}
+                  showDateSeparator={showDateSeparator}
+                  dateSeparatorLabel={dateSeparatorLabel}
+                />
               ))}
-              {isLoading && (
+              {isLoading && !messages.some(m => m.isStreaming) && (
                 <div className="flex justify-start mb-4">
                   <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex items-center gap-2">

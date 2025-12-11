@@ -54,14 +54,15 @@ serve(async (req) => {
 
     console.log('Sparky chat for user:', user.id);
 
-    // Fetch all user data for context
-    const [tasksRes, ideasRes, projectsRes, diaryRes, patternsRes, peopleRes] = await Promise.all([
-      supabase.from('tasks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
-      supabase.from('ideas').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30),
+    // Fetch ALL user data with FULL CONTENT for RAG
+    const [tasksRes, ideasRes, projectsRes, diaryRes, patternsRes, peopleRes, memoryRes] = await Promise.all([
+      supabase.from('tasks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(100),
+      supabase.from('ideas').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('projects').select('*').eq('user_id', user.id),
-      supabase.from('diary_entries').select('*').eq('user_id', user.id).order('entry_date', { ascending: false }).limit(10),
+      supabase.from('diary_entries').select('*').eq('user_id', user.id).order('entry_date', { ascending: false }).limit(30),
       supabase.from('detected_patterns').select('*').eq('user_id', user.id).eq('status', 'active'),
       supabase.from('people').select('*').eq('user_id', user.id),
+      supabase.from('memory_entries').select('*').eq('user_id', user.id).eq('is_active', true).limit(50),
     ]);
 
     const tasks = tasksRes.data || [];
@@ -70,6 +71,7 @@ serve(async (req) => {
     const diary = diaryRes.data || [];
     const patterns = patternsRes.data || [];
     const people = peopleRes.data || [];
+    const memories = memoryRes.data || [];
 
     // Fetch brain prompts
     const { data: prompts } = await supabase
@@ -107,7 +109,6 @@ serve(async (req) => {
     const classifyData = await classifyResponse.json();
     const brainType = (classifyData.choices?.[0]?.message?.content || 'organizer').toLowerCase().trim();
     
-    // Map brain type to prompt key
     const brainMap: Record<string, string> = {
       'organizer': 'sparky_brain_organizer',
       'mentor': 'sparky_brain_mentor',
@@ -120,64 +121,140 @@ serve(async (req) => {
     
     console.log('Selected brain:', brainType, '->', selectedBrainKey);
 
-    // Build context summary
+    // Build FULL RAG context with complete content
     const today = new Date().toISOString().split('T')[0];
     const pendingTasks = tasks.filter(t => t.status !== 'done');
     const overdueTasks = tasks.filter(t => t.due_date && t.due_date < today && t.status !== 'done');
+    const completedTasks = tasks.filter(t => t.status === 'done').slice(0, 10);
     const activeProjects = projects.filter(p => p.status === 'active');
-    const recentDiary = diary.slice(0, 3);
 
+    // Build comprehensive RAG context
     const contextSummary = `
-## CONTEXTO DEL USUARIO (${new Date().toLocaleDateString('es-ES')})
+## CONTEXTO COMPLETO DEL USUARIO (${new Date().toLocaleDateString('es-ES')})
 
-### Resumen:
+### RESUMEN EJECUTIVO:
 - ${pendingTasks.length} tareas pendientes (${overdueTasks.length} vencidas)
-- ${activeProjects.length} proyectos activos
+- ${completedTasks.length} tareas completadas recientemente
+- ${activeProjects.length} proyectos activos de ${projects.length} total
 - ${ideas.length} ideas guardadas
+- ${diary.length} entradas de diario
 - ${people.length} personas en su red
+- ${patterns.length} patrones activos detectados
+- ${memories.length} memorias activas
 
-### Tareas pendientes:
-${pendingTasks.slice(0, 10).map(t => `- [${t.priority}] ${t.title}${t.due_date ? ` (vence: ${t.due_date})` : ''}`).join('\n')}
+---
 
-### Proyectos activos:
-${activeProjects.map(p => `- ${p.title}: ${p.progress || 0}% completado`).join('\n')}
+### 📋 TAREAS PENDIENTES (${pendingTasks.length}):
+${pendingTasks.map(t => `
+**${t.title}** [Prioridad: ${t.priority || 'media'}] [Estado: ${t.status}]
+${t.description ? `Descripción: ${t.description}` : ''}
+${t.due_date ? `Fecha límite: ${t.due_date}` : 'Sin fecha límite'}
+Creada: ${t.created_at?.split('T')[0] || 'N/A'}
+`).join('\n---\n')}
 
-### Ideas recientes:
-${ideas.slice(0, 5).map(i => `- ${i.title} (${i.status})`).join('\n')}
+### ⚠️ TAREAS VENCIDAS (${overdueTasks.length}):
+${overdueTasks.map(t => `- ${t.title} (venció: ${t.due_date})`).join('\n')}
 
-### Últimas entradas del diario:
-${recentDiary.map(d => `- ${d.entry_date}: ${d.title || 'Sin título'} - Estado: ${d.mood || 'neutral'}`).join('\n')}
+### ✅ TAREAS COMPLETADAS RECIENTEMENTE:
+${completedTasks.map(t => `- ${t.title} (${t.updated_at?.split('T')[0] || 'N/A'})`).join('\n')}
 
-### Patrones detectados:
-${patterns.map(p => `- ${p.title}: ${p.description || ''}`).join('\n')}
+---
 
-### Personas importantes:
-${people.slice(0, 5).map(p => `- ${p.full_name} (${p.category || 'contacto'})`).join('\n')}
+### 📁 PROYECTOS (${projects.length}):
+${projects.map(p => `
+**${p.title}** [Estado: ${p.status}] [Progreso: ${p.progress || 0}%]
+${p.description ? `Descripción: ${p.description}` : ''}
+${p.due_date ? `Fecha límite: ${p.due_date}` : ''}
+Tags: ${(p.tags || []).join(', ') || 'ninguno'}
+Keywords: ${(p.keywords || []).join(', ') || 'ninguno'}
+`).join('\n---\n')}
+
+---
+
+### 💡 IDEAS (${ideas.length}):
+${ideas.map(i => `
+**${i.title}** [Categoría: ${i.category || 'general'}] [Prioridad: ${i.priority || 'media'}] [Estado: ${i.status}]
+${i.summary ? `Resumen: ${i.summary}` : ''}
+${i.description ? `Descripción: ${i.description}` : ''}
+${i.original_content ? `Contenido original: ${i.original_content}` : ''}
+${i.improved_content ? `Contenido mejorado: ${i.improved_content}` : ''}
+${i.transcription ? `Transcripción: ${i.transcription}` : ''}
+Sentimiento: ${i.sentiment || 'neutral'}
+Emociones: ${(i.detected_emotions || []).join(', ') || 'ninguna'}
+Tags: ${(i.tags || []).join(', ') || 'ninguno'}
+Personas relacionadas: ${(i.related_people || []).join(', ') || 'ninguna'}
+${i.next_steps ? `Próximos pasos: ${JSON.stringify(i.next_steps)}` : ''}
+${i.suggested_improvements ? `Mejoras sugeridas: ${JSON.stringify(i.suggested_improvements)}` : ''}
+Creada: ${i.created_at?.split('T')[0] || 'N/A'}
+`).join('\n---\n')}
+
+---
+
+### 📔 DIARIO (últimas ${diary.length} entradas):
+${diary.map(d => `
+**${d.title || 'Sin título'}** [Fecha: ${d.entry_date}] [Estado de ánimo: ${d.mood || 'neutral'}]
+Contenido completo: ${d.content}
+${d.summary ? `Resumen: ${d.summary}` : ''}
+Tags: ${(d.tags || []).join(', ') || 'ninguno'}
+Personas mencionadas: ${(d.related_people || []).join(', ') || 'ninguna'}
+`).join('\n---\n')}
+
+---
+
+### 👥 PERSONAS (${people.length}):
+${people.map(p => `
+**${p.full_name}** ${p.nickname ? `(${p.nickname})` : ''} [Categoría: ${p.category || 'contacto'}]
+${p.email ? `Email: ${p.email}` : ''} ${p.phone ? `Teléfono: ${p.phone}` : ''}
+${p.company ? `Empresa: ${p.company}` : ''} ${p.role ? `Rol: ${p.role}` : ''}
+${p.how_we_met ? `Cómo se conocieron: ${p.how_we_met}` : ''}
+${p.notes ? `Notas: ${p.notes}` : ''}
+Último contacto: ${p.last_contact_date || 'N/A'}
+`).join('\n---\n')}
+
+---
+
+### 🔍 PATRONES DETECTADOS (${patterns.length}):
+${patterns.map(p => `
+**${p.title}** [Tipo: ${p.pattern_type}] [Ocurrencias: ${p.occurrences || 1}]
+${p.description ? `Descripción: ${p.description}` : ''}
+${p.suggestions ? `Sugerencias: ${JSON.stringify(p.suggestions)}` : ''}
+${p.evidence ? `Evidencia: ${JSON.stringify(p.evidence)}` : ''}
+`).join('\n---\n')}
+
+---
+
+### 🧠 MEMORIAS ACTIVAS (${memories.length}):
+${memories.map(m => `
+[${m.entry_type}] ${m.content}
+Categoría: ${m.category || 'general'} | Confianza: ${m.confidence || 1}
+`).join('\n')}
 `;
 
-    // Build the system prompt with context
+    // Build the system prompt with full RAG context
     const systemPrompt = `${selectedBrain?.prompt || 'Eres Sparky, un asistente personal inteligente.'}
 
 ${contextSummary}
 
-INSTRUCCIONES ADICIONALES:
+INSTRUCCIONES CRÍTICAS:
+- Tienes acceso a TODA la información del usuario arriba (RAG completo)
+- Cuando el usuario pregunte sobre sus ideas, tareas, proyectos, etc., USA la información detallada proporcionada
+- Puedes citar contenido específico de sus ideas, entradas de diario, etc.
 - Responde siempre en español
-- Sé conciso pero útil
-- Usa el contexto del usuario para personalizar tus respuestas
-- Si el usuario pregunta por sus datos, usa la información proporcionada
-- Puedes sugerir crear tareas, organizar ideas o planificar proyectos basándote en el contexto`;
+- Sé específico y usa los datos reales del usuario
+- Si el usuario pregunta "¿qué ideas tengo sobre X?", busca en el contenido de las ideas
+- Puedes relacionar ideas entre sí, detectar patrones, y ofrecer insights basados en todo el contexto`;
 
     // Build messages array with conversation history
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...conversationHistory.map((msg: any) => ({
+      ...conversationHistory.slice(-15).map((msg: any) => ({
         role: msg.role,
         content: msg.content
       })),
       { role: 'user', content: message }
     ];
 
-    // Call AI with streaming disabled for simplicity
+    // Call AI WITH STREAMING
     const chatResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -188,6 +265,7 @@ INSTRUCCIONES ADICIONALES:
         model: selectedBrain?.model || 'google/gemini-2.5-flash',
         messages,
         temperature: selectedBrain?.temperature || 0.7,
+        stream: true,
       }),
     });
 
@@ -210,18 +288,13 @@ INSTRUCCIONES ADICIONALES:
       throw new Error('AI chat failed');
     }
 
-    const chatData = await chatResponse.json();
-    const response = chatData.choices?.[0]?.message?.content || 'Lo siento, no pude procesar tu mensaje.';
+    // Return streaming response with metadata header
+    const headers = new Headers(corsHeaders);
+    headers.set('Content-Type', 'text/event-stream');
+    headers.set('X-Sparky-Brain', brainType);
+    headers.set('X-Sparky-Brain-Name', selectedBrain?.name || 'Sparky');
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        response,
-        brain: brainType,
-        brainName: selectedBrain?.name || 'Sparky'
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(chatResponse.body, { headers });
 
   } catch (error) {
     console.error('Error in sparky-chat:', error);
