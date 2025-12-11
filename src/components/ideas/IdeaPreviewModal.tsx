@@ -6,6 +6,7 @@ import { Button } from '@/components/common/Button';
 import type { Idea } from '@/types/Idea.types';
 import { useRelatedIdeas, useIdeaProject } from '@/hooks/useRelatedIdeas';
 import { ConvertToTaskModal } from './ConvertToTaskModal';
+import { ConnectionsPanel } from './ConnectionsPanel';
 
 interface IdeaPreviewModalProps {
   isOpen: boolean;
@@ -173,12 +174,18 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                         </div>
                       )}
 
-                      {/* Ideas relacionadas */}
+                      {/* Conexiones Inteligentes con IA */}
+                      <ConnectionsPanel 
+                        itemId={idea.id} 
+                        itemType="idea" 
+                      />
+
+                      {/* Ideas relacionadas por tags */}
                       {relatedIdeas && relatedIdeas.length > 0 && (
                         <div>
                           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                             <LinkIcon className="h-5 w-5 text-primary" />
-                            Ideas relacionadas
+                            Ideas con tags similares
                           </h3>
                           <div className="space-y-2">
                             {relatedIdeas.map((related) => (

@@ -7,9 +7,10 @@ import {
   UserCircleIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import { GlobalSearchModal } from '@/components/search';
+import { GlobalSearchModal, SemanticSearchModal } from '@/components/search';
 
 /**
  * Props del componente Header
@@ -26,6 +27,7 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
   const { user, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSemanticSearchOpen, setIsSemanticSearchOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Cerrar dropdown al hacer click fuera
@@ -40,12 +42,16 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Keyboard shortcut Cmd/Ctrl + K para búsqueda
+  // Keyboard shortcut Cmd/Ctrl + K para búsqueda, Cmd/Ctrl + Shift + K para semántica
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setIsSearchOpen(true);
+        if (e.shiftKey) {
+          setIsSemanticSearchOpen(true);
+        } else {
+          setIsSearchOpen(true);
+        }
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -100,18 +106,25 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
           </div>
 
           {/* Center: Búsqueda global */}
-          <div className="hidden md:flex flex-1 max-w-lg mx-8">
+          <div className="hidden md:flex flex-1 max-w-lg mx-8 gap-2">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="relative w-full flex items-center"
+              className="relative flex-1 flex items-center"
             >
               <MagnifyingGlassIcon className="absolute left-3 h-5 w-5 text-muted-foreground" />
               <div className="w-full pl-10 pr-4 py-2 border border-border bg-background rounded-md text-sm text-muted-foreground text-left cursor-pointer hover:border-primary/50 transition-colors">
-                Buscar ideas, proyectos, personas...
+                Buscar...
               </div>
               <kbd className="absolute right-3 px-2 py-0.5 text-xs font-mono bg-muted text-muted-foreground rounded">
                 ⌘K
               </kbd>
+            </button>
+            <button
+              onClick={() => setIsSemanticSearchOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 border border-primary/30 bg-primary/5 rounded-md text-sm text-primary hover:bg-primary/10 transition-colors"
+            >
+              <SparklesIcon className="h-4 w-4" />
+              <span className="hidden lg:inline">IA</span>
             </button>
           </div>
 
@@ -187,6 +200,9 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
 
       {/* Global Search Modal */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      
+      {/* Semantic Search Modal */}
+      <SemanticSearchModal isOpen={isSemanticSearchOpen} onClose={() => setIsSemanticSearchOpen(false)} />
     </>
   );
 };
