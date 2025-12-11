@@ -217,11 +217,6 @@ const Dashboard = () => {
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           Actualizar insights
         </Button>
-        {usage && (
-          <p className="text-xs text-muted-foreground">
-            {usage.remaining} generaciones restantes hoy (de {usage.limit})
-          </p>
-        )}
       </div>
     </DashboardLayout>
   );
