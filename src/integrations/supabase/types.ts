@@ -412,6 +412,33 @@ export type Database = {
         }
         Relationships: []
       }
+      sparky_messages: {
+        Row: {
+          brain: string | null
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          brain?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          brain?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       summaries: {
         Row: {
           action_items: Json | null
