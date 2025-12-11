@@ -12,10 +12,12 @@ import {
   CpuChipIcon,
   PresentationChartLineIcon,
   SparklesIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { SparkyChat } from '@/components/chat/SparkyChat';
+import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -141,8 +143,23 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           )}
         </nav>
 
+        {/* Quick Capture Button */}
+        <div className="px-4 py-2 border-t border-border">
+          <QuickCapturePopup
+            trigger={
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-dashed"
+              >
+                <PlusIcon className="h-5 w-5" />
+                ¿Qué tienes en mente?
+              </Button>
+            }
+          />
+        </div>
+
         {/* Sparky Chat Button */}
-        <div className="px-4 py-3 border-t border-border">
+        <div className="px-4 py-2">
           <SparkyChat
             trigger={
               <Button
