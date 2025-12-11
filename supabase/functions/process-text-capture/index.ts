@@ -104,8 +104,7 @@ serve(async (req) => {
 
     // Fallback prompt if not found in DB
     const systemPrompt = promptData?.prompt || `Eres Sparky, un asistente inteligente que clasifica contenido.
-Clasifica el texto como: idea, task, diary, o person.
-Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
+Clasifica el texto como: idea, task, diary, o person.`;
 
     // Get user's projects for auto-matching
     const { data: userProjects } = await supabase
@@ -114,7 +113,56 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
       .eq('user_id', userId)
       .eq('status', 'active');
 
-    // Process with AI to classify and extract insights
+    // Use tool calling for structured output
+    const classificationTool = {
+      type: "function",
+      function: {
+        name: "classify_content",
+        description: "Clasifica el contenido del usuario en una de las categorías disponibles",
+        parameters: {
+          type: "object",
+          properties: {
+            type: { 
+              type: "string", 
+              enum: ["idea", "task", "diary", "person"],
+              description: "Tipo de contenido. IMPORTANTE: usa 'diary' para experiencias del día, emociones actuales, reflexiones personales del momento, o cuando mencione 'diario'"
+            },
+            confidence: { type: "number", description: "Confianza de 0 a 1" },
+            data: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Título breve (máx 100 chars)" },
+                summary: { type: "string", description: "Resumen del contenido" },
+                content: { type: "string", description: "Contenido completo (para diary)" },
+                description: { type: "string", description: "Descripción (para task)" },
+                category: { type: "string" },
+                priority: { type: "string", enum: ["low", "medium", "high"] },
+                mood: { type: "string", enum: ["happy", "sad", "neutral", "excited", "anxious", "calm", "angry", "grateful"] },
+                sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
+                detected_emotions: { type: "array", items: { type: "string" } },
+                related_people: { type: "array", items: { type: "string" } },
+                suggested_improvements: { type: "array", items: { type: "string" } },
+                next_steps: { type: "array", items: { type: "string" } },
+                tags: { type: "array", items: { type: "string" } },
+                due_date: { type: "string", description: "Fecha YYYY-MM-DD si aplica" },
+                full_name: { type: "string" },
+                nickname: { type: "string" },
+                email: { type: "string" },
+                phone: { type: "string" },
+                company: { type: "string" },
+                role: { type: "string" },
+                how_we_met: { type: "string" },
+                notes: { type: "string" }
+              },
+              required: ["title"]
+            }
+          },
+          required: ["type", "confidence", "data"]
+        }
+      }
+    };
+
+    // Process with AI to classify using tool calling
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -127,6 +175,8 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: text }
         ],
+        tools: [classificationTool],
+        tool_choice: { type: "function", function: { name: "classify_content" } }
       }),
     });
 
@@ -150,43 +200,63 @@ Responde con JSON: { "type": "...", "confidence": 0.0-1.0, "data": {...} }`;
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.choices?.[0]?.message?.content || '';
     
-    console.log('AI classification response:', aiContent.substring(0, 200));
-
-    // Parse AI response
+    // Parse tool call response
     let classification: ClassificationResult;
     try {
-      let cleanContent = aiContent.trim();
-      if (cleanContent.startsWith('```json')) {
-        cleanContent = cleanContent.slice(7);
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      if (toolCall && toolCall.function?.arguments) {
+        classification = JSON.parse(toolCall.function.arguments);
+        console.log('AI classification via tool call:', classification.type, 'confidence:', classification.confidence);
+      } else {
+        // Fallback: try to parse from content (legacy format)
+        const aiContent = aiData.choices?.[0]?.message?.content || '';
+        console.log('Fallback to content parsing:', aiContent.substring(0, 200));
+        
+        let cleanContent = aiContent.trim();
+        if (cleanContent.startsWith('```json')) cleanContent = cleanContent.slice(7);
+        if (cleanContent.startsWith('```')) cleanContent = cleanContent.slice(3);
+        if (cleanContent.endsWith('```')) cleanContent = cleanContent.slice(0, -3);
+        classification = JSON.parse(cleanContent.trim());
       }
-      if (cleanContent.startsWith('```')) {
-        cleanContent = cleanContent.slice(3);
-      }
-      if (cleanContent.endsWith('```')) {
-        cleanContent = cleanContent.slice(0, -3);
-      }
-      classification = JSON.parse(cleanContent.trim());
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      // Fallback to idea
-      classification = {
-        type: 'idea',
-        confidence: 0.5,
-        data: {
-          title: text.substring(0, 50),
-          summary: text.substring(0, 200),
-          category: 'general',
-          priority: 'medium',
-          sentiment: 'neutral',
-          detected_emotions: [],
-          related_people: [],
-          suggested_improvements: [],
-          next_steps: [],
-          tags: []
-        }
-      };
+      console.error('Raw AI response:', JSON.stringify(aiData).substring(0, 500));
+      
+      // Heuristic fallback: detect diary entries by keywords
+      const textLower = text.toLowerCase();
+      const diaryKeywords = ['hoy', 'hoy está', 'hoy ha sido', 'me siento', 'mi día', 'esta mañana', 'esta noche', 'diario'];
+      const isDiary = diaryKeywords.some(kw => textLower.includes(kw));
+      
+      if (isDiary) {
+        classification = {
+          type: 'diary',
+          confidence: 0.6,
+          data: {
+            title: `Entrada del ${new Date().toLocaleDateString('es-ES')}`,
+            content: text,
+            mood: 'neutral'
+          }
+        };
+        console.log('Heuristic fallback: classified as diary');
+      } else {
+        classification = {
+          type: 'idea',
+          confidence: 0.5,
+          data: {
+            title: text.substring(0, 50),
+            summary: text.substring(0, 200),
+            category: 'general',
+            priority: 'medium',
+            sentiment: 'neutral',
+            detected_emotions: [],
+            related_people: [],
+            suggested_improvements: [],
+            next_steps: [],
+            tags: []
+          }
+        };
+      }
     }
 
     let savedRecord: any;
