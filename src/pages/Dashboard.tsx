@@ -44,11 +44,12 @@ const Dashboard = () => {
 
   const [showBriefing, setShowBriefing] = useState(false);
 
-  // Load alerts and suggestions on mount
+  // Load alerts and suggestions on mount - only once
   useEffect(() => {
     getAlerts();
     getSuggestions();
-  }, [getAlerts, getSuggestions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
