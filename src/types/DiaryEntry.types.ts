@@ -15,15 +15,17 @@ export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
 
 /**
  * Interfaz principal de DiaryEntry - alineada con DB actual
- * La tabla solo tiene: id, user_id, title, content, mood, entry_date, created_at, updated_at
  */
 export interface DiaryEntry {
   id: string;
   user_id: string;
   content: string;
   title: string | null;
+  summary: string | null;
   mood: string | null;
   entry_date: string;
+  tags: string[];
+  related_people: string[];
   created_at: string;
   updated_at: string;
 }

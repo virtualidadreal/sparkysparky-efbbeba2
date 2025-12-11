@@ -410,8 +410,11 @@ serve(async (req) => {
           user_id: authenticatedUserId,
           title: parsedData.title || `Entrada del ${new Date().toLocaleDateString('es-ES')}`,
           content: transcription,
+          summary: parsedData.summary || null,
           mood: mapMoodToValid(parsedData.mood),
           entry_date: new Date().toISOString().split('T')[0],
+          tags: parsedData.tags || [],
+          related_people: parsedData.related_people || [],
         })
         .select()
         .single();

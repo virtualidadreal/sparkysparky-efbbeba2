@@ -65,20 +65,41 @@ export const DiaryEntryCard = ({ entry, onEdit, onDelete }: DiaryEntryCardProps)
 
         {/* Header con título */}
         {entry.title && (
-          <h3 className="font-semibold text-gray-900 mb-2 pr-20">
+          <h3 className="font-semibold text-foreground mb-2 pr-20">
             {entry.title}
           </h3>
         )}
 
+        {/* Resumen */}
+        {entry.summary && (
+          <p className="text-sm text-muted-foreground mb-3 italic">
+            {entry.summary}
+          </p>
+        )}
+
         {/* Contenido */}
-        <p className="text-gray-700 mb-3 whitespace-pre-wrap line-clamp-4">
+        <p className="text-foreground/80 mb-3 whitespace-pre-wrap line-clamp-4">
           {entry.content}
         </p>
+
+        {/* Tags y personas */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {entry.tags?.map((tag, i) => (
+            <span key={`tag-${i}`} className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-medium">
+              #{tag}
+            </span>
+          ))}
+          {entry.related_people?.map((person, i) => (
+            <span key={`person-${i}`} className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs font-medium">
+              👤 {person}
+            </span>
+          ))}
+        </div>
 
         {/* Mood badge */}
         {entry.mood && (
           <div className="mb-3">
-            <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs font-medium">
+            <span className="px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded-md text-xs font-medium">
               {entry.mood}
             </span>
           </div>

@@ -120,6 +120,9 @@ export type Database = {
           entry_date: string
           id: string
           mood: string | null
+          related_people: string[] | null
+          summary: string | null
+          tags: string[] | null
           title: string | null
           updated_at: string
           user_id: string
@@ -130,6 +133,9 @@ export type Database = {
           entry_date?: string
           id?: string
           mood?: string | null
+          related_people?: string[] | null
+          summary?: string | null
+          tags?: string[] | null
           title?: string | null
           updated_at?: string
           user_id: string
@@ -140,6 +146,9 @@ export type Database = {
           entry_date?: string
           id?: string
           mood?: string | null
+          related_people?: string[] | null
+          summary?: string | null
+          tags?: string[] | null
           title?: string | null
           updated_at?: string
           user_id?: string
