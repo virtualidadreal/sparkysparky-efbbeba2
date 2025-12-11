@@ -113,7 +113,7 @@ serve(async (req) => {
       usageRecord = newRecord;
     }
 
-    // Check limits
+    // Check limits - return 200 with error in body to avoid client-side exceptions
     if (type === 'suggestions' && usageRecord) {
       if (usageRecord.suggestions_count >= dailyLimit) {
         return new Response(JSON.stringify({ 
@@ -123,7 +123,7 @@ serve(async (req) => {
           current_count: usageRecord.suggestions_count,
           limit: dailyLimit
         }), {
-          status: 429,
+          status: 200, // Use 200 to avoid supabase client throwing exceptions
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -322,7 +322,7 @@ Genera 3-5 recordatorios útiles basados en patrones y contexto.`;
           error: 'Límite de API alcanzado, intenta más tarde',
           rate_limited: true
         }), {
-          status: 429,
+          status: 200, // Use 200 to avoid supabase client throwing exceptions
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
