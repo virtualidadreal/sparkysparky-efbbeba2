@@ -18,7 +18,6 @@ import clsx from 'clsx';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
-import { DiaryEntryPopup } from '@/components/diary/DiaryEntryPopup';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -154,21 +153,6 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               >
                 <PlusIcon className="h-5 w-5" />
                 ¿Qué tienes en mente?
-              </Button>
-            }
-          />
-        </div>
-
-        {/* Diary Entry Button */}
-        <div className="px-4 py-1">
-          <DiaryEntryPopup
-            trigger={
-              <Button
-                variant="ghost"
-                className="w-full gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <BookOpenIcon className="h-5 w-5" />
-                Nueva entrada de diario
               </Button>
             }
           />
