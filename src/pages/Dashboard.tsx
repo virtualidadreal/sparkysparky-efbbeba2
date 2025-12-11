@@ -39,8 +39,7 @@ const Dashboard = () => {
     getSuggestions,
     dismissAlert,
     dismissSuggestion,
-    settings,
-    remainingSuggestions,
+    usage,
   } = useProactiveInsights();
 
   const [showBriefing, setShowBriefing] = useState(false);
@@ -211,20 +210,15 @@ const Dashboard = () => {
             getAlerts();
             getSuggestions();
           }}
-          disabled={isLoading || (settings && !settings.suggestionsEnabled)}
+          disabled={isLoading}
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           Actualizar insights
         </Button>
-        {remainingSuggestions !== null && settings?.suggestionsEnabled && (
+        {usage && (
           <p className="text-xs text-muted-foreground">
-            {remainingSuggestions} generaciones restantes hoy
-          </p>
-        )}
-        {settings && !settings.suggestionsEnabled && (
-          <p className="text-xs text-muted-foreground">
-            Las sugerencias están desactivadas
+            {usage.remaining} generaciones restantes hoy (de {usage.limit})
           </p>
         )}
       </div>
