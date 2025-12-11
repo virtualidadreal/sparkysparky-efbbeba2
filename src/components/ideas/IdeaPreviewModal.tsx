@@ -8,6 +8,9 @@ import { useRelatedIdeas, useIdeaProject } from '@/hooks/useRelatedIdeas';
 import { ConvertToTaskModal } from './ConvertToTaskModal';
 import { ConnectionsPanel } from './ConnectionsPanel';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface IdeaPreviewModalProps {
   isOpen: boolean;
@@ -23,6 +26,10 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
   const { data: linkedProject } = useIdeaProject(idea.project_id);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [signedAudioUrl, setSignedAudioUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [userContext, setUserContext] = useState('');
+  const [showContextInput, setShowContextInput] = useState(false);
+  const queryClient = useQueryClient();
 
   // Generate signed URL for audio on demand
   useEffect(() => {
@@ -52,6 +59,50 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
 
     generateSignedUrl();
   }, [idea.audio_url, isOpen]);
+
+  const handleGenerateImprovements = async () => {
+    setIsGenerating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Debes iniciar sesión');
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/improve-idea`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            ideaId: idea.id,
+            userContext: userContext || undefined,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al generar mejoras');
+      }
+
+      const result = await response.json();
+      
+      toast.success(`Generadas ${result.improvements?.length || 0} sugerencias de mejora`);
+      queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      setUserContext('');
+      setShowContextInput(false);
+      onClose();
+    } catch (error) {
+      console.error('Error generating improvements:', error);
+      toast.error(error instanceof Error ? error.message : 'Error al generar mejoras');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const sentimentColors = {
     positive: 'success',
@@ -243,12 +294,82 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                         </div>
                       )}
 
+                      {/* Generar mejoras con Sparky */}
+                      <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <SparklesIcon className="h-5 w-5 text-primary" />
+                          <h3 className="text-sm font-semibold text-foreground">
+                            Sugerencias de Sparky
+                          </h3>
+                        </div>
+                        
+                        {showContextInput ? (
+                          <div className="space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              Cuéntale a Sparky más sobre tu idea para obtener mejores sugerencias:
+                            </p>
+                            <textarea
+                              value={userContext}
+                              onChange={(e) => setUserContext(e.target.value)}
+                              placeholder="Ej: Quiero enfocar esta idea hacia el mercado B2B, me interesa especialmente la parte de automatización..."
+                              className="w-full h-24 px-3 py-2 text-sm rounded-lg border border-border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={handleGenerateImprovements}
+                                disabled={isGenerating}
+                                className="gap-2"
+                              >
+                                {isGenerating ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Generando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <SparklesIcon className="h-4 w-4" />
+                                    Generar mejoras
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setShowContextInput(false);
+                                  setUserContext('');
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground">
+                              Sparky analizará tu idea junto con tus otros proyectos e ideas para sugerir mejoras.
+                            </p>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setShowContextInput(true)}
+                              className="gap-2 ml-4"
+                            >
+                              <SparklesIcon className="h-4 w-4" />
+                              Pedir sugerencias
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Variantes mejoradas */}
                       {idea.suggested_improvements.length > 0 && (
                         <div>
                           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                             <LightBulbIcon className="h-5 w-5 text-warning" />
-                            Variantes mejoradas
+                            Variantes mejoradas ({idea.suggested_improvements.length})
                           </h3>
                           <div className="space-y-3">
                             {idea.suggested_improvements.map((improvement) => (

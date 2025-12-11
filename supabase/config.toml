@@ -17,3 +17,12 @@ verify_jwt = true
 
 [functions.semantic-search]
 verify_jwt = true
+
+[functions.sparky-chat]
+verify_jwt = true
+
+[functions.get-insights-settings]
+verify_jwt = true
+
+[functions.improve-idea]
+verify_jwt = true
