@@ -259,16 +259,27 @@ serve(async (req) => {
     }
 
     // Fallback prompt if not found in DB
-    const systemPrompt = promptData?.prompt || `Eres un asistente que analiza transcripciones de notas de voz.
-Primero determina el tipo de contenido:
-- "diary": reflexiones personales, cómo me siento, mi día, emociones
-- "task": cosas que hacer, pendientes, recordatorios
-- "idea": proyectos, negocios, conceptos creativos
-- "person": información sobre alguien
+    const systemPrompt = promptData?.prompt || `Eres un asistente que analiza transcripciones de notas de voz y CLASIFICA EL TIPO DE CONTENIDO.
 
-Responde SOLO con un JSON válido:
+REGLAS DE CLASIFICACIÓN (IMPORTANTE - sigue este orden):
+1. "diary" (PRIORIDAD ALTA): Usa "diary" cuando el usuario habla de:
+   - Cómo ha sido su día o cómo se siente
+   - Reflexiones personales sobre experiencias vividas
+   - Narraciones de eventos del día ("hoy me desperté", "hoy ha sido", "mi día")
+   - Emociones y estados de ánimo
+   - Actividades cotidianas personales (café, paseos, tiempo con familia/amigos)
+   
+2. "task": Solo cuando hay una acción pendiente clara ("tengo que", "debo", "recordar hacer")
+
+3. "idea": Solo para conceptos creativos, proyectos de negocio, o ideas innovadoras sin contexto de reflexión personal
+
+4. "person": Solo para información específica sobre una persona
+
+SI EL CONTENIDO MEZCLA reflexiones personales con logros o eventos del día → es "diary"
+
+Responde SOLO con JSON válido:
 {
-  "content_type": "idea|diary|task|person",
+  "content_type": "diary|idea|task|person",
   "title": "título breve (máx 50 chars)",
   "summary": "resumen (máx 200 chars)",
   "category": "personal|trabajo|proyecto|aprendizaje|salud|finanzas|relaciones|creatividad|general",
