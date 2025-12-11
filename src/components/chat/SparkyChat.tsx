@@ -3,56 +3,50 @@ import { useSparkyChat, ChatMessage } from '@/hooks/useSparkyChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
-} from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { 
   SparklesIcon, 
   PaperAirplaneIcon,
   TrashIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
+import ReactMarkdown from 'react-markdown';
 
 const brainColors: Record<string, string> = {
-  organizer: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  mentor: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-  creative: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-  business: 'bg-green-500/10 text-green-600 dark:text-green-400',
+  organizer: 'text-blue-500',
+  mentor: 'text-purple-500',
+  creative: 'text-orange-500',
+  business: 'text-emerald-500',
 };
 
 const brainLabels: Record<string, string> = {
-  organizer: '🗂️ Organizador',
-  mentor: '🧭 Mentor',
-  creative: '💡 Creativo',
-  business: '💼 Empresarial',
+  organizer: 'Organizador',
+  mentor: 'Mentor',
+  creative: 'Creativo',
+  business: 'Empresarial',
 };
 
-// Format timestamp with context (today, yesterday, or full date)
 const formatMessageTime = (date: Date): string => {
   if (isToday(date)) {
     return format(date, 'HH:mm', { locale: es });
   } else if (isYesterday(date)) {
     return `Ayer ${format(date, 'HH:mm', { locale: es })}`;
   } else {
-    return format(date, "d MMM 'a las' HH:mm", { locale: es });
+    return format(date, "d MMM HH:mm", { locale: es });
   }
 };
 
-// Group messages by date for date separators
 const getDateLabel = (date: Date): string => {
   if (isToday(date)) {
     return 'Hoy';
   } else if (isYesterday(date)) {
     return 'Ayer';
   } else {
-    return format(date, "EEEE, d 'de' MMMM", { locale: es });
+    return format(date, "d 'de' MMMM", { locale: es });
   }
 };
 
@@ -72,47 +66,71 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <>
       {showDateSeparator && dateSeparatorLabel && (
-        <div className="flex items-center justify-center my-4">
-          <div className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground font-medium">
+        <div className="flex items-center justify-center my-6">
+          <span className="text-xs text-muted-foreground/60 font-medium">
             {dateSeparatorLabel}
-          </div>
+          </span>
         </div>
       )}
       <div className={cn(
-        'flex w-full mb-3',
+        'flex w-full mb-4',
         isUser ? 'justify-end' : 'justify-start'
       )}>
         <div className={cn(
-          'max-w-[85%] rounded-2xl px-4 py-3',
-          isUser 
-            ? 'bg-primary text-primary-foreground rounded-br-md' 
-            : 'bg-muted text-foreground rounded-bl-md'
+          'max-w-[80%]',
+          isUser ? 'text-right' : 'text-left'
         )}>
           {!isUser && message.brain && (
             <div className={cn(
-              'text-xs font-medium mb-1.5 px-2 py-0.5 rounded-full inline-block',
-              brainColors[message.brain] || 'bg-muted-foreground/10'
+              'text-[10px] font-medium mb-1 uppercase tracking-wider',
+              brainColors[message.brain] || 'text-muted-foreground'
             )}>
               {brainLabels[message.brain] || message.brainName}
             </div>
           )}
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">
-            {message.content}
-            {message.isStreaming && (
-              <span className="inline-block w-1.5 h-4 bg-current ml-0.5 animate-pulse" />
-            )}
-          </p>
           <div className={cn(
-            "flex items-center gap-1 mt-1.5",
-            isUser ? "justify-end" : "justify-start"
+            'rounded-2xl px-4 py-3',
+            isUser 
+              ? 'bg-foreground text-background' 
+              : 'bg-muted/50'
           )}>
-            <span className={cn(
-              "text-[10px]",
-              isUser ? "text-primary-foreground/70" : "text-muted-foreground"
-            )}>
-              {formatMessageTime(message.timestamp)}
-            </span>
+            {isUser ? (
+              <p className="text-sm">{message.content}</p>
+            ) : (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="mb-2 last:mb-0 text-sm leading-relaxed">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-2 ml-4 list-disc space-y-1">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-2 ml-4 list-decimal space-y-1">{children}</ol>,
+                    li: ({ children }) => <li className="text-sm">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                    em: ({ children }) => <em className="italic">{children}</em>,
+                    code: ({ children }) => (
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
+                    ),
+                    pre: ({ children }) => (
+                      <pre className="bg-muted p-3 rounded-lg overflow-x-auto my-2 text-xs">{children}</pre>
+                    ),
+                    h1: ({ children }) => <h1 className="text-base font-bold mb-2">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-sm font-bold mb-2">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-sm font-semibold mb-1">{children}</h3>,
+                    blockquote: ({ children }) => (
+                      <blockquote className="border-l-2 border-primary/30 pl-3 italic my-2">{children}</blockquote>
+                    ),
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
+                {message.isStreaming && (
+                  <span className="inline-block w-1 h-4 bg-foreground/60 ml-0.5 animate-pulse" />
+                )}
+              </div>
+            )}
           </div>
+          <span className="text-[10px] text-muted-foreground/50 mt-1 block px-1">
+            {formatMessageTime(message.timestamp)}
+          </span>
         </div>
       </div>
     </>
@@ -130,7 +148,6 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
       const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -140,7 +157,6 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
     }
   }, [messages]);
 
-  // Focus input when opened
   useEffect(() => {
     if (isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -155,7 +171,6 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
     }
   };
 
-  // Calculate date separators
   const messagesWithSeparators = messages.map((message, index) => {
     const prevMessage = index > 0 ? messages[index - 1] : null;
     const currentDate = message.timestamp;
@@ -174,7 +189,7 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   const defaultTrigger = (
     <Button
       size="lg"
-      className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
+      className="gap-2 bg-foreground text-background hover:bg-foreground/90"
     >
       <SparklesIcon className="h-5 w-5" />
       Hablar con Sparky
@@ -182,117 +197,128 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   );
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
+    <>
+      <div onClick={() => setIsOpen(true)}>
         {trigger || defaultTrigger}
-      </SheetTrigger>
-      <SheetContent 
-        side="right" 
-        className="w-full sm:max-w-md p-0 flex flex-col"
-      >
-        <SheetHeader className="p-4 border-b bg-gradient-to-r from-primary/5 to-primary/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <SparklesIcon className="h-5 w-5 text-primary" />
+      </div>
+      
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent 
+          className="max-w-none w-[90vw] md:w-[70vw] h-[80vh] p-0 gap-0 rounded-3xl border-0 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-xl"
+          hideCloseButton
+        >
+          <DialogTitle className="sr-only">Chat con Sparky</DialogTitle>
+          
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-foreground/5 flex items-center justify-center">
+                <SparklesIcon className="h-4 w-4 text-foreground/70" />
               </div>
               <div>
-                <SheetTitle className="text-left">Sparky</SheetTitle>
-                <p className="text-xs text-muted-foreground">
-                  {messages.length > 0 
-                    ? `${messages.length} mensajes` 
-                    : 'Tu asistente personal IA'}
+                <h2 className="font-medium text-sm">Sparky</h2>
+                <p className="text-[10px] text-muted-foreground">
+                  {messages.length > 0 ? `${messages.length} mensajes` : 'Asistente personal'}
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={clearChat}
-              className="h-8 w-8"
-              title="Limpiar chat"
-              disabled={messages.length === 0}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        </SheetHeader>
-
-        <ScrollArea 
-          ref={scrollRef}
-          className="flex-1 p-4"
-        >
-          {messages.length === 0 && !isLoading ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-8">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <SparklesIcon className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-semibold text-foreground mb-2">¡Hola! Soy Sparky</h3>
-              <p className="text-sm text-muted-foreground max-w-[250px]">
-                Tu asistente personal que conoce <strong>todas</strong> tus ideas, tareas y proyectos con detalle completo. ¿En qué puedo ayudarte?
-              </p>
-              <div className="flex flex-wrap gap-2 mt-4 justify-center">
-                {['¿Qué tengo pendiente?', 'Cuéntame mis ideas', 'Ayúdame a priorizar'].map((suggestion) => (
-                  <Button
-                    key={suggestion}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => {
-                      setInput(suggestion);
-                      inputRef.current?.focus();
-                    }}
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
-              </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={clearChat}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                disabled={messages.length === 0}
+              >
+                <TrashIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(false)}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </Button>
             </div>
-          ) : (
-            <div className="space-y-1">
-              {messagesWithSeparators.map(({ message, showDateSeparator, dateSeparatorLabel }) => (
-                <MessageBubble 
-                  key={message.id} 
-                  message={message}
-                  showDateSeparator={showDateSeparator}
-                  dateSeparatorLabel={dateSeparatorLabel}
-                />
-              ))}
-              {isLoading && !messages.some(m => m.isStreaming) && (
-                <div className="flex justify-start mb-4">
-                  <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      <span className="text-sm text-muted-foreground">Sparky está pensando...</span>
-                    </div>
+          </div>
+
+          {/* Messages */}
+          <ScrollArea 
+            ref={scrollRef}
+            className="flex-1 h-[calc(80vh-8rem)]"
+          >
+            <div className="px-6 py-4">
+              {messages.length === 0 && !isLoading ? (
+                <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+                  <div className="h-12 w-12 rounded-full bg-foreground/5 flex items-center justify-center mb-4">
+                    <SparklesIcon className="h-6 w-6 text-foreground/40" />
                   </div>
+                  <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                    Tengo acceso a todas tus ideas, tareas, proyectos y más. ¿En qué puedo ayudarte?
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center max-w-md">
+                    {['¿Qué tengo pendiente?', 'Resume mis ideas', 'Ayúdame a priorizar'].map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        className="px-3 py-1.5 text-xs bg-muted/50 hover:bg-muted rounded-full transition-colors"
+                        onClick={() => {
+                          setInput(suggestion);
+                          inputRef.current?.focus();
+                        }}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {messagesWithSeparators.map(({ message, showDateSeparator, dateSeparatorLabel }) => (
+                    <MessageBubble 
+                      key={message.id} 
+                      message={message}
+                      showDateSeparator={showDateSeparator}
+                      dateSeparatorLabel={dateSeparatorLabel}
+                    />
+                  ))}
+                  {isLoading && !messages.some(m => m.isStreaming) && (
+                    <div className="flex justify-start mb-4">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span className="text-xs">Pensando...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
 
-        <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
-          <div className="flex gap-2">
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Escribe tu mensaje..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button 
-              type="submit" 
-              size="icon"
-              disabled={isLoading || !input.trim()}
-            >
-              <PaperAirplaneIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+          {/* Input */}
+          <form onSubmit={handleSubmit} className="px-6 py-4 border-t border-border/50">
+            <div className="flex gap-3">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Escribe tu mensaje..."
+                disabled={isLoading}
+                className="flex-1 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl"
+              />
+              <Button 
+                type="submit" 
+                size="icon"
+                disabled={isLoading || !input.trim()}
+                className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
+              >
+                <PaperAirplaneIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
