@@ -77,7 +77,7 @@ serve(async (req) => {
     const { data: prompts } = await supabase
       .from('system_prompts')
       .select('*')
-      .in('key', ['sparky_brain_organizer', 'sparky_brain_mentor', 'sparky_brain_creative', 'sparky_brain_business', 'sparky_brain_selector'])
+      .in('key', ['sparky_brain_organizer', 'sparky_brain_mentor', 'sparky_brain_creative', 'sparky_brain_business', 'sparky_brain_casual', 'sparky_brain_selector'])
       .eq('is_active', true);
 
     const promptsMap: Record<string, any> = {};
@@ -85,7 +85,7 @@ serve(async (req) => {
 
     // Step 1: Classify the message to select the right brain
     const selectorPrompt = promptsMap['sparky_brain_selector']?.prompt || 
-      'Responde solo con: organizer, mentor, creative, o business';
+      'Responde solo con: organizer, mentor, creative, business, o casual';
 
     const classifyResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -114,6 +114,7 @@ serve(async (req) => {
       'mentor': 'sparky_brain_mentor',
       'creative': 'sparky_brain_creative',
       'business': 'sparky_brain_business',
+      'casual': 'sparky_brain_casual',
     };
 
     const selectedBrainKey = brainMap[brainType] || 'sparky_brain_organizer';

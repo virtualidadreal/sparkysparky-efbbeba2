@@ -27,10 +27,12 @@ const brainNames: Record<string, string> = {
   'sparky_brain_mentor': 'Mentor',
   'sparky_brain_creative': 'Creativo',
   'sparky_brain_business': 'Empresarial',
+  'sparky_brain_casual': 'Charleta',
   'organizer': 'Organizador',
   'mentor': 'Mentor',
   'creative': 'Creativo',
   'business': 'Empresarial',
+  'casual': 'Charleta',
 };
 
 export const useSparkyChat = () => {
