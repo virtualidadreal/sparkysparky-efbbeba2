@@ -7,7 +7,7 @@ import {
   useSystemPrompts, 
   useUpdateSystemPrompt, 
   useCreateSystemPrompt,
-  useDeleteSystemPrompt,
+  
   useAdminSettings,
   useUpdateAdminSetting,
   PROMPT_CATEGORIES,
@@ -25,7 +25,7 @@ import {
   CheckIcon,
   UsersIcon,
   PlusIcon,
-  TrashIcon,
+  
   PencilIcon,
   XMarkIcon,
   Cog6ToothIcon,
@@ -61,7 +61,7 @@ const Admin = () => {
   const { data: settings, isLoading: loadingSettings } = useAdminSettings();
   const updatePrompt = useUpdateSystemPrompt();
   const createPrompt = useCreateSystemPrompt();
-  const deletePrompt = useDeleteSystemPrompt();
+  
   const updateSetting = useUpdateAdminSetting();
   
   const [activeTab, setActiveTab] = useState<TabType>('prompts');
@@ -176,11 +176,6 @@ const Admin = () => {
     setNewPromptContent('');
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este prompt?')) {
-      await deletePrompt.mutateAsync(id);
-    }
-  };
 
   const handleUpdateSetting = async (id: string, key: string, newValue: any) => {
     await updateSetting.mutateAsync({ id, value: { [key]: newValue } });
@@ -466,24 +461,14 @@ const Admin = () => {
                               <p className="text-xs text-muted-foreground">
                                 Actualizado: {new Date(existingPrompt.updated_at).toLocaleString('es-ES')}
                               </p>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => handleDelete(existingPrompt.id)}
-                                >
-                                  <TrashIcon className="h-4 w-4 mr-1" />
-                                  Eliminar
-                                </Button>
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => handleEdit(existingPrompt)}
-                                >
-                                  <PencilIcon className="h-4 w-4 mr-1" />
-                                  Editar
-                                </Button>
-                              </div>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => handleEdit(existingPrompt)}
+                              >
+                                <PencilIcon className="h-4 w-4 mr-1" />
+                                Editar prompt
+                              </Button>
                             </div>
                           </div>
                         )}
