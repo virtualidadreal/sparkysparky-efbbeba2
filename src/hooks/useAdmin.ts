@@ -43,6 +43,7 @@ export const AI_MODELS = [
  * Categorías de configuraciones globales
  */
 export const SETTINGS_CATEGORIES = {
+  insights: { name: 'Sugerencias e Insights', icon: 'LightBulbIcon' },
   analysis: { name: 'Análisis', icon: 'CpuChipIcon' },
   memory: { name: 'Memoria', icon: 'CircleStackIcon' },
   notifications: { name: 'Notificaciones', icon: 'BellIcon' },
