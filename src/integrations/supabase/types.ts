@@ -32,6 +32,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_settings: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          name: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          name: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          name?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       detected_patterns: {
         Row: {
           created_at: string
@@ -439,8 +472,11 @@ export type Database = {
           id: string
           is_active: boolean | null
           key: string
+          max_tokens: number | null
+          model: string | null
           name: string
           prompt: string
+          temperature: number | null
           updated_at: string | null
         }
         Insert: {
@@ -449,8 +485,11 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           key: string
+          max_tokens?: number | null
+          model?: string | null
           name: string
           prompt: string
+          temperature?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -459,8 +498,11 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           key?: string
+          max_tokens?: number | null
+          model?: string | null
           name?: string
           prompt?: string
+          temperature?: number | null
           updated_at?: string | null
         }
         Relationships: []
