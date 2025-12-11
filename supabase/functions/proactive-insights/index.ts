@@ -245,7 +245,11 @@ Genera 3-5 recordatorios útiles basados en patrones y contexto.`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+      console.error('CRITICAL: LOVABLE_API_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const model = customPrompt?.model || 'google/gemini-2.5-flash';
@@ -342,7 +346,7 @@ Genera 3-5 recordatorios útiles basados en patrones y contexto.`;
     console.error('Error in proactive-insights:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: 'An error occurred processing your request' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
