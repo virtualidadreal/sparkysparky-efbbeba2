@@ -37,19 +37,22 @@ const Dashboard = () => {
     getMorningBriefing,
     getAlerts,
     getSuggestions,
+    refreshAll,
     dismissAlert,
     dismissSuggestion,
     usage,
+    initialized,
   } = useProactiveInsights();
 
   const [showBriefing, setShowBriefing] = useState(false);
 
-  // Load alerts and suggestions on mount - only once
+  // Load alerts and suggestions on mount - uses cache if available
   useEffect(() => {
-    getAlerts();
-    getSuggestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (initialized) {
+      getAlerts(); // Will use cache if available
+      getSuggestions(); // Will use cache if available
+    }
+  }, [initialized, getAlerts, getSuggestions]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -207,10 +210,7 @@ const Dashboard = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            getAlerts();
-            getSuggestions();
-          }}
+          onClick={refreshAll}
           disabled={isLoading}
           className="gap-2"
         >
