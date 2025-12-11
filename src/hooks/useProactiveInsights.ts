@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useInsightsSettings, incrementDailyUsage, useUserDailyUsage } from './useInsightsSettings';
 import toast from 'react-hot-toast';
 
 export interface Alert {
@@ -42,86 +41,93 @@ export interface MorningBriefing {
   energy_tip: string;
 }
 
+export interface UsageInfo {
+  current: number;
+  limit: number;
+  remaining: number;
+}
+
 export const useProactiveInsights = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [morningBriefing, setMorningBriefing] = useState<MorningBriefing | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
-
-  const { data: settings } = useInsightsSettings();
-  const { data: usage, refetch: refetchUsage } = useUserDailyUsage();
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
 
   const fetchInsight = useCallback(async (type: 'morning_briefing' | 'suggestions' | 'alerts' | 'reminders') => {
-    // Check if feature is enabled
-    if (settings) {
-      if (type === 'suggestions' && !settings.suggestionsEnabled) {
-        toast.error('Las sugerencias están desactivadas');
-        return null;
-      }
-      if (type === 'alerts' && !settings.alertsEnabled) {
-        toast.error('Las alertas están desactivadas');
-        return null;
-      }
-      if (type === 'morning_briefing' && !settings.briefingEnabled) {
-        toast.error('El briefing matutino está desactivado');
-        return null;
-      }
-    }
-
-    // Check daily limit for suggestions
-    if (type === 'suggestions' && settings && usage) {
-      if (usage.suggestions >= settings.suggestionsDailyLimit) {
-        toast.error(`Has alcanzado el límite diario de ${settings.suggestionsDailyLimit} generaciones de sugerencias`);
-        return null;
-      }
-    }
-
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('proactive-insights', {
         body: { type }
       });
 
-      if (error) throw error;
-
-      if (data.success) {
-        // Increment usage counter
-        if (type === 'suggestions') {
-          incrementDailyUsage('suggestions');
-          refetchUsage();
-        } else if (type === 'alerts') {
-          incrementDailyUsage('alerts');
-        } else if (type === 'morning_briefing') {
-          incrementDailyUsage('briefings');
+      if (error) {
+        // Handle specific error cases
+        if (error.message?.includes('429') || error.message?.includes('límite')) {
+          toast.error('Has alcanzado el límite diario');
+          return null;
         }
-
-        switch (type) {
-          case 'morning_briefing':
-            setMorningBriefing(data.data);
-            break;
-          case 'suggestions':
-            setSuggestions(data.data.suggestions || []);
-            break;
-          case 'alerts':
-            setAlerts(data.data.alerts || []);
-            break;
-          case 'reminders':
-            setReminders(data.data.reminders || []);
-            break;
-        }
-        return data.data;
-      } else {
-        throw new Error(data.error || 'Error fetching insights');
+        throw error;
       }
-    } catch (error) {
+
+      // Check for backend error responses
+      if (!data.success) {
+        if (data.limit_reached) {
+          toast.error(`Has alcanzado el límite diario de ${data.limit} generaciones`);
+          setUsage({ current: data.current_count, limit: data.limit, remaining: 0 });
+          return null;
+        }
+        if (data.disabled) {
+          toast.error(data.error || 'Esta función está desactivada');
+          return null;
+        }
+        if (data.rate_limited) {
+          toast.error('Límite de API alcanzado, intenta más tarde');
+          return null;
+        }
+        throw new Error(data.error || 'Error desconocido');
+      }
+
+      // Update usage info if provided
+      if (data.usage) {
+        setUsage(data.usage);
+      }
+
+      // Set the data based on type
+      switch (type) {
+        case 'morning_briefing':
+          setMorningBriefing(data.data);
+          break;
+        case 'suggestions':
+          setSuggestions(data.data.suggestions || []);
+          break;
+        case 'alerts':
+          setAlerts(data.data.alerts || []);
+          break;
+        case 'reminders':
+          setReminders(data.data.reminders || []);
+          break;
+      }
+      
+      return data.data;
+    } catch (error: any) {
       console.error(`Error fetching ${type}:`, error);
-      toast.error(`Error al obtener ${type === 'morning_briefing' ? 'el briefing' : type}`);
+      
+      // Parse error message for specific cases
+      const errorMsg = error?.message || '';
+      if (errorMsg.includes('límite') || errorMsg.includes('limit')) {
+        toast.error('Has alcanzado el límite diario');
+      } else if (errorMsg.includes('desactivad')) {
+        toast.error('Esta función está desactivada');
+      } else {
+        toast.error(`Error al obtener ${type === 'morning_briefing' ? 'el briefing' : type}`);
+      }
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [settings, usage, refetchUsage]);
+  }, []);
 
   const getMorningBriefing = useCallback(() => fetchInsight('morning_briefing'), [fetchInsight]);
   const getSuggestions = useCallback(() => fetchInsight('suggestions'), [fetchInsight]);
@@ -136,11 +142,6 @@ export const useProactiveInsights = () => {
     setSuggestions(prev => prev.filter(s => s.id !== suggestionId));
   }, []);
 
-  // Compute remaining usage
-  const remainingSuggestions = settings && usage 
-    ? Math.max(0, settings.suggestionsDailyLimit - (usage.suggestions || 0))
-    : null;
-
   return {
     isLoading,
     morningBriefing,
@@ -153,8 +154,6 @@ export const useProactiveInsights = () => {
     getReminders,
     dismissAlert,
     dismissSuggestion,
-    // New exports for settings awareness
-    settings,
-    remainingSuggestions,
+    usage,
   };
 };

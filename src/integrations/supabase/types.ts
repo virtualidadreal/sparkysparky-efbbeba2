@@ -554,6 +554,39 @@ export type Database = {
           },
         ]
       }
+      user_daily_usage: {
+        Row: {
+          alerts_count: number
+          briefings_count: number
+          created_at: string
+          id: string
+          suggestions_count: number
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          alerts_count?: number
+          briefings_count?: number
+          created_at?: string
+          id?: string
+          suggestions_count?: number
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          alerts_count?: number
+          briefings_count?: number
+          created_at?: string
+          id?: string
+          suggestions_count?: number
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

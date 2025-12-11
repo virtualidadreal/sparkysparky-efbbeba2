@@ -24,6 +24,11 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
       throw new Error('User not authenticated');
@@ -31,8 +36,100 @@ serve(async (req) => {
 
     const { type } = await req.json();
 
-    // Fetch user data for context
+    // Get admin settings for limits
+    const { data: settings } = await supabaseAdmin
+      .from('admin_settings')
+      .select('key, value')
+      .in('key', ['suggestions_enabled', 'suggestions_daily_limit', 'alerts_enabled', 'briefing_enabled']);
+
+    const settingsMap: Record<string, any> = {};
+    settings?.forEach(s => { settingsMap[s.key] = s.value; });
+
+    const suggestionsEnabled = settingsMap['suggestions_enabled']?.enabled ?? true;
+    const alertsEnabled = settingsMap['alerts_enabled']?.enabled ?? true;
+    const briefingEnabled = settingsMap['briefing_enabled']?.enabled ?? true;
+    const dailyLimit = settingsMap['suggestions_daily_limit']?.limit ?? 10;
+
+    // Check if feature is enabled
+    if (type === 'suggestions' && !suggestionsEnabled) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Las sugerencias están desactivadas por el administrador',
+        disabled: true
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (type === 'alerts' && !alertsEnabled) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Las alertas están desactivadas por el administrador',
+        disabled: true
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (type === 'morning_briefing' && !briefingEnabled) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'El briefing matutino está desactivado por el administrador',
+        disabled: true
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check and update daily usage
     const today = new Date().toISOString().split('T')[0];
+    
+    // Get or create usage record
+    let { data: usageRecord } = await supabaseClient
+      .from('user_daily_usage')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('usage_date', today)
+      .maybeSingle();
+
+    if (!usageRecord) {
+      // Create new record for today
+      const { data: newRecord, error: insertError } = await supabaseClient
+        .from('user_daily_usage')
+        .insert({
+          user_id: user.id,
+          usage_date: today,
+          suggestions_count: 0,
+          alerts_count: 0,
+          briefings_count: 0
+        })
+        .select()
+        .single();
+      
+      if (insertError) {
+        console.error('Error creating usage record:', insertError);
+      }
+      usageRecord = newRecord;
+    }
+
+    // Check limits
+    if (type === 'suggestions' && usageRecord) {
+      if (usageRecord.suggestions_count >= dailyLimit) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: `Has alcanzado el límite diario de ${dailyLimit} generaciones de sugerencias`,
+          limit_reached: true,
+          current_count: usageRecord.suggestions_count,
+          limit: dailyLimit
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Fetch user data for context
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const [tasksRes, ideasRes, patternsRes, projectsRes] = await Promise.all([
@@ -57,8 +154,20 @@ serve(async (req) => {
     let prompt = '';
     let systemPrompt = '';
 
+    // Try to get custom prompt from system_prompts table
+    const promptKey = type === 'morning_briefing' ? 'morning_briefing' : 
+                      type === 'suggestions' ? 'smart_suggestions' :
+                      type === 'alerts' ? 'proactive_alerts' : 'smart_reminders';
+    
+    const { data: customPrompt } = await supabaseAdmin
+      .from('system_prompts')
+      .select('prompt, model, temperature, max_tokens')
+      .eq('key', promptKey)
+      .eq('is_active', true)
+      .maybeSingle();
+
     if (type === 'morning_briefing') {
-      systemPrompt = `Eres un asistente personal inteligente que genera briefings matutinos concisos y accionables en español.
+      systemPrompt = customPrompt?.prompt || `Eres un asistente personal inteligente que genera briefings matutinos concisos y accionables en español.
 Tu objetivo es dar una visión clara del día y ayudar al usuario a priorizar.
 Responde en formato JSON con esta estructura:
 {
@@ -83,7 +192,7 @@ DATOS DEL USUARIO:
 Genera un briefing motivador pero realista.`;
 
     } else if (type === 'suggestions') {
-      systemPrompt = `Eres un asistente que genera sugerencias inteligentes de productividad en español.
+      systemPrompt = customPrompt?.prompt || `Eres un asistente que genera sugerencias inteligentes de productividad en español.
 Analiza los datos y sugiere acciones concretas.
 Responde en formato JSON:
 {
@@ -115,7 +224,7 @@ IDEAS RECIENTES: ${JSON.stringify(ideas.slice(0, 5).map(i => ({ title: i.title, 
 Genera 3-5 sugerencias accionables y específicas.`;
 
     } else if (type === 'alerts') {
-      systemPrompt = `Eres un sistema de alertas inteligente que identifica problemas y oportunidades en español.
+      systemPrompt = customPrompt?.prompt || `Eres un sistema de alertas inteligente que identifica problemas y oportunidades en español.
 Responde en formato JSON:
 {
   "alerts": [
@@ -146,7 +255,7 @@ ALERTAS POTENCIALES:
 Prioriza las alertas más críticas primero. Máximo 5 alertas.`;
 
     } else if (type === 'reminders') {
-      systemPrompt = `Eres un sistema de recordatorios inteligente que aprende de patrones del usuario.
+      systemPrompt = customPrompt?.prompt || `Eres un sistema de recordatorios inteligente que aprende de patrones del usuario.
 Responde en formato JSON:
 {
   "reminders": [
@@ -183,6 +292,11 @@ Genera 3-5 recordatorios útiles basados en patrones y contexto.`;
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
+    const model = customPrompt?.model || 'google/gemini-2.5-flash';
+    const temperature = customPrompt?.temperature ?? 0.7;
+
+    console.log(`Generating ${type} with model: ${model}, temperature: ${temperature}`);
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -190,7 +304,7 @@ Genera 3-5 recordatorios útiles basados en patrones y contexto.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
@@ -201,6 +315,18 @@ Genera 3-5 recordatorios útiles basados en patrones y contexto.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI API error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Límite de API alcanzado, intenta más tarde',
+          rate_limited: true
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       throw new Error(`AI API error: ${response.status}`);
     }
 
@@ -248,7 +374,31 @@ Genera 3-5 recordatorios útiles basados en patrones y contexto.`;
       }
     }
 
-    return new Response(JSON.stringify({ success: true, data: result, type }), {
+    // Update usage count after successful generation
+    if (usageRecord) {
+      const updateField = type === 'suggestions' ? 'suggestions_count' :
+                         type === 'alerts' ? 'alerts_count' : 'briefings_count';
+      
+      await supabaseClient
+        .from('user_daily_usage')
+        .update({ [updateField]: (usageRecord[updateField] || 0) + 1 })
+        .eq('id', usageRecord.id);
+    }
+
+    // Return result with usage info
+    const updatedCount = (usageRecord?.[type === 'suggestions' ? 'suggestions_count' : 
+                          type === 'alerts' ? 'alerts_count' : 'briefings_count'] || 0) + 1;
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      data: result, 
+      type,
+      usage: {
+        current: updatedCount,
+        limit: dailyLimit,
+        remaining: Math.max(0, dailyLimit - updatedCount)
+      }
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
