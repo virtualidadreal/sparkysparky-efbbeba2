@@ -7,6 +7,75 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation constants
+const MAX_QUERY_LENGTH = 500;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const VALID_ITEM_TYPES = ['idea', 'task', 'project', 'person', 'diary'] as const;
+const VALID_MODES = ['search', 'connections'] as const;
+
+// Validation functions
+function validateUUID(value: unknown, fieldName: string): { valid: boolean; error?: string } {
+  if (typeof value !== 'string') {
+    return { valid: false, error: `${fieldName} must be a string` };
+  }
+  
+  if (!UUID_REGEX.test(value)) {
+    return { valid: false, error: `${fieldName} must be a valid UUID` };
+  }
+  
+  return { valid: true };
+}
+
+function validateQuery(query: unknown): { valid: boolean; error?: string; sanitized?: string } {
+  if (query === undefined || query === null) {
+    return { valid: true, sanitized: '' }; // Query is optional for connections mode
+  }
+  
+  if (typeof query !== 'string') {
+    return { valid: false, error: 'Query must be a string' };
+  }
+  
+  const trimmed = query.trim();
+  
+  if (trimmed.length > MAX_QUERY_LENGTH) {
+    return { valid: false, error: `Query exceeds maximum length of ${MAX_QUERY_LENGTH} characters` };
+  }
+  
+  return { valid: true, sanitized: trimmed };
+}
+
+function validateMode(mode: unknown): { valid: boolean; error?: string; value?: string } {
+  if (mode === undefined || mode === null) {
+    return { valid: true, value: 'search' }; // Default mode
+  }
+  
+  if (typeof mode !== 'string') {
+    return { valid: false, error: 'Mode must be a string' };
+  }
+  
+  if (!VALID_MODES.includes(mode as any)) {
+    return { valid: false, error: `Mode must be one of: ${VALID_MODES.join(', ')}` };
+  }
+  
+  return { valid: true, value: mode };
+}
+
+function validateItemType(itemType: unknown): { valid: boolean; error?: string } {
+  if (itemType === undefined || itemType === null) {
+    return { valid: true }; // Optional field
+  }
+  
+  if (typeof itemType !== 'string') {
+    return { valid: false, error: 'itemType must be a string' };
+  }
+  
+  if (!VALID_ITEM_TYPES.includes(itemType as any)) {
+    return { valid: false, error: `itemType must be one of: ${VALID_ITEM_TYPES.join(', ')}` };
+  }
+  
+  return { valid: true };
+}
+
 interface SearchItem {
   id: string;
   type: 'idea' | 'task' | 'project' | 'person' | 'diary';
@@ -33,11 +102,71 @@ serve(async (req) => {
   }
 
   try {
-    const { query, userId, mode = 'search', itemId, itemType } = await req.json();
-
-    if (!userId) {
+    // Parse and validate request body
+    let requestBody;
+    try {
+      const bodyText = await req.text();
+      if (bodyText.length > 10000) { // ~10KB max for search requests
+        return new Response(
+          JSON.stringify({ error: 'Request body too large' }),
+          { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      requestBody = JSON.parse(bodyText);
+    } catch {
       return new Response(
-        JSON.stringify({ error: 'userId is required' }),
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { query, userId, mode, itemId, itemType } = requestBody;
+
+    // Validate userId (required)
+    const userIdValidation = validateUUID(userId, 'userId');
+    if (!userIdValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: userIdValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate mode
+    const modeValidation = validateMode(mode);
+    if (!modeValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: modeValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const validatedMode = modeValidation.value!;
+
+    // Validate query
+    const queryValidation = validateQuery(query);
+    if (!queryValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: queryValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const validatedQuery = queryValidation.sanitized!;
+
+    // Validate itemId if provided
+    if (itemId !== undefined && itemId !== null) {
+      const itemIdValidation = validateUUID(itemId, 'itemId');
+      if (!itemIdValidation.valid) {
+        return new Response(
+          JSON.stringify({ error: itemIdValidation.error }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Validate itemType if provided
+    const itemTypeValidation = validateItemType(itemType);
+    if (!itemTypeValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: itemTypeValidation.error }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -115,7 +244,7 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    if (mode === 'connections' && itemId && itemType) {
+    if (validatedMode === 'connections' && itemId && itemType) {
       // Find intelligent connections for a specific item
       const sourceItem = allItems.find(i => i.id === itemId && i.type === itemType);
       if (!sourceItem) {
@@ -211,7 +340,7 @@ Responde SOLO en JSON:
     }
 
     // Semantic search mode
-    if (!query || query.length < 2) {
+    if (!validatedQuery || validatedQuery.length < 2) {
       return new Response(
         JSON.stringify({ results: [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -220,7 +349,7 @@ Responde SOLO en JSON:
 
     const searchPrompt = `Analiza la siguiente consulta de búsqueda y encuentra los elementos más relevantes semánticamente.
 
-CONSULTA: "${query}"
+CONSULTA: "${validatedQuery}"
 
 ELEMENTOS DISPONIBLES:
 ${allItems.slice(0, 100).map((item, i) => `${i + 1}. [${item.type}] "${item.title}" - ${item.content.substring(0, 200)} ${item.tags?.length ? `Tags: ${item.tags.join(', ')}` : ''}`).join('\n')}
@@ -287,7 +416,7 @@ Responde SOLO en JSON:
         };
       });
 
-    console.log(`Semantic search for "${query}": found ${semanticResults.length} results`);
+    console.log(`Semantic search for "${validatedQuery}": found ${semanticResults.length} results`);
 
     return new Response(
       JSON.stringify({ results: semanticResults }),
