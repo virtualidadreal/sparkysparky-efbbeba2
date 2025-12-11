@@ -154,8 +154,26 @@ export const QuickCapture = () => {
             console.error('Error processing audio:', error);
             toast.error('Error al procesar el audio');
           } else {
-            toast.success('¡Idea transcrita y procesada!');
-            queryClient.invalidateQueries({ queryKey: ['ideas'] });
+            // Show message based on content type
+            const typeMessages: Record<string, string> = {
+              idea: '💡 ¡Idea transcrita y guardada!',
+              diary: '📔 ¡Entrada de diario guardada!',
+              task: '✅ ¡Tarea creada!',
+              person: '👤 ¡Contacto añadido!',
+            };
+            const contentType = data?.type || 'idea';
+            const message = typeMessages[contentType] || '¡Guardado!';
+            toast.success(message);
+            
+            // Invalidate the correct queries based on type
+            if (contentType === 'diary') {
+              queryClient.invalidateQueries({ queryKey: ['diary'] });
+              queryClient.invalidateQueries({ queryKey: ['diaryEntries'] });
+            } else {
+              queryClient.invalidateQueries({ queryKey: ['ideas'] });
+            }
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['people'] });
           }
         });
       
