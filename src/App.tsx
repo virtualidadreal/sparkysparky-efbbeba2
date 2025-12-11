@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { lazy, Suspense } from 'react';
 import { queryClient } from '@/lib/queryClient';
-import { ErrorBoundary, ProtectedRoute } from '@/components/common';
+import { ErrorBoundary, ProtectedRoute, InstallPWAPrompt } from '@/components/common';
 
 // Lazy load de páginas
 const Auth = lazy(() => import('@/pages/Auth'));
@@ -58,6 +58,9 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+        
+        {/* PWA Install Prompt for mobile */}
+        <InstallPWAPrompt />
         
         <Toaster
           position="top-right"
