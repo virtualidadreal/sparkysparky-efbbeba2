@@ -169,6 +169,26 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check user quota before processing
+    const { data: quotaData, error: quotaError } = await supabase.rpc('check_user_quota', {
+      p_user_id: authenticatedUserId
+    });
+
+    if (quotaError) {
+      console.error('Error checking quota:', quotaError);
+    }
+
+    if (quotaData && !quotaData.can_generate) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Has alcanzado el límite mensual de generaciones. Actualiza a Pro para continuar.',
+          quota_exceeded: true,
+          quota: quotaData
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get the idea to verify it exists AND check ownership
     const { data: existingIdea, error: fetchError } = await supabase
       .from('ideas')
@@ -427,6 +447,9 @@ serve(async (req) => {
       // Delete the placeholder idea
       await supabase.from('ideas').delete().eq('id', ideaId);
 
+      // Increment usage
+      await supabase.rpc('increment_user_usage', { p_user_id: authenticatedUserId });
+
       console.log('Voice diary entry created:', diaryEntry.id);
 
       return new Response(
@@ -456,6 +479,9 @@ serve(async (req) => {
 
       // Delete the placeholder idea
       await supabase.from('ideas').delete().eq('id', ideaId);
+
+      // Increment usage
+      await supabase.rpc('increment_user_usage', { p_user_id: authenticatedUserId });
 
       console.log('Voice task created:', task.id);
 
@@ -494,6 +520,9 @@ serve(async (req) => {
       console.error('Database update error:', updateError);
       throw new Error('Failed to update idea');
     }
+
+    // Increment usage
+    await supabase.rpc('increment_user_usage', { p_user_id: authenticatedUserId });
 
     console.log('Voice idea processed successfully:', updatedIdea.id);
 

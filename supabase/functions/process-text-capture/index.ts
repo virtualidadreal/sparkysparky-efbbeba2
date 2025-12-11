@@ -183,6 +183,26 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check user quota before processing
+    const { data: quotaData, error: quotaError } = await supabase.rpc('check_user_quota', {
+      p_user_id: userId
+    });
+
+    if (quotaError) {
+      console.error('Error checking quota:', quotaError);
+    }
+
+    if (quotaData && !quotaData.can_generate) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Has alcanzado el límite mensual de generaciones. Actualiza a Pro para continuar.',
+          quota_exceeded: true,
+          quota: quotaData
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Processing and classifying text for authenticated user:', userId);
 
     // Get the system prompt from database
@@ -490,6 +510,9 @@ Clasifica el texto como: idea, task, diary, o person.`;
         console.log('Idea saved successfully:', idea.id, 'Project:', matchedProjectId);
         break;
     }
+
+    // Increment usage after successful generation
+    await supabase.rpc('increment_user_usage', { p_user_id: userId });
 
     return new Response(
       JSON.stringify({ 

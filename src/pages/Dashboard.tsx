@@ -11,6 +11,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { usePeople } from '@/hooks/usePeople';
 import { useProactiveInsights } from '@/hooks/useProactiveInsights';
+import { useUserQuota } from '@/hooks/useUserQuota';
 import {
   CalendarIcon,
   CheckCircleIcon,
@@ -43,6 +44,8 @@ const Dashboard = () => {
     usage,
     initialized,
   } = useProactiveInsights();
+
+  const { quota, isPro, usageText } = useUserQuota();
 
   const [showBriefing, setShowBriefing] = useState(false);
 
@@ -203,6 +206,21 @@ const Dashboard = () => {
           <p className="text-sm text-muted-foreground">Personas</p>
           <p className="text-2xl font-bold text-foreground mt-1">{people?.length || 0}</p>
         </div>
+
+        {/* Usage indicator for free users */}
+        {!isPro && usageText && (
+          <div className="bg-card rounded-lg border border-border p-4">
+            <p className="text-sm text-muted-foreground">Uso mensual</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{quota?.used || 0}/{quota?.limit || 10}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {quota?.remaining === 0 ? (
+                <span className="text-destructive">Sin generaciones restantes</span>
+              ) : (
+                `${quota?.remaining} restantes`
+              )}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Refresh insights button */}
