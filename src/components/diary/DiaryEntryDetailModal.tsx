@@ -152,7 +152,7 @@ export const DiaryEntryDetailModal = ({
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-border px-6 py-4 bg-muted/30">
             <div className="text-xs text-muted-foreground">
-              Última actualización: {formatDistanceToNow(new Date(entry.updated_at), { addSuffix: true, locale: es })}
+              Última actualización: {format(new Date(entry.updated_at), "d 'de' MMMM yyyy, HH:mm", { locale: es })}
             </div>
             <div className="flex gap-2">
               {onDelete && (

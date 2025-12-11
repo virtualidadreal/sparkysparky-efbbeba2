@@ -170,6 +170,15 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                               Convertida a tarea
                             </span>
                           )}
+                          <span className="text-xs text-muted-foreground">
+                            Creada el {new Date(idea.created_at).toLocaleDateString('es-ES', { 
+                              day: 'numeric', 
+                              month: 'long', 
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
