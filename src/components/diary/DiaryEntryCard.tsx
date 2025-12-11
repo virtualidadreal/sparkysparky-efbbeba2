@@ -1,7 +1,7 @@
 import { Card } from '@/components/common';
 import type { DiaryEntry } from '@/types/DiaryEntry.types';
-import { ClockIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { formatDistanceToNow } from 'date-fns';
+import { ClockIcon, TrashIcon, PencilIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState } from 'react';
 
@@ -113,15 +113,16 @@ export const DiaryEntryCard = ({ entry, onClick, onEdit, onDelete }: DiaryEntryC
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-xs text-gray-500 border-t pt-3">
-          <div className="flex items-center gap-1">
-            <ClockIcon className="h-3 w-3" />
-            <span>
-              {formatDistanceToNow(new Date(entry.created_at), {
-                addSuffix: true,
-                locale: es,
-              })}
-            </span>
+        <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <CalendarIcon className="h-3 w-3" />
+              <span>{format(new Date(entry.entry_date), "d 'de' MMMM yyyy", { locale: es })}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <ClockIcon className="h-3 w-3" />
+              <span>{format(new Date(entry.created_at), 'HH:mm', { locale: es })}</span>
+            </div>
           </div>
         </div>
       </Card>

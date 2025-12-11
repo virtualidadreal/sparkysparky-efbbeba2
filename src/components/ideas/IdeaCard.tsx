@@ -12,7 +12,7 @@ import {
   FaceSmileIcon,
   FolderIcon,
 } from '@heroicons/react/24/outline';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState } from 'react';
 import { useIdeaProject } from '@/hooks/useRelatedIdeas';
@@ -198,10 +198,7 @@ export const IdeaCard = ({ idea, onEdit, onArchive, onDelete }: IdeaCardProps) =
           <div className="flex items-center gap-1">
             <ClockIcon className="h-3 w-3" />
             <span>
-              {formatDistanceToNow(new Date(idea.created_at), {
-                addSuffix: true,
-                locale: es,
-              })}
+              {format(new Date(idea.created_at), "d MMM yyyy, HH:mm", { locale: es })}
             </span>
           </div>
           
