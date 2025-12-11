@@ -148,14 +148,24 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (scrollRef.current) {
       const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollElement) {
         scrollElement.scrollTop = scrollElement.scrollHeight;
       }
     }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
