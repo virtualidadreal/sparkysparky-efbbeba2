@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
@@ -203,17 +204,15 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
   );
 
   return (
-    <>
-      <div onClick={() => setIsOpen(true)}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
         {trigger || defaultTrigger}
-      </div>
-
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent 
-          className="max-w-none w-[95vw] md:w-[500px] p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-xl"
-          hideCloseButton
-        >
-          <DialogTitle className="sr-only">Captura rápida</DialogTitle>
+      </DialogTrigger>
+      <DialogContent 
+        className="max-w-none w-[95vw] md:w-[500px] p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-xl"
+        hideCloseButton
+      >
+        <DialogTitle className="sr-only">Captura rápida</DialogTitle>
           
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
@@ -307,6 +306,5 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
           </form>
         </DialogContent>
       </Dialog>
-    </>
   );
 };
