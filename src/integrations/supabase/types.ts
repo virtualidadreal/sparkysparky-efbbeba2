@@ -596,15 +596,68 @@ export type Database = {
         }
         Relationships: []
       }
+      user_monthly_usage: {
+        Row: {
+          created_at: string
+          generations_count: number
+          id: string
+          updated_at: string
+          usage_month: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generations_count?: number
+          id?: string
+          updated_at?: string
+          usage_month: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generations_count?: number
+          id?: string
+          updated_at?: string
+          usage_month?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_user_quota: { Args: { p_user_id: string }; Returns: Json }
+      increment_user_usage: { Args: { p_user_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      subscription_plan: "free" | "pro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -731,6 +784,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      subscription_plan: ["free", "pro"],
+    },
   },
 } as const
