@@ -19,40 +19,66 @@ interface UseAudioPermission {
  * - Permite revocar el permiso manualmente
  */
 export const useAudioPermission = (): UseAudioPermission => {
-  const [permissionState, setPermissionState] = useState<PermissionState>('checking');
-  const [isPersistent, setIsPersistent] = useState(false);
+  // Inicializar con el valor guardado en localStorage si existe
+  const getInitialState = (): PermissionState => {
+    const saved = localStorage.getItem('sparky_mic_permission');
+    if (saved === 'granted') return 'granted';
+    if (saved === 'denied') return 'denied';
+    return 'prompt';
+  };
+
+  const [permissionState, setPermissionState] = useState<PermissionState>(getInitialState);
+  const [isPersistent, setIsPersistent] = useState(getInitialState() === 'granted');
   const streamRef = useRef<MediaStream | null>(null);
   const permissionStatusRef = useRef<PermissionStatus | null>(null);
 
-  // Verificar estado del permiso al montar
+  // Verificar estado del permiso al montar usando Permissions API (sin solicitar)
   useEffect(() => {
     const checkPermission = async () => {
       try {
-        // Usar Permissions API si está disponible
+        // Usar Permissions API si está disponible (esto NO solicita permiso, solo consulta)
         if ('permissions' in navigator) {
           const status = await navigator.permissions.query({ name: 'microphone' as PermissionName });
           permissionStatusRef.current = status;
-          setPermissionState(status.state as PermissionState);
-          setIsPersistent(status.state === 'granted');
+          
+          // Actualizar estado basado en la API del navegador
+          const browserState = status.state as PermissionState;
+          setPermissionState(browserState);
+          setIsPersistent(browserState === 'granted');
+          
+          // Sincronizar localStorage con el estado real del navegador
+          if (browserState === 'granted') {
+            localStorage.setItem('sparky_mic_permission', 'granted');
+          } else if (browserState === 'denied') {
+            localStorage.setItem('sparky_mic_permission', 'denied');
+          }
 
           // Escuchar cambios en el permiso
           status.onchange = () => {
-            setPermissionState(status.state as PermissionState);
-            setIsPersistent(status.state === 'granted');
+            const newState = status.state as PermissionState;
+            setPermissionState(newState);
+            setIsPersistent(newState === 'granted');
+            
+            // Sincronizar localStorage
+            if (newState === 'granted') {
+              localStorage.setItem('sparky_mic_permission', 'granted');
+            } else if (newState === 'denied') {
+              localStorage.setItem('sparky_mic_permission', 'denied');
+            } else {
+              localStorage.removeItem('sparky_mic_permission');
+            }
             
             // Si el permiso fue revocado, limpiar el stream
-            if (status.state === 'denied' && streamRef.current) {
+            if (newState === 'denied' && streamRef.current) {
               streamRef.current.getTracks().forEach(track => track.stop());
               streamRef.current = null;
             }
           };
-        } else {
-          // Fallback: intentar acceder al micrófono para verificar
-          setPermissionState('prompt');
         }
+        // Si Permissions API no está disponible, mantenemos el estado de localStorage
       } catch (error) {
-        console.log('Permissions API not fully supported, using fallback');
-        setPermissionState('prompt');
+        console.log('Permissions API not fully supported, using localStorage fallback');
+        // Mantener el estado inicial de localStorage
       }
     };
 
