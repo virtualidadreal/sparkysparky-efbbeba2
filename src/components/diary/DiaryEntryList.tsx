@@ -2,11 +2,12 @@ import { useDiaryEntries, useDeleteDiaryEntry } from '@/hooks/useDiaryEntries';
 import { DiaryEntryCard } from './DiaryEntryCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BookOpenIcon } from '@heroicons/react/24/outline';
-import type { DiaryEntriesFilters } from '@/types/DiaryEntry.types';
+import type { DiaryEntriesFilters, DiaryEntry } from '@/types/DiaryEntry.types';
 
 interface DiaryEntryListProps {
   filters?: DiaryEntriesFilters;
   onEdit?: (entryId: string) => void;
+  onView?: (entry: DiaryEntry) => void;
 }
 
 /**
@@ -16,11 +17,15 @@ interface DiaryEntryListProps {
  * - Grid responsive
  * - Loading state
  * - Empty state
- * - Acciones (editar, eliminar)
+ * - Acciones (ver, editar, eliminar)
  */
-export const DiaryEntryList = ({ filters, onEdit }: DiaryEntryListProps) => {
+export const DiaryEntryList = ({ filters, onEdit, onView }: DiaryEntryListProps) => {
   const { data: entries, isLoading, error } = useDiaryEntries(filters);
   const deleteEntry = useDeleteDiaryEntry();
+
+  const handleView = (entry: DiaryEntry) => {
+    onView?.(entry);
+  };
 
   const handleEdit = (entryId: string) => {
     onEdit?.(entryId);
@@ -98,6 +103,7 @@ export const DiaryEntryList = ({ filters, onEdit }: DiaryEntryListProps) => {
         <DiaryEntryCard 
           key={entry.id} 
           entry={entry}
+          onClick={() => handleView(entry)}
           onEdit={() => handleEdit(entry.id)}
           onDelete={() => handleDelete(entry.id)}
         />

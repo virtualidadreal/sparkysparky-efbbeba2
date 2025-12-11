@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout';
 import { Button, VoiceRecordButton } from '@/components/common';
-import { DiaryEntryList, DiaryEntryForm } from '@/components/diary';
+import { DiaryEntryList, DiaryEntryForm, DiaryEntryDetailModal } from '@/components/diary';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { useCreateDiaryEntry, useDiaryEntry } from '@/hooks/useDiaryEntries';
+import { useDiaryEntry, useDeleteDiaryEntry, useCreateDiaryEntry } from '@/hooks/useDiaryEntries';
 import { supabase } from '@/integrations/supabase/client';
-import type { DiaryEntriesFilters } from '@/types/DiaryEntry.types';
+import type { DiaryEntriesFilters, DiaryEntry } from '@/types/DiaryEntry.types';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 /**
  * Página Diary (Diario Personal)
@@ -17,12 +18,17 @@ const Diary = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showNewEntry, setShowNewEntry] = useState(false);
   const [newEntryContent, setNewEntryContent] = useState('');
+  const [isProcessingText, setIsProcessingText] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [viewingEntry, setViewingEntry] = useState<DiaryEntry | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   
-  const createEntry = useCreateDiaryEntry();
+  const queryClient = useQueryClient();
   const { data: editingEntry } = useDiaryEntry(editingEntryId || '');
+  const deleteEntry = useDeleteDiaryEntry();
+  const createEntry = useCreateDiaryEntry();
 
   // Construir filtros
   const filters: DiaryEntriesFilters = {
@@ -31,19 +37,29 @@ const Diary = () => {
   };
 
   /**
-   * Manejar creación de entrada de texto
+   * Manejar creación de entrada de texto - usa process-text-capture para enriquecer con IA
    */
   const handleSubmitTextEntry = async () => {
     if (!newEntryContent.trim()) return;
 
+    setIsProcessingText(true);
     try {
-      await createEntry.mutateAsync({
-        content: newEntryContent.trim(),
+      // Usamos process-text-capture que clasifica y enriquece el contenido
+      const { data, error } = await supabase.functions.invoke('process-text-capture', {
+        body: { text: `Diario: ${newEntryContent.trim()}` },
       });
+
+      if (error) throw error;
+
+      toast.success('Entrada guardada y procesada');
       setNewEntryContent('');
       setShowNewEntry(false);
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['diary-entries'] });
+    } catch (error: any) {
       console.error('Error creating diary entry:', error);
+      toast.error(error.message || 'Error al guardar la entrada');
+    } finally {
+      setIsProcessingText(false);
     }
   };
 
@@ -117,6 +133,11 @@ const Diary = () => {
     }
   };
 
+  const handleViewEntry = (entry: DiaryEntry) => {
+    setViewingEntry(entry);
+    setIsDetailOpen(true);
+  };
+
   const handleEditEntry = (entryId: string) => {
     setEditingEntryId(entryId);
     setIsFormOpen(true);
@@ -125,6 +146,26 @@ const Diary = () => {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingEntryId(null);
+  };
+
+  const handleDeleteFromDetail = async () => {
+    if (viewingEntry) {
+      try {
+        await deleteEntry.mutateAsync(viewingEntry.id);
+        setIsDetailOpen(false);
+        setViewingEntry(null);
+      } catch (error) {
+        // Error ya manejado en el hook
+      }
+    }
+  };
+
+  const handleEditFromDetail = () => {
+    if (viewingEntry) {
+      setIsDetailOpen(false);
+      setEditingEntryId(viewingEntry.id);
+      setIsFormOpen(true);
+    }
   };
 
   return (
@@ -142,13 +183,13 @@ const Diary = () => {
           <div className="flex gap-2">
             <VoiceRecordButton
               onRecordingComplete={handleRecordingComplete}
-              disabled={isProcessingAudio || createEntry.isPending}
+              disabled={isProcessingAudio || isProcessingText}
             />
             <Button
               variant="primary"
               icon={<PlusIcon className="h-5 w-5" />}
               onClick={() => setShowNewEntry(true)}
-              disabled={createEntry.isPending}
+              disabled={isProcessingText}
             >
               Nueva entrada
             </Button>
@@ -178,8 +219,8 @@ const Diary = () => {
               <Button
                 variant="primary"
                 onClick={handleSubmitTextEntry}
-                disabled={!newEntryContent.trim() || createEntry.isPending}
-                loading={createEntry.isPending}
+                disabled={!newEntryContent.trim() || isProcessingText}
+                loading={isProcessingText}
               >
                 Guardar
               </Button>
@@ -240,12 +281,27 @@ const Diary = () => {
         </div>
       </div>
 
-      <DiaryEntryList filters={filters} onEdit={handleEditEntry} />
+      <DiaryEntryList 
+        filters={filters} 
+        onEdit={handleEditEntry}
+        onView={handleViewEntry}
+      />
 
       <DiaryEntryForm
         isOpen={isFormOpen}
         onClose={handleCloseForm}
         entry={editingEntry}
+      />
+
+      <DiaryEntryDetailModal
+        isOpen={isDetailOpen}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setViewingEntry(null);
+        }}
+        entry={viewingEntry}
+        onEdit={handleEditFromDetail}
+        onDelete={handleDeleteFromDetail}
       />
     </DashboardLayout>
   );
