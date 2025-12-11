@@ -260,13 +260,21 @@ serve(async (req) => {
 
     // Fallback prompt if not found in DB
     const systemPrompt = promptData?.prompt || `Eres un asistente que analiza transcripciones de notas de voz.
+Primero determina el tipo de contenido:
+- "diary": reflexiones personales, cómo me siento, mi día, emociones
+- "task": cosas que hacer, pendientes, recordatorios
+- "idea": proyectos, negocios, conceptos creativos
+- "person": información sobre alguien
+
 Responde SOLO con un JSON válido:
 {
+  "content_type": "idea|diary|task|person",
   "title": "título breve (máx 50 chars)",
   "summary": "resumen (máx 200 chars)",
   "category": "personal|trabajo|proyecto|aprendizaje|salud|finanzas|relaciones|creatividad|general",
   "priority": "low|medium|high",
   "sentiment": "positive|neutral|negative",
+  "mood": "great|good|neutral|bad|terrible",
   "detected_emotions": [],
   "related_people": [],
   "suggested_improvements": [],
@@ -313,34 +321,75 @@ Responde SOLO con un JSON válido:
     
     console.log('AI response received:', aiContent.substring(0, 100));
 
+    // Map mood to valid database values
+    function mapMoodToValid(mood: string | undefined): string {
+      const validMoods = ['great', 'good', 'neutral', 'bad', 'terrible'];
+      if (mood && validMoods.includes(mood)) return mood;
+      const moodMap: Record<string, string> = {
+        'happy': 'great', 'excited': 'great', 'grateful': 'great',
+        'calm': 'good', 'sad': 'bad', 'anxious': 'bad', 'angry': 'terrible',
+      };
+      return moodMap[mood || ''] || 'neutral';
+    }
+
     // Parse AI response
     let parsedData;
     try {
       let cleanContent = aiContent.trim();
-      if (cleanContent.startsWith('```json')) {
-        cleanContent = cleanContent.slice(7);
-      }
-      if (cleanContent.startsWith('```')) {
-        cleanContent = cleanContent.slice(3);
-      }
-      if (cleanContent.endsWith('```')) {
-        cleanContent = cleanContent.slice(0, -3);
-      }
+      if (cleanContent.startsWith('```json')) cleanContent = cleanContent.slice(7);
+      if (cleanContent.startsWith('```')) cleanContent = cleanContent.slice(3);
+      if (cleanContent.endsWith('```')) cleanContent = cleanContent.slice(0, -3);
       parsedData = JSON.parse(cleanContent.trim());
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       parsedData = {
+        content_type: 'idea',
         title: transcription.substring(0, 50),
         summary: transcription.substring(0, 200),
         category: 'general',
         priority: 'medium',
         sentiment: 'neutral',
+        mood: 'neutral',
         detected_emotions: [],
         related_people: [],
         suggested_improvements: [],
         next_steps: [],
         tags: ['voz']
       };
+    }
+
+    const contentType = parsedData.content_type || 'idea';
+    console.log('Classified voice content as:', contentType);
+
+    // Handle based on content type
+    if (contentType === 'diary') {
+      // Create diary entry instead of idea
+      const { data: diaryEntry, error: diaryError } = await supabase
+        .from('diary_entries')
+        .insert({
+          user_id: authenticatedUserId,
+          title: parsedData.title || `Entrada del ${new Date().toLocaleDateString('es-ES')}`,
+          content: transcription,
+          mood: mapMoodToValid(parsedData.mood),
+          entry_date: new Date().toISOString().split('T')[0],
+        })
+        .select()
+        .single();
+
+      if (diaryError) {
+        console.error('Diary insert error:', diaryError);
+        throw new Error('Failed to create diary entry');
+      }
+
+      // Delete the placeholder idea
+      await supabase.from('ideas').delete().eq('id', ideaId);
+
+      console.log('Voice diary entry created:', diaryEntry.id);
+
+      return new Response(
+        JSON.stringify({ success: true, type: 'diary', entry: diaryEntry, transcription }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Update the existing idea with transcription and analysis
@@ -376,7 +425,7 @@ Responde SOLO con un JSON válido:
     console.log('Voice idea processed successfully:', updatedIdea.id);
 
     return new Response(
-      JSON.stringify({ success: true, idea: updatedIdea, transcription }),
+      JSON.stringify({ success: true, type: 'idea', idea: updatedIdea, transcription }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
