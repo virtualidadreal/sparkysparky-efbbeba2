@@ -508,6 +508,114 @@ Clasifica el texto como: idea, task, diary, o person.`;
         if (ideaError) throw ideaError;
         savedRecord = idea;
         console.log('Idea saved successfully:', idea.id, 'Project:', matchedProjectId);
+        
+        // === PROJECT SUGGESTION LOGIC ===
+        // Check for related ideas and suggest creating a project
+        let projectSuggestion = null;
+        
+        if (!matchedProjectId && ideaTags.length > 0) {
+          // Get other ideas with similar tags
+          const { data: relatedIdeas } = await supabase
+            .from('ideas')
+            .select('id, title, tags, created_at')
+            .eq('user_id', userId)
+            .neq('id', idea.id)
+            .is('project_id', null)
+            .order('created_at', { ascending: false })
+            .limit(50);
+          
+          if (relatedIdeas && relatedIdeas.length > 0) {
+            // Find ideas with matching tags
+            const matchingIdeas = relatedIdeas.filter((relatedIdea: any) => {
+              const relatedTags = (relatedIdea.tags || []).map((t: string) => t.toLowerCase());
+              return ideaTags.some((tag: string) => relatedTags.includes(tag.toLowerCase()));
+            });
+            
+            if (matchingIdeas.length >= 1) { // 2+ ideas total (including current one)
+              // Determine topic from most common tag
+              const tagCounts: Record<string, number> = {};
+              for (const tag of ideaTags) {
+                tagCounts[tag.toLowerCase()] = (tagCounts[tag.toLowerCase()] || 0) + 1;
+              }
+              for (const relatedIdea of matchingIdeas) {
+                for (const tag of (relatedIdea.tags || [])) {
+                  tagCounts[tag.toLowerCase()] = (tagCounts[tag.toLowerCase()] || 0) + 1;
+                }
+              }
+              
+              const topTopic = Object.entries(tagCounts)
+                .sort((a, b) => b[1] - a[1])[0]?.[0] || ideaTags[0]?.toLowerCase() || 'general';
+              
+              // Check if we already have a suggestion for this topic
+              const { data: existingSuggestion } = await supabase
+                .from('project_suggestions')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('topic', topTopic)
+                .single();
+              
+              if (existingSuggestion) {
+                // Update existing suggestion
+                if (existingSuggestion.status !== 'dismissed_forever' && existingSuggestion.status !== 'accepted') {
+                  const newIdeaIds = [...new Set([...existingSuggestion.idea_ids, idea.id, ...matchingIdeas.map((i: any) => i.id)])];
+                  const newCount = existingSuggestion.suggestion_count + 1;
+                  
+                  await supabase
+                    .from('project_suggestions')
+                    .update({ 
+                      idea_ids: newIdeaIds,
+                      suggestion_count: newCount,
+                      status: 'pending'
+                    })
+                    .eq('id', existingSuggestion.id);
+                  
+                  // Only show suggestion if not dismissed forever and we have 2+ ideas
+                  if (newIdeaIds.length >= 2) {
+                    projectSuggestion = {
+                      id: existingSuggestion.id,
+                      topic: topTopic,
+                      ideaCount: newIdeaIds.length,
+                      suggestionCount: newCount,
+                      canDismissForever: newCount >= 3
+                    };
+                  }
+                }
+              } else {
+                // Create new suggestion
+                const allIdeaIds = [idea.id, ...matchingIdeas.map((i: any) => i.id)];
+                
+                if (allIdeaIds.length >= 2) {
+                  const { data: newSuggestion } = await supabase
+                    .from('project_suggestions')
+                    .insert({
+                      user_id: userId,
+                      topic: topTopic,
+                      idea_ids: allIdeaIds,
+                      suggestion_count: 1,
+                      status: 'pending'
+                    })
+                    .select()
+                    .single();
+                  
+                  if (newSuggestion) {
+                    projectSuggestion = {
+                      id: newSuggestion.id,
+                      topic: topTopic,
+                      ideaCount: allIdeaIds.length,
+                      suggestionCount: 1,
+                      canDismissForever: false
+                    };
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        // Store project suggestion in savedRecord for response
+        if (projectSuggestion) {
+          savedRecord.projectSuggestion = projectSuggestion;
+        }
         break;
     }
 
@@ -521,7 +629,8 @@ Clasifica el texto como: idea, task, diary, o person.`;
         confidence: classification.confidence,
         record: savedRecord,
         table: tableName,
-        matchedProjectId
+        matchedProjectId,
+        projectSuggestion: savedRecord?.projectSuggestion || null
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

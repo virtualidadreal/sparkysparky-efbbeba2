@@ -10,8 +10,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ProjectSuggestionModal } from '@/components/projects/ProjectSuggestionModal';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
+
+interface ProjectSuggestion {
+  id: string;
+  topic: string;
+  ideaCount: number;
+  suggestionCount: number;
+  canDismissForever: boolean;
+}
 
 interface QuickCapturePopupProps {
   trigger?: React.ReactNode;
@@ -27,6 +36,7 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
   const [content, setContent] = useState('');
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isProcessingText, setIsProcessingText] = useState(false);
+  const [projectSuggestion, setProjectSuggestion] = useState<ProjectSuggestion | null>(null);
   const queryClient = useQueryClient();
 
   /**
@@ -70,6 +80,11 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
       
       setContent('');
       setIsOpen(false);
+      
+      // Check for project suggestion
+      if (data?.projectSuggestion) {
+        setProjectSuggestion(data.projectSuggestion);
+      }
       
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -204,107 +219,114 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </DialogTrigger>
-      <DialogContent 
-        className="max-w-none w-[95vw] md:w-[500px] p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-xl"
-        hideCloseButton
-      >
-        <DialogTitle className="sr-only">Captura rápida</DialogTitle>
-          
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <LightBulbIcon className="h-4 w-4 text-primary" />
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          {trigger || defaultTrigger}
+        </DialogTrigger>
+        <DialogContent 
+          className="max-w-none w-[95vw] md:w-[500px] p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-xl"
+          hideCloseButton
+        >
+          <DialogTitle className="sr-only">Captura rápida</DialogTitle>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <LightBulbIcon className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-medium text-sm">¿Qué tienes en mente?</h2>
+                  <p className="text-[10px] text-muted-foreground">
+                    Sparky clasificará automáticamente
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-medium text-sm">¿Qué tienes en mente?</h2>
-                <p className="text-[10px] text-muted-foreground">
-                  Sparky clasificará automáticamente
-                </p>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(false)}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(false)}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              <XMarkIcon className="h-4 w-4" />
-            </Button>
-          </div>
 
-          {/* Content */}
-          <form onSubmit={handleSubmit} className="p-5">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Escribe una idea, tarea, nota de diario..."
-              rows={5}
-              disabled={isLoading}
-              autoFocus
-              className={clsx(
-                'w-full px-4 py-3 border border-border rounded-xl resize-none bg-muted/30',
-                'text-foreground placeholder-muted-foreground',
-                'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
-                'transition-all duration-200',
-                'disabled:opacity-50 disabled:cursor-not-allowed'
-              )}
-            />
-
-            {/* Actions */}
-            <div className="flex items-center justify-between mt-4">
-              <div className="flex items-center gap-2">
-                {isProcessingAudio ? (
-                  <span className="text-xs text-primary font-medium animate-pulse">
-                    Procesando audio...
-                  </span>
-                ) : isProcessingText ? (
-                  <span className="text-xs text-primary font-medium animate-pulse">
-                    Analizando...
-                  </span>
-                ) : content.length > 0 ? (
-                  <span className="text-xs text-muted-foreground">
-                    {content.length} caracteres
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">
-                    <kbd className="px-1.5 py-0.5 bg-muted rounded border border-border text-[10px]">⌘</kbd> + <kbd className="px-1.5 py-0.5 bg-muted rounded border border-border text-[10px]">↵</kbd> para guardar
-                  </span>
+            {/* Content */}
+            <form onSubmit={handleSubmit} className="p-5">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Escribe una idea, tarea, nota de diario..."
+                rows={5}
+                disabled={isLoading}
+                autoFocus
+                className={clsx(
+                  'w-full px-4 py-3 border border-border rounded-xl resize-none bg-muted/30',
+                  'text-foreground placeholder-muted-foreground',
+                  'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
+                  'transition-all duration-200',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
-              </div>
+              />
 
-              <div className="flex items-center gap-2">
-                <VoiceRecordButton
-                  onRecordingComplete={handleRecordingComplete}
-                  disabled={isLoading}
-                />
-
-                <Button
-                  type="submit"
-                  disabled={isDisabled}
-                  className="gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <span className="animate-spin">⏳</span>
-                      Procesando...
-                    </>
+              {/* Actions */}
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center gap-2">
+                  {isProcessingAudio ? (
+                    <span className="text-xs text-primary font-medium animate-pulse">
+                      Procesando audio...
+                    </span>
+                  ) : isProcessingText ? (
+                    <span className="text-xs text-primary font-medium animate-pulse">
+                      Analizando...
+                    </span>
+                  ) : content.length > 0 ? (
+                    <span className="text-xs text-muted-foreground">
+                      {content.length} caracteres
+                    </span>
                   ) : (
-                    <>
-                      <PaperAirplaneIcon className="h-4 w-4" />
-                      Guardar
-                    </>
+                    <span className="text-xs text-muted-foreground">
+                      <kbd className="px-1.5 py-0.5 bg-muted rounded border border-border text-[10px]">⌘</kbd> + <kbd className="px-1.5 py-0.5 bg-muted rounded border border-border text-[10px]">↵</kbd> para guardar
+                    </span>
                   )}
-                </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <VoiceRecordButton
+                    onRecordingComplete={handleRecordingComplete}
+                    disabled={isLoading}
+                  />
+
+                  <Button
+                    type="submit"
+                    disabled={isDisabled}
+                    className="gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="animate-spin">⏳</span>
+                        Procesando...
+                      </>
+                    ) : (
+                      <>
+                        <PaperAirplaneIcon className="h-4 w-4" />
+                        Guardar
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <ProjectSuggestionModal
+          suggestion={projectSuggestion}
+          onClose={() => setProjectSuggestion(null)}
+        />
+    </>
   );
 };
