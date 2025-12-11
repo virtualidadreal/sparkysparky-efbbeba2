@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useAudioPermission } from './useAudioPermission';
 
 /**
  * Interfaz del hook useRecordVoice
@@ -10,6 +11,10 @@ export interface UseRecordVoice {
   stopRecording: () => Promise<Blob | null>;
   cancelRecording: () => void;
   error: string | null;
+  // Nuevas propiedades para gestión de permisos
+  permissionState: 'prompt' | 'granted' | 'denied' | 'checking';
+  hasPermission: boolean;
+  requestPermission: () => Promise<boolean>;
 }
 
 /**
@@ -18,28 +23,37 @@ export interface UseRecordVoice {
  * Maneja la grabación de audio usando Web Audio API:
  * - Duración máxima: 5 minutos (300 segundos)
  * - Formato: audio/webm
- * - Manejo de errores de permisos y micrófono
+ * - Gestión persistente de permisos de micrófono
+ * - Reutilización del stream para evitar solicitudes repetidas
  */
 export const useRecordVoice = (): UseRecordVoice => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  const { 
+    permissionState, 
+    hasPermission, 
+    requestPermission, 
+    getStream 
+  } = useAudioPermission();
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const activeStreamRef = useRef<MediaStream | null>(null);
 
   const MAX_DURATION = 300; // 5 minutos en segundos
 
-  // Limpiar timer al desmontar
+  // Limpiar timer al desmontar (pero NO el stream global)
   useEffect(() => {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+      // Solo detenemos el MediaRecorder, no el stream global
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
       }
     };
   }, []);
@@ -53,16 +67,15 @@ export const useRecordVoice = (): UseRecordVoice => {
       audioChunksRef.current = [];
       setRecordingTime(0);
 
-      // Solicitar acceso al micrófono
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100,
-        } 
-      });
+      // Obtener stream (reutiliza el existente si está disponible)
+      const stream = await getStream();
+      
+      if (!stream) {
+        setError('No se pudo acceder al micrófono. Por favor permite el acceso.');
+        return;
+      }
 
-      streamRef.current = stream;
+      activeStreamRef.current = stream;
 
       // Crear MediaRecorder
       const mimeType = MediaRecorder.isTypeSupported('audio/webm')
@@ -101,17 +114,18 @@ export const useRecordVoice = (): UseRecordVoice => {
       console.error('Error al iniciar grabación:', err);
       
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setError('Permiso denegado para acceder al micrófono. Por favor permite el acceso.');
+        setError('Permiso denegado para acceder al micrófono. Por favor permite el acceso en la configuración de tu navegador.');
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         setError('No se encontró ningún micrófono. Por favor conecta un micrófono.');
       } else {
         setError('Error al iniciar la grabación. Por favor intenta de nuevo.');
       }
     }
-  }, []);
+  }, [getStream]);
 
   /**
    * Detener grabación y retornar Blob de audio
+   * NOTA: No detenemos el stream para poder reutilizarlo
    */
   const stopRecording = useCallback(async (): Promise<Blob | null> => {
     return new Promise((resolve) => {
@@ -127,16 +141,14 @@ export const useRecordVoice = (): UseRecordVoice => {
           type: mediaRecorder.mimeType 
         });
         
-        // Limpiar
+        // Limpiar timer
         if (timerRef.current) {
           clearInterval(timerRef.current);
           timerRef.current = null;
         }
         
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
+        // NO detenemos el stream aquí para poder reutilizarlo
+        // El stream se mantiene activo para evitar nuevas solicitudes de permiso
 
         setIsRecording(false);
         audioChunksRef.current = [];
@@ -161,10 +173,7 @@ export const useRecordVoice = (): UseRecordVoice => {
       timerRef.current = null;
     }
 
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
+    // NO detenemos el stream aquí tampoco
 
     setIsRecording(false);
     setRecordingTime(0);
@@ -178,5 +187,8 @@ export const useRecordVoice = (): UseRecordVoice => {
     stopRecording,
     cancelRecording,
     error,
+    permissionState,
+    hasPermission,
+    requestPermission,
   };
 };

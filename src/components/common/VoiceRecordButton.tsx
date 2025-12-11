@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { MicrophoneIcon, StopIcon } from '@heroicons/react/24/solid';
+import { ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useRecordVoice } from '@/hooks/useRecordVoice';
 import toast from 'react-hot-toast';
+import clsx from 'clsx';
 
 /**
  * Props del componente VoiceRecordButton
@@ -10,6 +12,7 @@ export interface VoiceRecordButtonProps {
   onRecordingComplete: (audioBlob: Blob) => void;
   onError?: (error: string) => void;
   disabled?: boolean;
+  showPermissionStatus?: boolean;
 }
 
 /**
@@ -19,11 +22,13 @@ export interface VoiceRecordButtonProps {
  * - Idle: Botón con icono de micrófono
  * - Grabando: Botón rojo pulsante + timer
  * - Procesando: Loading spinner (manejado por padre)
+ * - Estado de permiso visible
  */
 export const VoiceRecordButton = ({ 
   onRecordingComplete, 
   onError,
-  disabled = false
+  disabled = false,
+  showPermissionStatus = false,
 }: VoiceRecordButtonProps) => {
   const {
     isRecording,
@@ -31,6 +36,9 @@ export const VoiceRecordButton = ({
     startRecording,
     stopRecording,
     error,
+    permissionState,
+    hasPermission,
+    requestPermission,
   } = useRecordVoice();
 
   // Manejar errores
@@ -57,34 +65,86 @@ export const VoiceRecordButton = ({
         onRecordingComplete(audioBlob);
       }
     } else {
+      // Si no tiene permiso, solicitar primero
+      if (permissionState === 'denied') {
+        toast.error('El acceso al micrófono está bloqueado. Haz clic en el icono de candado en la barra de direcciones para permitirlo.');
+        return;
+      }
+      
       // Iniciar grabación
       await startRecording();
     }
   };
 
+  // Solicitar permiso al primer uso
+  const handleRequestPermission = async () => {
+    const granted = await requestPermission();
+    if (granted) {
+      toast.success('¡Permiso concedido! Ya puedes grabar audio.');
+    } else {
+      toast.error('Permiso denegado. Puedes cambiarlo en la configuración del navegador.');
+    }
+  };
+
   return (
     <div className="flex items-center gap-3">
+      {/* Botón de permiso si está en estado 'prompt' y showPermissionStatus */}
+      {showPermissionStatus && permissionState === 'prompt' && !isRecording && (
+        <button
+          type="button"
+          onClick={handleRequestPermission}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors dark:bg-amber-900/30 dark:text-amber-400"
+        >
+          <ExclamationTriangleIcon className="h-4 w-4" />
+          Permitir micrófono
+        </button>
+      )}
+
+      {/* Indicador de permiso concedido */}
+      {showPermissionStatus && hasPermission && !isRecording && (
+        <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+          <CheckCircleIcon className="h-4 w-4" />
+          <span>Micrófono listo</span>
+        </div>
+      )}
+
+      {/* Botón principal */}
       <button
         type="button"
         onClick={handleClick}
-        disabled={disabled}
-        className={`
-          relative flex items-center justify-center
-          w-12 h-12 rounded-full
-          transition-all duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed
-          ${isRecording 
+        disabled={disabled || permissionState === 'checking'}
+        className={clsx(
+          'relative flex items-center justify-center',
+          'w-12 h-12 rounded-full',
+          'transition-all duration-200',
+          'disabled:opacity-50 disabled:cursor-not-allowed',
+          isRecording 
             ? 'bg-red-500 hover:bg-red-600 animate-pulse shadow-lg shadow-red-500/50' 
-            : 'bg-primary hover:bg-primary/90 shadow-md'
-          }
-        `}
-        title={isRecording ? 'Detener grabación' : 'Grabar audio'}
+            : permissionState === 'denied'
+              ? 'bg-muted text-muted-foreground cursor-not-allowed'
+              : 'bg-primary hover:bg-primary/90 shadow-md'
+        )}
+        title={
+          permissionState === 'denied' 
+            ? 'Micrófono bloqueado' 
+            : isRecording 
+              ? 'Detener grabación' 
+              : 'Grabar audio'
+        }
         aria-label={isRecording ? 'Detener grabación de audio' : 'Iniciar grabación de audio'}
       >
         {isRecording ? (
           <StopIcon className="h-6 w-6 text-white" />
         ) : (
-          <MicrophoneIcon className="h-6 w-6 text-white" />
+          <MicrophoneIcon className={clsx(
+            'h-6 w-6',
+            permissionState === 'denied' ? 'text-muted-foreground' : 'text-white'
+          )} />
+        )}
+        
+        {/* Indicador de estado del micrófono */}
+        {hasPermission && !isRecording && (
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" />
         )}
       </button>
 
@@ -92,12 +152,19 @@ export const VoiceRecordButton = ({
       {isRecording && (
         <div className="flex items-center gap-2 animate-fade-in">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-sm font-mono text-gray-700 font-medium">
+          <span className="text-sm font-mono text-foreground font-medium">
             {formatTime(recordingTime)}
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted-foreground">
             (máx 5:00)
           </span>
+        </div>
+      )}
+
+      {/* Mensaje de error si el permiso está denegado */}
+      {permissionState === 'denied' && !isRecording && (
+        <div className="text-xs text-red-500 dark:text-red-400 max-w-[200px]">
+          Micrófono bloqueado. Haz clic en el candado 🔒 de la barra de direcciones.
         </div>
       )}
     </div>
