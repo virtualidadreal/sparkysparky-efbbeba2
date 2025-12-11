@@ -11,9 +11,12 @@ import {
   ShieldCheckIcon,
   CpuChipIcon,
   PresentationChartLineIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { SparkyChat } from '@/components/chat/SparkyChat';
+import { Button } from '@/components/ui/button';
 
 /**
  * Props del componente Sidebar
@@ -138,8 +141,22 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           )}
         </nav>
 
+        {/* Sparky Chat Button */}
+        <div className="px-4 py-3 border-t border-border">
+          <SparkyChat
+            trigger={
+              <Button
+                className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+              >
+                <SparklesIcon className="h-5 w-5" />
+                Hablar con Sparky
+              </Button>
+            }
+          />
+        </div>
+
         {/* Footer del sidebar */}
-        <div className="px-4 py-4 border-t border-border">
+        <div className="px-4 py-2 border-t border-border">
           <p className="text-xs text-muted-foreground text-center">
             Sparky v1.0
           </p>

@@ -264,6 +264,18 @@ export const useUpdateAdminSetting = () => {
  * Categorías de prompts predefinidas
  */
 export const PROMPT_CATEGORIES = {
+  sparky: {
+    name: 'Cerebros de Sparky',
+    icon: 'SparklesIcon',
+    description: 'Personalidades del asistente de chat',
+    prompts: [
+      { key: 'sparky_brain_organizer', name: 'Cerebro Organizador', description: 'Productividad, tareas y gestión del tiempo' },
+      { key: 'sparky_brain_mentor', name: 'Cerebro Mentor', description: 'Guía personal, reflexión y desarrollo' },
+      { key: 'sparky_brain_creative', name: 'Cerebro Creativo', description: 'Brainstorming, innovación y exploración' },
+      { key: 'sparky_brain_business', name: 'Cerebro Empresarial', description: 'Estrategia de negocio y emprendimiento' },
+      { key: 'sparky_brain_selector', name: 'Selector de Cerebro', description: 'Clasifica qué cerebro usar según el mensaje' },
+    ],
+  },
   capture: {
     name: 'Captura',
     icon: 'DocumentTextIcon',
