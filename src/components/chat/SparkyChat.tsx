@@ -216,7 +216,7 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
       
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent 
-          className="max-w-none w-[90vw] md:w-[70vw] h-[80vh] p-0 gap-0 rounded-3xl border-0 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-xl"
+          className="max-w-none w-[95vw] h-[95vh] md:w-[70vw] md:h-[80vh] p-0 gap-0 rounded-3xl border-0 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-xl"
           hideCloseButton
         >
           <DialogTitle className="sr-only">Chat con Sparky</DialogTitle>
