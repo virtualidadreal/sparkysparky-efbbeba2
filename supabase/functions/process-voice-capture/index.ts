@@ -432,7 +432,37 @@ serve(async (req) => {
       );
     }
 
-    // Update the existing idea with transcription and analysis
+    if (contentType === 'task') {
+      // Create task instead of idea
+      const { data: task, error: taskError } = await supabase
+        .from('tasks')
+        .insert({
+          user_id: authenticatedUserId,
+          title: parsedData.title || transcription.substring(0, 100),
+          description: transcription,
+          priority: parsedData.priority || 'medium',
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (taskError) {
+        console.error('Task insert error:', taskError);
+        throw new Error('Failed to create task');
+      }
+
+      // Delete the placeholder idea
+      await supabase.from('ideas').delete().eq('id', ideaId);
+
+      console.log('Voice task created:', task.id);
+
+      return new Response(
+        JSON.stringify({ success: true, type: 'task', task, transcription }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Update the existing idea with transcription and analysis (for type 'idea' or 'person')
     const { data: updatedIdea, error: updateError } = await supabase
       .from('ideas')
       .update({
