@@ -31,12 +31,22 @@ export interface AdminSetting {
  * Modelos de IA disponibles
  */
 export const AI_MODELS = [
+  // Gemini models
   { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Rápido y económico (recomendado)' },
   { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite', description: 'Más rápido, menos preciso' },
   { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Más potente, más lento' },
+  { value: 'google/gemini-3-pro-preview', label: 'Gemini 3 Pro Preview', description: 'Próxima generación (beta)' },
+  // GPT-5 models
   { value: 'openai/gpt-5', label: 'GPT-5', description: 'Muy potente pero costoso' },
   { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini', description: 'Balance potencia/costo' },
   { value: 'openai/gpt-5-nano', label: 'GPT-5 Nano', description: 'Rápido y económico' },
+  // GPT-4.1 models
+  { value: 'openai/gpt-4.1', label: 'GPT-4.1', description: 'Flagship GPT-4, fiable y potente' },
+  { value: 'openai/gpt-4.1-mini', label: 'GPT-4.1 Mini', description: 'Versión ligera de GPT-4.1' },
+  { value: 'openai/gpt-4.1-nano', label: 'GPT-4.1 Nano', description: 'Muy rápido y económico' },
+  // Reasoning models
+  { value: 'openai/o3', label: 'O3', description: 'Razonamiento multi-paso avanzado' },
+  { value: 'openai/o4-mini', label: 'O4 Mini', description: 'Razonamiento rápido' },
 ];
 
 /**
