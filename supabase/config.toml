@@ -1,10 +1,10 @@
 project_id = "osupgbsaashqhspbuafb"
 
 [functions.process-text-capture]
-verify_jwt = false
+verify_jwt = true
 
 [functions.process-voice-capture]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-summary]
 verify_jwt = false

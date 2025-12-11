@@ -9,7 +9,6 @@ const corsHeaders = {
 // Input validation constants
 const MAX_TEXT_LENGTH = 10000;
 const MIN_TEXT_LENGTH = 1;
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Validation functions
 function validateTextInput(text: unknown): { valid: boolean; error?: string; sanitized?: string } {
@@ -28,18 +27,6 @@ function validateTextInput(text: unknown): { valid: boolean; error?: string; san
   }
   
   return { valid: true, sanitized: trimmed };
-}
-
-function validateUserId(userId: unknown): { valid: boolean; error?: string } {
-  if (typeof userId !== 'string') {
-    return { valid: false, error: 'userId must be a string' };
-  }
-  
-  if (!UUID_REGEX.test(userId)) {
-    return { valid: false, error: 'userId must be a valid UUID' };
-  }
-  
-  return { valid: true };
 }
 
 type ContentType = 'idea' | 'task' | 'diary' | 'person';
@@ -105,6 +92,35 @@ serve(async (req) => {
   }
 
   try {
+    // SECURITY: Require authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create authenticated client to get user
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get authenticated user from JWT
+    const { data: { user }, error: userError } = await authClient.auth.getUser();
+    if (userError || !user) {
+      console.error('Authentication failed:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = user.id;
+    console.log('Authenticated user:', userId);
+
     // Parse request body with size check
     let requestBody;
     try {
@@ -123,16 +139,8 @@ serve(async (req) => {
       );
     }
 
-    const { text, userId } = requestBody;
-
-    // Validate userId
-    const userIdValidation = validateUserId(userId);
-    if (!userIdValidation.valid) {
-      return new Response(
-        JSON.stringify({ error: userIdValidation.error }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Only accept text from request body (userId comes from JWT)
+    const { text } = requestBody;
 
     // Validate and sanitize text input
     const textValidation = validateTextInput(text);
@@ -150,12 +158,11 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    // Initialize Supabase client with service role for database operations
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Processing and classifying text for user:', userId);
+    console.log('Processing and classifying text for authenticated user:', userId);
 
     // Get the system prompt from database
     const { data: promptData, error: promptError } = await supabase

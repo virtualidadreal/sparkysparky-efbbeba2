@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, SparklesIcon, LightBulbIcon, FolderIcon, LinkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/common/Badge';
@@ -7,6 +7,7 @@ import type { Idea } from '@/types/Idea.types';
 import { useRelatedIdeas, useIdeaProject } from '@/hooks/useRelatedIdeas';
 import { ConvertToTaskModal } from './ConvertToTaskModal';
 import { ConnectionsPanel } from './ConnectionsPanel';
+import { supabase } from '@/integrations/supabase/client';
 
 interface IdeaPreviewModalProps {
   isOpen: boolean;
@@ -21,6 +22,36 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
   const { data: relatedIdeas } = useRelatedIdeas(idea.id, idea.tags || []);
   const { data: linkedProject } = useIdeaProject(idea.project_id);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+  const [signedAudioUrl, setSignedAudioUrl] = useState<string | null>(null);
+
+  // Generate signed URL for audio on demand
+  useEffect(() => {
+    const generateSignedUrl = async () => {
+      if (idea.audio_url && isOpen) {
+        // Check if it's already a full URL (legacy data) or a file path
+        if (idea.audio_url.startsWith('http')) {
+          // Legacy public URL - use as is (will fail if bucket is now private)
+          setSignedAudioUrl(idea.audio_url);
+        } else {
+          // New file path format - generate signed URL
+          const { data, error } = await supabase.storage
+            .from('audio-recordings')
+            .createSignedUrl(idea.audio_url, 3600); // 1 hour expiry
+          
+          if (data && !error) {
+            setSignedAudioUrl(data.signedUrl);
+          } else {
+            console.error('Error generating signed URL:', error);
+            setSignedAudioUrl(null);
+          }
+        }
+      } else {
+        setSignedAudioUrl(null);
+      }
+    };
+
+    generateSignedUrl();
+  }, [idea.audio_url, isOpen]);
 
   const sentimentColors = {
     positive: 'success',
@@ -289,14 +320,14 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                       )}
 
                       {/* Audio */}
-                      {idea.audio_url && (
+                      {idea.audio_url && signedAudioUrl && (
                         <div>
                           <h3 className="text-sm font-semibold text-foreground mb-2">
                             Audio original
                           </h3>
                           <audio
                             controls
-                            src={idea.audio_url}
+                            src={signedAudioUrl}
                             className="w-full"
                           >
                             Tu navegador no soporta el elemento de audio.

@@ -102,6 +102,35 @@ serve(async (req) => {
   }
 
   try {
+    // SECURITY: Require authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create authenticated client to get user
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get authenticated user from JWT
+    const { data: { user }, error: userError } = await authClient.auth.getUser();
+    if (userError || !user) {
+      console.error('Authentication failed:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = user.id;
+    console.log('Authenticated user:', userId);
+
     // Parse and validate request body
     let requestBody;
     try {
@@ -120,16 +149,8 @@ serve(async (req) => {
       );
     }
 
-    const { query, userId, mode, itemId, itemType } = requestBody;
-
-    // Validate userId (required)
-    const userIdValidation = validateUUID(userId, 'userId');
-    if (!userIdValidation.valid) {
-      return new Response(
-        JSON.stringify({ error: userIdValidation.error }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Only accept query params (userId comes from JWT now)
+    const { query, mode, itemId, itemType } = requestBody;
 
     // Validate mode
     const modeValidation = validateMode(mode);
@@ -171,11 +192,11 @@ serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    // Use service role for database queries (RLS is bypassed but we filter by authenticated userId)
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch all user data
+    // Fetch all user data (filtered by authenticated userId)
     const [ideasRes, tasksRes, projectsRes, peopleRes, diaryRes] = await Promise.all([
       supabase.from('ideas').select('*').eq('user_id', userId),
       supabase.from('tasks').select('*').eq('user_id', userId),
