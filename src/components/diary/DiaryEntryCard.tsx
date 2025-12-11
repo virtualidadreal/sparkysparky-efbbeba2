@@ -7,6 +7,7 @@ import { useState } from 'react';
 
 interface DiaryEntryCardProps {
   entry: DiaryEntry;
+  onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -18,14 +19,19 @@ interface DiaryEntryCardProps {
  * - Contenido y título
  * - Mood (estado de ánimo)
  * - Acciones
+ * - Click para ver detalles
  */
-export const DiaryEntryCard = ({ entry, onEdit, onDelete }: DiaryEntryCardProps) => {
+export const DiaryEntryCard = ({ entry, onClick, onEdit, onDelete }: DiaryEntryCardProps) => {
   const [showActions, setShowActions] = useState(false);
 
   const handleAction = (e: React.MouseEvent, action?: () => void) => {
     e.preventDefault();
     e.stopPropagation();
     action?.();
+  };
+
+  const handleClick = () => {
+    onClick?.();
   };
 
   return (
@@ -37,7 +43,8 @@ export const DiaryEntryCard = ({ entry, onEdit, onDelete }: DiaryEntryCardProps)
       <Card 
         variant="hoverable" 
         padding="md" 
-        className="relative"
+        className="relative cursor-pointer"
+        onClick={handleClick}
       >
         {/* Botones de acción */}
         {showActions && (
