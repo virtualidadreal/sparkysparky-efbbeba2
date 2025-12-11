@@ -39,6 +39,8 @@ const Dashboard = () => {
     getSuggestions,
     dismissAlert,
     dismissSuggestion,
+    settings,
+    remainingSuggestions,
   } = useProactiveInsights();
 
   const [showBriefing, setShowBriefing] = useState(false);
@@ -201,7 +203,7 @@ const Dashboard = () => {
       </div>
 
       {/* Refresh insights button */}
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6 flex flex-col items-center gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -209,12 +211,22 @@ const Dashboard = () => {
             getAlerts();
             getSuggestions();
           }}
-          disabled={isLoading}
+          disabled={isLoading || (settings && !settings.suggestionsEnabled)}
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           Actualizar insights
         </Button>
+        {remainingSuggestions !== null && settings?.suggestionsEnabled && (
+          <p className="text-xs text-muted-foreground">
+            {remainingSuggestions} generaciones restantes hoy
+          </p>
+        )}
+        {settings && !settings.suggestionsEnabled && (
+          <p className="text-xs text-muted-foreground">
+            Las sugerencias están desactivadas
+          </p>
+        )}
       </div>
     </DashboardLayout>
   );

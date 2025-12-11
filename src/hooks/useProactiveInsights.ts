@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useInsightsSettings, incrementDailyUsage, useUserDailyUsage } from './useInsightsSettings';
 import toast from 'react-hot-toast';
 
 export interface Alert {
@@ -48,7 +49,34 @@ export const useProactiveInsights = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
 
+  const { data: settings } = useInsightsSettings();
+  const { data: usage, refetch: refetchUsage } = useUserDailyUsage();
+
   const fetchInsight = useCallback(async (type: 'morning_briefing' | 'suggestions' | 'alerts' | 'reminders') => {
+    // Check if feature is enabled
+    if (settings) {
+      if (type === 'suggestions' && !settings.suggestionsEnabled) {
+        toast.error('Las sugerencias están desactivadas');
+        return null;
+      }
+      if (type === 'alerts' && !settings.alertsEnabled) {
+        toast.error('Las alertas están desactivadas');
+        return null;
+      }
+      if (type === 'morning_briefing' && !settings.briefingEnabled) {
+        toast.error('El briefing matutino está desactivado');
+        return null;
+      }
+    }
+
+    // Check daily limit for suggestions
+    if (type === 'suggestions' && settings && usage) {
+      if (usage.suggestions >= settings.suggestionsDailyLimit) {
+        toast.error(`Has alcanzado el límite diario de ${settings.suggestionsDailyLimit} generaciones de sugerencias`);
+        return null;
+      }
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('proactive-insights', {
@@ -58,6 +86,16 @@ export const useProactiveInsights = () => {
       if (error) throw error;
 
       if (data.success) {
+        // Increment usage counter
+        if (type === 'suggestions') {
+          incrementDailyUsage('suggestions');
+          refetchUsage();
+        } else if (type === 'alerts') {
+          incrementDailyUsage('alerts');
+        } else if (type === 'morning_briefing') {
+          incrementDailyUsage('briefings');
+        }
+
         switch (type) {
           case 'morning_briefing':
             setMorningBriefing(data.data);
@@ -83,7 +121,7 @@ export const useProactiveInsights = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [settings, usage, refetchUsage]);
 
   const getMorningBriefing = useCallback(() => fetchInsight('morning_briefing'), [fetchInsight]);
   const getSuggestions = useCallback(() => fetchInsight('suggestions'), [fetchInsight]);
@@ -98,6 +136,11 @@ export const useProactiveInsights = () => {
     setSuggestions(prev => prev.filter(s => s.id !== suggestionId));
   }, []);
 
+  // Compute remaining usage
+  const remainingSuggestions = settings && usage 
+    ? Math.max(0, settings.suggestionsDailyLimit - (usage.suggestions || 0))
+    : null;
+
   return {
     isLoading,
     morningBriefing,
@@ -110,5 +153,8 @@ export const useProactiveInsights = () => {
     getReminders,
     dismissAlert,
     dismissSuggestion,
+    // New exports for settings awareness
+    settings,
+    remainingSuggestions,
   };
 };
