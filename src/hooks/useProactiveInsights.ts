@@ -62,8 +62,10 @@ export const useProactiveInsights = () => {
         body: { type }
       });
 
+      // Handle edge function errors (including 429)
       if (error) {
-        // Handle specific error cases
+        console.log('Edge function error:', error);
+        // Check if error contains limit info
         if (error.message?.includes('429') || error.message?.includes('límite')) {
           toast.error('Has alcanzado el límite diario');
           return null;
@@ -71,10 +73,16 @@ export const useProactiveInsights = () => {
         throw error;
       }
 
-      // Check for backend error responses
-      if (!data.success) {
+      // Handle null/undefined data
+      if (!data) {
+        console.log('No data returned from edge function');
+        return null;
+      }
+
+      // Check for backend error responses (limit reached, disabled, etc.)
+      if (data.success === false) {
         if (data.limit_reached) {
-          toast.error(`Has alcanzado el límite diario de ${data.limit} generaciones`);
+          toast.error(`Límite diario alcanzado (${data.current_count}/${data.limit})`);
           setUsage({ current: data.current_count, limit: data.limit, remaining: 0 });
           return null;
         }
@@ -86,7 +94,10 @@ export const useProactiveInsights = () => {
           toast.error('Límite de API alcanzado, intenta más tarde');
           return null;
         }
-        throw new Error(data.error || 'Error desconocido');
+        // Don't throw, just return null for graceful handling
+        console.log('Backend returned error:', data.error);
+        toast.error(data.error || 'Error al obtener datos');
+        return null;
       }
 
       // Update usage info if provided
