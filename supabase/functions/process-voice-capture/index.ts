@@ -258,40 +258,61 @@ serve(async (req) => {
       console.error('Error fetching system prompt:', promptError);
     }
 
-    // Fallback prompt if not found in DB
-    const systemPrompt = promptData?.prompt || `Eres un asistente que analiza transcripciones de notas de voz y CLASIFICA EL TIPO DE CONTENIDO.
+    // Map mood to valid database values
+    function mapMoodToValid(mood: string | undefined): string {
+      const validMoods = ['great', 'good', 'neutral', 'bad', 'terrible'];
+      if (mood && validMoods.includes(mood)) return mood;
+      const moodMap: Record<string, string> = {
+        'happy': 'great', 'excited': 'great', 'grateful': 'great',
+        'calm': 'good', 'sad': 'bad', 'anxious': 'bad', 'angry': 'terrible',
+      };
+      return moodMap[mood || ''] || 'neutral';
+    }
 
-REGLAS DE CLASIFICACIÓN (IMPORTANTE - sigue este orden):
-1. "diary" (PRIORIDAD ALTA): Usa "diary" cuando el usuario habla de:
-   - Cómo ha sido su día o cómo se siente
-   - Reflexiones personales sobre experiencias vividas
-   - Narraciones de eventos del día ("hoy me desperté", "hoy ha sido", "mi día")
-   - Emociones y estados de ánimo
-   - Actividades cotidianas personales (café, paseos, tiempo con familia/amigos)
-   
-2. "task": Solo cuando hay una acción pendiente clara ("tengo que", "debo", "recordar hacer")
+    // Heuristic detection for diary entries - check BEFORE AI call
+    const transcriptionLower = transcription.toLowerCase();
+    const diaryPatterns = [
+      'mi diario', 'en mi diario', 'apunta en mi diario', 'anota en mi diario',
+      'hoy ha sido', 'hoy fue', 'hoy me', 'hoy estoy', 'hoy he',
+      'me siento', 'me he sentido', 'cómo me siento',
+      'mi día', 'el día de hoy', 'este día',
+      'me desperté', 'me he despertado', 'me levanté', 'me he levantado',
+      'reflexión', 'reflexiono'
+    ];
+    
+    const isDiaryByHeuristic = diaryPatterns.some(pattern => transcriptionLower.includes(pattern));
+    console.log('Heuristic diary detection:', isDiaryByHeuristic, 'for:', transcription.substring(0, 50));
 
-3. "idea": Solo para conceptos creativos, proyectos de negocio, o ideas innovadoras sin contexto de reflexión personal
-
-4. "person": Solo para información específica sobre una persona
-
-SI EL CONTENIDO MEZCLA reflexiones personales con logros o eventos del día → es "diary"
-
-Responde SOLO con JSON válido:
-{
-  "content_type": "diary|idea|task|person",
-  "title": "título breve (máx 50 chars)",
-  "summary": "resumen (máx 200 chars)",
-  "category": "personal|trabajo|proyecto|aprendizaje|salud|finanzas|relaciones|creatividad|general",
-  "priority": "low|medium|high",
-  "sentiment": "positive|neutral|negative",
-  "mood": "great|good|neutral|bad|terrible",
-  "detected_emotions": [],
-  "related_people": [],
-  "suggested_improvements": [],
-  "next_steps": [],
-  "tags": []
-}`;
+    // Fallback prompt if not found in DB - use tool calling for structured output
+    const systemPrompt = `Eres un asistente que clasifica transcripciones de notas de voz. Usa la función classify_content para clasificar.`;
+    
+    const classificationTool = {
+      type: "function",
+      function: {
+        name: "classify_content",
+        description: "Clasifica el contenido de una nota de voz",
+        parameters: {
+          type: "object",
+          properties: {
+            content_type: { 
+              type: "string", 
+              enum: ["diary", "idea", "task", "person"],
+              description: "diary: reflexiones personales, cómo ha sido el día, emociones, experiencias vividas. idea: conceptos creativos, proyectos, negocios. task: acciones pendientes, recordatorios. person: información sobre alguien."
+            },
+            title: { type: "string", description: "Título breve (máx 50 chars)" },
+            summary: { type: "string", description: "Resumen (máx 200 chars)" },
+            category: { type: "string", enum: ["personal", "trabajo", "proyecto", "aprendizaje", "salud", "finanzas", "relaciones", "creatividad", "general"] },
+            priority: { type: "string", enum: ["low", "medium", "high"] },
+            sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
+            mood: { type: "string", enum: ["great", "good", "neutral", "bad", "terrible"] },
+            detected_emotions: { type: "array", items: { type: "string" } },
+            related_people: { type: "array", items: { type: "string" } },
+            tags: { type: "array", items: { type: "string" } }
+          },
+          required: ["content_type", "title", "summary"]
+        }
+      }
+    };
     
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -303,8 +324,10 @@ Responde SOLO con JSON válido:
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Transcripción de nota de voz:\n\n${transcription}` }
+          { role: 'user', content: `Clasifica esta transcripción. Si habla de su día, experiencias personales o emociones, es "diary". Transcripción:\n\n${transcription}` }
         ],
+        tools: [classificationTool],
+        tool_choice: { type: "function", function: { name: "classify_content" } }
       }),
     });
 
@@ -328,49 +351,55 @@ Responde SOLO con JSON válido:
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.choices?.[0]?.message?.content || '';
     
-    console.log('AI response received:', aiContent.substring(0, 100));
-
-    // Map mood to valid database values
-    function mapMoodToValid(mood: string | undefined): string {
-      const validMoods = ['great', 'good', 'neutral', 'bad', 'terrible'];
-      if (mood && validMoods.includes(mood)) return mood;
-      const moodMap: Record<string, string> = {
-        'happy': 'great', 'excited': 'great', 'grateful': 'great',
-        'calm': 'good', 'sad': 'bad', 'anxious': 'bad', 'angry': 'terrible',
-      };
-      return moodMap[mood || ''] || 'neutral';
-    }
-
-    // Parse AI response
+    // Extract from tool call
     let parsedData;
-    try {
-      let cleanContent = aiContent.trim();
-      if (cleanContent.startsWith('```json')) cleanContent = cleanContent.slice(7);
-      if (cleanContent.startsWith('```')) cleanContent = cleanContent.slice(3);
-      if (cleanContent.endsWith('```')) cleanContent = cleanContent.slice(0, -3);
-      parsedData = JSON.parse(cleanContent.trim());
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      parsedData = {
-        content_type: 'idea',
-        title: transcription.substring(0, 50),
-        summary: transcription.substring(0, 200),
-        category: 'general',
-        priority: 'medium',
-        sentiment: 'neutral',
-        mood: 'neutral',
-        detected_emotions: [],
-        related_people: [],
-        suggested_improvements: [],
-        next_steps: [],
-        tags: ['voz']
-      };
+    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    
+    if (toolCall?.function?.arguments) {
+      try {
+        parsedData = JSON.parse(toolCall.function.arguments);
+        console.log('AI tool call classification:', parsedData.content_type);
+      } catch (e) {
+        console.error('Failed to parse tool call arguments:', e);
+      }
+    }
+    
+    // Fallback if tool call failed
+    if (!parsedData) {
+      const aiContent = aiData.choices?.[0]?.message?.content || '';
+      console.log('AI response (no tool call):', aiContent.substring(0, 100));
+      
+      try {
+        let cleanContent = aiContent.trim();
+        if (cleanContent.startsWith('```json')) cleanContent = cleanContent.slice(7);
+        if (cleanContent.startsWith('```')) cleanContent = cleanContent.slice(3);
+        if (cleanContent.endsWith('```')) cleanContent = cleanContent.slice(0, -3);
+        parsedData = JSON.parse(cleanContent.trim());
+      } catch {
+        parsedData = {
+          content_type: isDiaryByHeuristic ? 'diary' : 'idea',
+          title: transcription.substring(0, 50),
+          summary: transcription.substring(0, 200),
+          category: 'general',
+          priority: 'medium',
+          sentiment: 'neutral',
+          mood: 'neutral',
+          detected_emotions: [],
+          related_people: [],
+          tags: ['voz']
+        };
+      }
     }
 
-    const contentType = parsedData.content_type || 'idea';
-    console.log('Classified voice content as:', contentType);
+    // OVERRIDE: If heuristic detected diary but AI said otherwise, trust heuristic
+    if (isDiaryByHeuristic && parsedData.content_type !== 'diary') {
+      console.log('Overriding AI classification to diary based on heuristic');
+      parsedData.content_type = 'diary';
+    }
+
+    const contentType = parsedData.content_type || (isDiaryByHeuristic ? 'diary' : 'idea');
+    console.log('Final classification:', contentType);
 
     // Handle based on content type
     if (contentType === 'diary') {
