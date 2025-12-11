@@ -21,6 +21,7 @@ const brainColors: Record<string, string> = {
   mentor: 'text-purple-500',
   creative: 'text-orange-500',
   business: 'text-emerald-500',
+  casual: 'text-pink-500',
 };
 
 const brainLabels: Record<string, string> = {
@@ -28,6 +29,7 @@ const brainLabels: Record<string, string> = {
   mentor: 'Mentor',
   creative: 'Creativo',
   business: 'Empresarial',
+  casual: 'Charleta',
 };
 
 const formatMessageTime = (date: Date): string => {
