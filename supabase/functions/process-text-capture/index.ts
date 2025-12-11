@@ -29,6 +29,27 @@ function validateTextInput(text: unknown): { valid: boolean; error?: string; san
   return { valid: true, sanitized: trimmed };
 }
 
+// Map AI mood responses to valid database values
+function mapMoodToValid(mood: string | undefined): string {
+  const validMoods = ['great', 'good', 'neutral', 'bad', 'terrible'];
+  if (mood && validMoods.includes(mood)) {
+    return mood;
+  }
+  
+  // Map common AI responses to valid values
+  const moodMap: Record<string, string> = {
+    'happy': 'great',
+    'excited': 'great',
+    'grateful': 'great',
+    'calm': 'good',
+    'sad': 'bad',
+    'anxious': 'bad',
+    'angry': 'terrible',
+  };
+  
+  return moodMap[mood || ''] || 'neutral';
+}
+
 type ContentType = 'idea' | 'task' | 'diary' | 'person';
 
 interface ClassificationResult {
@@ -211,7 +232,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
                 description: { type: "string", description: "Descripción (para task)" },
                 category: { type: "string" },
                 priority: { type: "string", enum: ["low", "medium", "high"] },
-                mood: { type: "string", enum: ["happy", "sad", "neutral", "excited", "anxious", "calm", "angry", "grateful"] },
+                mood: { type: "string", enum: ["great", "good", "neutral", "bad", "terrible"], description: "Estado de ánimo: great (muy bien), good (bien), neutral, bad (mal), terrible (muy mal)" },
                 sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
                 detected_emotions: { type: "array", items: { type: "string" } },
                 related_people: { type: "array", items: { type: "string" } },
@@ -303,13 +324,20 @@ Clasifica el texto como: idea, task, diary, o person.`;
       const isDiary = diaryKeywords.some(kw => textLower.includes(kw));
       
       if (isDiary) {
+        // Heuristic mood detection
+        const positiveWords = ['increíble', 'genial', 'fantástico', 'feliz', 'contento', 'bien', 'excelente'];
+        const negativeWords = ['mal', 'triste', 'terrible', 'horrible', 'fatal', 'agotado'];
+        const hasPositive = positiveWords.some(w => textLower.includes(w));
+        const hasNegative = negativeWords.some(w => textLower.includes(w));
+        const heuristicMood = hasPositive ? 'great' : (hasNegative ? 'bad' : 'neutral');
+        
         classification = {
           type: 'diary',
           confidence: 0.6,
           data: {
             title: `Entrada del ${new Date().toLocaleDateString('es-ES')}`,
             content: sanitizedText,
-            mood: 'neutral'
+            mood: heuristicMood
           }
         };
         console.log('Heuristic fallback: classified as diary');
@@ -378,7 +406,8 @@ Clasifica el texto como: idea, task, diary, o person.`;
             user_id: userId,
             title: classification.data.title || `Entrada del ${new Date().toLocaleDateString('es-ES')}`,
             content: classification.data.content || sanitizedText,
-            mood: classification.data.mood || 'neutral',
+            // Map AI mood to valid database values
+            mood: mapMoodToValid(classification.data.mood),
             entry_date: new Date().toISOString().split('T')[0],
           })
           .select()
