@@ -1,11 +1,13 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { usePasswordCheck } from '@/hooks/usePasswordCheck';
 import toast from 'react-hot-toast';
 
 const Signup = () => {
   const navigate = useNavigate();
   const { signUp, user, loading: authLoading } = useAuth();
+  const { checkPassword, isChecking } = usePasswordCheck();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -13,6 +15,7 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [passwordWarning, setPasswordWarning] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -53,8 +56,20 @@ const Signup = () => {
     if (!validate()) return;
 
     setLoading(true);
+    setPasswordWarning(null);
 
     try {
+      // Check if password has been leaked
+      const pwnedResult = await checkPassword(password);
+      
+      if (pwnedResult.isPwned) {
+        setPasswordWarning(
+          `⚠️ Esta contraseña apareció en ${pwnedResult.occurrences.toLocaleString()} filtraciones de datos. Te recomendamos usar otra.`
+        );
+        setLoading(false);
+        return;
+      }
+
       const { error } = await signUp(email, password, fullName);
 
       if (error) {
@@ -135,13 +150,31 @@ const Signup = () => {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordWarning(null);
+                }}
+                disabled={loading || isChecking}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
                 placeholder="Mínimo 8 caracteres"
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-destructive">{errors.password}</p>
+              )}
+              {passwordWarning && (
+                <div className="mt-2 rounded-md bg-amber-500/10 border border-amber-500/30 p-3">
+                  <p className="text-sm text-amber-600 dark:text-amber-400">{passwordWarning}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Puedes continuar, pero te recomendamos elegir una contraseña más segura.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setPasswordWarning(null)}
+                    className="mt-2 text-xs text-primary hover:underline"
+                  >
+                    Continuar de todos modos
+                  </button>
+                </div>
               )}
             </div>
 
@@ -164,10 +197,10 @@ const Signup = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isChecking}
               className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {loading ? 'Creando cuenta...' : 'Registrarse'}
+              {isChecking ? 'Verificando seguridad...' : loading ? 'Creando cuenta...' : 'Registrarse'}
             </button>
           </form>
 
