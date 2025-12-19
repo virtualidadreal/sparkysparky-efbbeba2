@@ -27,6 +27,8 @@ import {
   BarChart3,
   Sparkles,
   ShieldCheck,
+  Mic,
+  Send,
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useIsAdmin } from '@/hooks/useAdmin';
@@ -60,6 +62,7 @@ const Dashboard = () => {
 
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [quickInput, setQuickInput] = useState('');
+  const [chatInput, setChatInput] = useState('');
 
   useEffect(() => {
     if (initialized) {
@@ -201,18 +204,43 @@ const Dashboard = () => {
 
         {/* Main Content */}
         <div className="flex flex-col gap-4 lg:gap-6">
-          {/* Header */}
-          <div className="bg-card rounded-[32px] p-8 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h1 className="text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
-                Haz una pregunta_
-              </h1>
-              <Link
-                to="/chat"
-                className="flex items-center justify-center w-14 h-14 bg-foreground rounded-full hover:opacity-90 transition-opacity"
+          {/* Header with Chat Input */}
+          <div className="bg-card rounded-[32px] p-6 lg:p-8 shadow-sm">
+            <h1 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight mb-6">
+              Haz una pregunta_
+            </h1>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Escribe tu pregunta aquí..."
+                  className="w-full px-5 py-4 bg-muted/50 border border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(217,91%,60%)]/50 focus:border-[hsl(217,91%,60%)] transition-all pr-12"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && chatInput.trim()) {
+                      window.location.href = `/chat?q=${encodeURIComponent(chatInput)}`;
+                    }
+                  }}
+                />
+                {chatInput.trim() && (
+                  <button
+                    onClick={() => window.location.href = `/chat?q=${encodeURIComponent(chatInput)}`}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+              <button
+                className="flex items-center justify-center w-14 h-14 bg-foreground rounded-full hover:opacity-90 transition-opacity shrink-0"
+                onClick={() => {
+                  // TODO: Implement voice recording
+                  console.log('Voice recording');
+                }}
               >
-                <Zap className="h-6 w-6 text-card" />
-              </Link>
+                <Mic className="h-6 w-6 text-card" />
+              </button>
             </div>
           </div>
 
