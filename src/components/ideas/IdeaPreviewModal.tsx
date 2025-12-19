@@ -15,15 +15,15 @@ import { Loader2 } from 'lucide-react';
 interface IdeaPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  idea: Idea | null;
+  idea: Idea;
 }
 
 /**
  * Modal para previsualizar idea procesada por IA
  */
 export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProps) => {
-  const { data: relatedIdeas } = useRelatedIdeas(idea?.id || '', idea?.tags || []);
-  const { data: linkedProject } = useIdeaProject(idea?.project_id);
+  const { data: relatedIdeas } = useRelatedIdeas(idea.id, idea.tags || []);
+  const { data: linkedProject } = useIdeaProject(idea.project_id);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [signedAudioUrl, setSignedAudioUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -34,7 +34,7 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
   // Generate signed URL for audio on demand
   useEffect(() => {
     const generateSignedUrl = async () => {
-      if (idea?.audio_url && isOpen) {
+      if (idea.audio_url && isOpen) {
         // Check if it's already a full URL (legacy data) or a file path
         if (idea.audio_url.startsWith('http')) {
           // Legacy public URL - use as is (will fail if bucket is now private)
@@ -58,12 +58,7 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
     };
 
     generateSignedUrl();
-  }, [idea?.audio_url, isOpen]);
-
-  // Don't render anything if no idea
-  if (!idea) {
-    return null;
-  }
+  }, [idea.audio_url, isOpen]);
 
   const handleGenerateImprovements = async () => {
     setIsGenerating(true);
