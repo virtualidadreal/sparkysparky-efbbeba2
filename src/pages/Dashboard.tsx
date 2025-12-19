@@ -120,14 +120,14 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[hsl(220,14%,96%)] p-2 lg:p-3">
+    <div className="min-h-screen bg-[hsl(220,14%,96%)] p-3">
       {/* 3-column grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr_260px] gap-2 lg:gap-3 max-w-[1600px] mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto min-h-[calc(100vh-24px)]">
         
         {/* Left Sidebar */}
-        <div className="flex flex-col gap-2 lg:gap-3">
+        <div className="flex flex-col">
           {/* Navigation Panel */}
-          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col h-full">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col flex-1">
             {/* Nav Items */}
             <nav className="space-y-0.5 flex-1">
               {[
@@ -203,7 +203,7 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-col gap-2 lg:gap-3">
+        <div className="flex flex-col gap-3">
           {/* Header with Chat Input */}
           <div className="bg-card rounded-[24px] p-4 lg:p-5 shadow-sm">
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight mb-4">
