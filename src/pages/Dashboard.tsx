@@ -120,14 +120,14 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[hsl(220,14%,96%)] p-4 lg:p-6">
+    <div className="min-h-screen bg-[hsl(220,14%,96%)] p-2 lg:p-3">
       {/* 3-column grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_280px] gap-4 lg:gap-6 max-w-[1600px] mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr_260px] gap-2 lg:gap-3 max-w-[1600px] mx-auto">
         
         {/* Left Sidebar */}
-        <div className="flex flex-col gap-4 lg:gap-6">
+        <div className="flex flex-col gap-2 lg:gap-3">
           {/* Navigation Panel */}
-          <div className="bg-card rounded-[32px] p-5 shadow-sm flex flex-col h-full">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col h-full">
             {/* Nav Items */}
             <nav className="space-y-0.5 flex-1">
               {[
@@ -203,10 +203,10 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-col gap-4 lg:gap-6">
+        <div className="flex flex-col gap-2 lg:gap-3">
           {/* Header with Chat Input */}
-          <div className="bg-card rounded-[32px] p-6 lg:p-8 shadow-sm">
-            <h1 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight mb-6">
+          <div className="bg-card rounded-[24px] p-4 lg:p-5 shadow-sm">
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight mb-4">
               Haz una pregunta_
             </h1>
             <div className="flex items-center gap-3">
@@ -245,15 +245,15 @@ const Dashboard = () => {
           </div>
 
           {/* Get Started Banner */}
-          <div className="bg-card rounded-[32px] p-2 shadow-sm">
-            <h3 className="text-sm font-semibold text-muted-foreground px-6 pt-4 pb-3">
+          <div className="bg-card rounded-[24px] p-2 shadow-sm">
+            <h3 className="text-sm font-semibold text-muted-foreground px-4 pt-3 pb-2">
               Explorar
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {/* Past */}
               <Link
                 to="/diary"
-                className="relative overflow-hidden rounded-[24px] aspect-[2/1] group"
+                className="relative overflow-hidden rounded-[18px] aspect-[2/1] group"
               >
                 <img
                   src={pastBg}
@@ -270,7 +270,7 @@ const Dashboard = () => {
               {/* Future */}
               <Link
                 to="/projects"
-                className="relative overflow-hidden rounded-[24px] aspect-[2/1] group"
+                className="relative overflow-hidden rounded-[18px] aspect-[2/1] group"
               >
                 <img
                   src={futureBg}
@@ -287,7 +287,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Ideas Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {recentIdeas.length > 0 ? (
               recentIdeas.map((idea, idx) => {
                 const icons = [iconSphere, iconCube, iconTorus];
@@ -295,19 +295,19 @@ const Dashboard = () => {
                   <button
                     key={idea.id}
                     onClick={() => setSelectedIdea(idea)}
-                    className="bg-card rounded-[24px] p-6 shadow-sm text-left hover:shadow-md transition-shadow group"
+                    className="bg-card rounded-[18px] p-4 shadow-sm text-left hover:shadow-md transition-shadow group"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                    <div className="flex items-start justify-between mb-3">
+                      <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
                         {idea.category || 'Idea'}
                       </span>
                       <img
                         src={icons[idx % 3]}
                         alt=""
-                        className="w-10 h-10 object-contain group-hover:scale-110 transition-transform"
+                        className="w-8 h-8 object-contain group-hover:scale-110 transition-transform"
                       />
                     </div>
-                    <p className="text-foreground font-medium leading-relaxed line-clamp-3">
+                    <p className="text-foreground font-medium leading-relaxed line-clamp-3 text-sm">
                       {idea.title}
                     </p>
                   </button>
@@ -315,34 +315,34 @@ const Dashboard = () => {
               })
             ) : (
               <>
-                <div className="bg-card rounded-[24px] p-6 shadow-sm">
-                  <div className="flex items-start justify-between mb-4">
-                    <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                <div className="bg-card rounded-[18px] p-4 shadow-sm">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
                       Ideas
                     </span>
-                    <img src={iconSphere} alt="" className="w-10 h-10 object-contain" />
+                    <img src={iconSphere} alt="" className="w-8 h-8 object-contain" />
                   </div>
                   <p className="text-muted-foreground text-sm">
                     Captura tu primera idea para verla aquí
                   </p>
                 </div>
-                <div className="bg-card rounded-[24px] p-6 shadow-sm">
-                  <div className="flex items-start justify-between mb-4">
-                    <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                <div className="bg-card rounded-[18px] p-4 shadow-sm">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
                       Tareas
                     </span>
-                    <img src={iconCube} alt="" className="w-10 h-10 object-contain" />
+                    <img src={iconCube} alt="" className="w-8 h-8 object-contain" />
                   </div>
                   <p className="text-muted-foreground text-sm">
                     Organiza tus tareas y proyectos
                   </p>
                 </div>
-                <div className="bg-card rounded-[24px] p-6 shadow-sm">
-                  <div className="flex items-start justify-between mb-4">
-                    <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                <div className="bg-card rounded-[18px] p-4 shadow-sm">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
                       Análisis
                     </span>
-                    <img src={iconTorus} alt="" className="w-10 h-10 object-contain" />
+                    <img src={iconTorus} alt="" className="w-8 h-8 object-contain" />
                   </div>
                   <p className="text-muted-foreground text-sm">
                     Analiza patrones en tu información
@@ -354,7 +354,7 @@ const Dashboard = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className="bg-card rounded-[32px] p-6 shadow-sm flex flex-col">
+        <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col">
           {/* Profile */}
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
