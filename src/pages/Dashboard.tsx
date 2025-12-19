@@ -23,6 +23,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { IdeaPreviewModal } from '@/components/ideas/IdeaPreviewModal';
+import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 import { Idea } from '@/types/Idea.types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -44,7 +45,6 @@ const Dashboard = () => {
   } = useProactiveInsights();
 
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
-  const [chatInput, setChatInput] = useState('');
 
   useEffect(() => {
     if (initialized) {
@@ -269,34 +269,22 @@ const Dashboard = () => {
           <div className="flex-1" />
 
           {/* Chat Input - Bottom */}
-          <div className="bg-card rounded-[24px] p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="🎙️ ¿Qué tienes en mente?"
-                  className="w-full px-4 py-3.5 bg-muted/50 border border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && chatInput.trim()) {
-                      window.location.href = `/chat?q=${encodeURIComponent(chatInput)}`;
-                    }
-                  }}
-                />
+          <QuickCapturePopup
+            trigger={
+              <div className="bg-card rounded-[24px] p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 relative">
+                    <div className="w-full px-4 py-3.5 bg-muted/50 border border-border rounded-2xl text-muted-foreground">
+                      🎙️ ¿Qué tienes en mente?
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-12 h-12 bg-foreground rounded-full shrink-0">
+                    <Mic className="h-5 w-5 text-card" />
+                  </div>
+                </div>
               </div>
-              <button
-                className="flex items-center justify-center w-12 h-12 bg-foreground rounded-full hover:opacity-90 transition-opacity shrink-0"
-                onClick={() => {
-                  if (chatInput.trim()) {
-                    window.location.href = `/chat?q=${encodeURIComponent(chatInput)}`;
-                  }
-                }}
-              >
-                <Mic className="h-5 w-5 text-card" />
-              </button>
-            </div>
-          </div>
+            }
+          />
         </div>
 
         {/* Right Sidebar */}
