@@ -34,7 +34,7 @@ const SettingsSection = ({
   description?: string;
   children: React.ReactNode;
 }) => (
-  <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+  <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg rounded-[18px] border border-white/50 dark:border-white/10 p-6 shadow-sm">
     <div className="mb-6">
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       {description && (
@@ -189,7 +189,7 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="bg-muted p-1 rounded-lg">
+          <TabsList className="bg-white/60 dark:bg-card/60 backdrop-blur-lg p-1 rounded-xl border border-white/50 dark:border-white/10">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <UserCircleIcon className="h-4 w-4" />
               Perfil

@@ -229,7 +229,7 @@ const Admin = () => {
         {activeTab === 'prompts' && (
           <>
             {/* Category Navigation */}
-            <div className="bg-card border border-border rounded-xl p-2 overflow-x-auto">
+            <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/50 dark:border-white/10 rounded-[18px] p-2 overflow-x-auto">
               <div className="flex gap-1 min-w-max">
                 {(Object.entries(PROMPT_CATEGORIES) as [CategoryKey, typeof PROMPT_CATEGORIES[CategoryKey]][]).map(([key, category]) => {
                   const Icon = categoryIcons[category.icon] || DocumentTextIcon;

@@ -120,7 +120,7 @@ const Memory = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
+          <TabsList className="bg-white/60 dark:bg-card/60 backdrop-blur-lg p-1 rounded-xl border border-white/50 dark:border-white/10">
             <TabsTrigger value="summaries" className="gap-2">
               <DocumentTextIcon className="h-4 w-4" />
               Resúmenes
