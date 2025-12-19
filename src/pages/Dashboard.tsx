@@ -148,33 +148,6 @@ const Dashboard = () => {
             </nav>
           </div>
 
-          {/* Timeline Panel */}
-          <div className="bg-card rounded-[32px] p-6 shadow-sm flex-1">
-            <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-6">
-              ACTIVIDAD RECIENTE
-            </h3>
-            <div className="space-y-6">
-              {timelineItems.map((item, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-foreground" />
-                    {idx < timelineItems.length - 1 && (
-                      <div className="w-px h-full bg-border mt-2" />
-                    )}
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="font-bold text-foreground">{item.month}</span>
-                      <span className="text-xs text-muted-foreground">{item.year}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {item.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Main Content */}
@@ -338,6 +311,34 @@ const Dashboard = () => {
                         {item.desc}
                       </p>
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Timeline / Recent Activity */}
+          <div className="mt-6 pt-6 border-t border-border">
+            <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
+              ACTIVIDAD RECIENTE
+            </h3>
+            <div className="space-y-4">
+              {timelineItems.map((item, idx) => (
+                <div key={idx} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-2 h-2 rounded-full bg-foreground" />
+                    {idx < timelineItems.length - 1 && (
+                      <div className="w-px h-full bg-border mt-2" />
+                    )}
+                  </div>
+                  <div className="flex-1 pb-2">
+                    <div className="flex items-baseline gap-2 mb-0.5">
+                      <span className="font-semibold text-foreground text-sm">{item.month}</span>
+                      <span className="text-xs text-muted-foreground">{item.year}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {item.text}
+                    </p>
                   </div>
                 </div>
               ))}
