@@ -203,47 +203,7 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-col gap-3">
-          {/* Header with Chat Input */}
-          <div className="bg-card rounded-[24px] p-4 lg:p-5 shadow-sm">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight mb-4">
-              Haz una pregunta_
-            </h1>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="¿Qué tienes en mente?"
-                  className="w-full px-5 py-4 bg-muted/50 border border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(217,91%,60%)]/50 focus:border-[hsl(217,91%,60%)] transition-all pr-12"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && chatInput.trim()) {
-                      window.location.href = `/chat?q=${encodeURIComponent(chatInput)}`;
-                    }
-                  }}
-                />
-                {chatInput.trim() && (
-                  <button
-                    onClick={() => window.location.href = `/chat?q=${encodeURIComponent(chatInput)}`}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Send className="h-5 w-5" />
-                  </button>
-                )}
-              </div>
-              <button
-                className="flex items-center justify-center w-14 h-14 bg-foreground rounded-full hover:opacity-90 transition-opacity shrink-0"
-                onClick={() => {
-                  // TODO: Implement voice recording
-                  console.log('Voice recording');
-                }}
-              >
-                <Mic className="h-6 w-6 text-card" />
-              </button>
-            </div>
-          </div>
-
+        <div className="flex flex-col gap-3 flex-1">
           {/* Get Started Banner */}
           <div className="bg-card rounded-[24px] p-2 shadow-sm">
             <h3 className="text-sm font-semibold text-muted-foreground px-4 pt-3 pb-2">
@@ -287,7 +247,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Ideas Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
             {recentIdeas.length > 0 ? (
               recentIdeas.map((idea, idx) => {
                 const icons = [iconSphere, iconCube, iconTorus];
@@ -350,6 +310,45 @@ const Dashboard = () => {
                 </div>
               </>
             )}
+          </div>
+
+          {/* Chat Input - Bottom */}
+          <div className="bg-card rounded-[24px] p-4 lg:p-5 shadow-sm mt-auto">
+            <h2 className="text-xl lg:text-2xl font-bold text-foreground tracking-tight mb-3">
+              Haz una pregunta_
+            </h2>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="¿Qué tienes en mente?"
+                  className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(217,91%,60%)]/50 focus:border-[hsl(217,91%,60%)] transition-all pr-12"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && chatInput.trim()) {
+                      window.location.href = `/chat?q=${encodeURIComponent(chatInput)}`;
+                    }
+                  }}
+                />
+                {chatInput.trim() && (
+                  <button
+                    onClick={() => window.location.href = `/chat?q=${encodeURIComponent(chatInput)}`}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+              <button
+                className="flex items-center justify-center w-12 h-12 bg-foreground rounded-full hover:opacity-90 transition-opacity shrink-0"
+                onClick={() => {
+                  console.log('Voice recording');
+                }}
+              >
+                <Mic className="h-5 w-5 text-card" />
+              </button>
+            </div>
           </div>
         </div>
 
