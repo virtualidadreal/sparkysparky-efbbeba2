@@ -225,7 +225,7 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
           {trigger || defaultTrigger}
         </DialogTrigger>
         <DialogContent 
-          className="max-w-none w-[95vw] md:w-[500px] p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-xl"
+          className="max-w-none w-[95vw] md:w-[500px] p-0 gap-0 rounded-3xl border border-white/30 dark:border-white/10 shadow-2xl overflow-hidden bg-white/70 dark:bg-card/70 backdrop-blur-2xl"
           hideCloseButton
         >
           <DialogTitle className="sr-only">Captura rápida</DialogTitle>
