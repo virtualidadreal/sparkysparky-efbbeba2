@@ -129,7 +129,7 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+            <div className="fixed inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-2xl" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
@@ -143,7 +143,7 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-lg bg-card border border-border shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-3xl bg-white/70 dark:bg-card/70 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-2xl transition-all">
                   <div className="relative p-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-6 pb-4 border-b border-border">
