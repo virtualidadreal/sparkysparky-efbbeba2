@@ -216,7 +216,7 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
       
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent 
-          className="max-w-none w-[95vw] h-[90vh] md:w-[500px] md:h-[70vh] p-0 gap-0 rounded-3xl border border-white/30 dark:border-white/10 shadow-2xl overflow-hidden bg-white/70 dark:bg-card/70 backdrop-blur-2xl"
+          className="max-w-none w-[95vw] h-[85vh] md:w-[600px] md:h-[77vh] p-0 gap-0 rounded-3xl border border-white/30 dark:border-white/10 shadow-2xl overflow-hidden bg-white/70 dark:bg-card/70 backdrop-blur-2xl flex flex-col"
           hideCloseButton
         >
           <DialogTitle className="sr-only">Chat con Sparky</DialogTitle>
@@ -258,7 +258,7 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
           {/* Messages */}
           <ScrollArea 
             ref={scrollRef}
-            className="flex-1 h-[calc(80vh-8rem)]"
+            className="flex-1 min-h-0"
           >
             <div className="px-6 py-4">
               {messages.length === 0 && !isLoading ? (
