@@ -20,7 +20,16 @@ import {
   Calendar,
   Target,
   User,
+  FolderOpen,
+  CheckSquare,
+  BookOpen,
+  Brain,
+  BarChart3,
+  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { IdeaPreviewModal } from '@/components/ideas/IdeaPreviewModal';
 import { Idea } from '@/types/Idea.types';
 
@@ -38,6 +47,8 @@ const Dashboard = () => {
   const { data: projects } = useProjects();
   const { data: people } = usePeople();
   const { data: profile } = useProfile();
+  const { data: isAdmin } = useIsAdmin();
+  const location = useLocation();
 
   const {
     alerts,
@@ -48,6 +59,7 @@ const Dashboard = () => {
   } = useProactiveInsights();
 
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+  const [quickInput, setQuickInput] = useState('');
 
   useEffect(() => {
     if (initialized) {
@@ -112,40 +124,77 @@ const Dashboard = () => {
         {/* Left Sidebar */}
         <div className="flex flex-col gap-4 lg:gap-6">
           {/* Navigation Panel */}
-          <div className="bg-card rounded-[32px] p-6 shadow-sm">
-            {/* New Button */}
-            <Link
-              to="/ideas"
-              className="flex items-center gap-2 bg-foreground text-card px-5 py-3 rounded-full font-medium text-sm mb-6 hover:opacity-90 transition-opacity w-fit"
-            >
-              <Plus className="h-4 w-4" />
-              NEW
-            </Link>
-
+          <div className="bg-card rounded-[32px] p-5 shadow-sm flex flex-col h-full">
             {/* Nav Items */}
-            <nav className="space-y-1">
-              <Link
-                to="/"
-                className="flex items-center gap-3 px-4 py-3 text-foreground font-medium rounded-xl hover:bg-muted/50 transition-colors"
-              >
-                <Home className="h-5 w-5" />
-                Home
-              </Link>
-              <Link
-                to="/people"
-                className="flex items-center gap-3 px-4 py-3 text-muted-foreground rounded-xl hover:bg-muted/50 hover:text-foreground transition-colors"
-              >
-                <Users className="h-5 w-5" />
-                Personas
-              </Link>
-              <Link
-                to="/settings"
-                className="flex items-center gap-3 px-4 py-3 text-muted-foreground rounded-xl hover:bg-muted/50 hover:text-foreground transition-colors"
-              >
-                <Settings className="h-5 w-5" />
-                Configuración
-              </Link>
+            <nav className="space-y-0.5 flex-1">
+              {[
+                { to: '/dashboard', icon: Home, label: 'Dashboard' },
+                { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
+                { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
+                { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
+                { to: '/people', icon: Users, label: 'Personas' },
+                { to: '/diary', icon: BookOpen, label: 'Diario' },
+                { to: '/memory', icon: Brain, label: 'Memoria' },
+                { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+                { to: '/insights', icon: TrendingUp, label: 'Insights' },
+                { to: '/settings', icon: Settings, label: 'Configuración' },
+              ].map((item) => {
+                const isActive = location.pathname === item.to || 
+                  (item.to === '/dashboard' && location.pathname === '/');
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                      isActive
+                        ? 'bg-[hsl(217,91%,60%)]/10 text-[hsl(217,91%,60%)] font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* Admin link (separated) */}
+              {isAdmin && (
+                <>
+                  <div className="border-t border-border my-3" />
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                      location.pathname === '/admin'
+                        ? 'bg-[hsl(217,91%,60%)]/10 text-[hsl(217,91%,60%)] font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
+                    <ShieldCheck className="h-5 w-5" />
+                    Admin
+                  </Link>
+                </>
+              )}
             </nav>
+
+            {/* Quick Input */}
+            <div className="mt-4 space-y-3">
+              <Link
+                to="/ideas"
+                className="flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                ¿Qué tienes en mente?
+              </Link>
+
+              {/* Sparky Button */}
+              <Link
+                to="/chat"
+                className="flex items-center justify-center gap-2 bg-[hsl(217,91%,60%)] text-white px-4 py-3 rounded-xl font-medium text-sm hover:bg-[hsl(217,91%,55%)] transition-colors"
+              >
+                <Sparkles className="h-4 w-4" />
+                Hablar con Sparky
+              </Link>
+            </div>
           </div>
 
         </div>
