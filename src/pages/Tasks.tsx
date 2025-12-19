@@ -48,19 +48,19 @@ const Tasks = () => {
 
   return (
     <DashboardLayout>
-      <div>
+      <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Tareas</h1>
-            <p className="text-gray-600">Organiza tus tareas con el tablero Kanban</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Mis Tareas</h1>
+            <p className="text-muted-foreground">Organiza tus tareas con el tablero Kanban</p>
           </div>
 
           <div className="w-64">
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+              className="w-full px-3 py-2.5 bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/50 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[hsl(217,91%,60%)]/50 text-foreground"
             >
               <option value="">Todos los proyectos</option>
               {activeProjects?.map((project) => (

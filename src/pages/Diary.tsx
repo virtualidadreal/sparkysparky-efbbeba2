@@ -170,12 +170,12 @@ const Diary = () => {
 
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mi Diario</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">Mi Diario</h1>
+            <p className="text-muted-foreground mt-1">
               Captura momentos importantes y reflexiona sobre tus experiencias
             </p>
           </div>
@@ -198,13 +198,13 @@ const Diary = () => {
 
         {/* Nueva entrada (texto) */}
         {showNewEntry && (
-          <div className="bg-white rounded-lg border-2 border-primary p-4 mb-6">
+          <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg rounded-[18px] p-4 border-2 border-[hsl(217,91%,60%)]">
             <textarea
               value={newEntryContent}
               onChange={(e) => setNewEntryContent(e.target.value)}
               placeholder="¿Qué sucedió hoy? ¿Cómo te sientes?"
               rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 bg-muted/50 border border-border rounded-xl resize-none focus:ring-2 focus:ring-[hsl(217,91%,60%)]/50 focus:border-[hsl(217,91%,60%)] text-foreground placeholder:text-muted-foreground"
             />
             <div className="flex justify-end gap-2 mt-3">
               <Button
@@ -229,80 +229,82 @@ const Diary = () => {
         )}
 
         {/* Filtros */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveFilter('all')}
-              className={clsx(
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              )}
-            >
-              Todas
-            </button>
-            <button
-              onClick={() => setActiveFilter('positive')}
-              className={clsx(
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeFilter === 'positive' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              )}
-            >
-              Positivas
-            </button>
-            <button
-              onClick={() => setActiveFilter('neutral')}
-              className={clsx(
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeFilter === 'neutral' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              )}
-            >
-              Neutrales
-            </button>
-            <button
-              onClick={() => setActiveFilter('negative')}
-              className={clsx(
-                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                activeFilter === 'negative' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              )}
-            >
-              Negativas
-            </button>
-          </div>
+        <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg rounded-[18px] p-4 border border-white/50 dark:border-white/10">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveFilter('all')}
+                className={clsx(
+                  'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                  activeFilter === 'all' ? 'bg-[hsl(217,91%,60%)] text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                Todas
+              </button>
+              <button
+                onClick={() => setActiveFilter('positive')}
+                className={clsx(
+                  'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                  activeFilter === 'positive' ? 'bg-green-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                Positivas
+              </button>
+              <button
+                onClick={() => setActiveFilter('neutral')}
+                className={clsx(
+                  'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                  activeFilter === 'neutral' ? 'bg-gray-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                Neutrales
+              </button>
+              <button
+                onClick={() => setActiveFilter('negative')}
+                className={clsx(
+                  'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                  activeFilter === 'negative' ? 'bg-red-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                Negativas
+              </button>
+            </div>
 
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Buscar en entradas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Buscar en entradas..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-xl focus:ring-2 focus:ring-[hsl(217,91%,60%)]/50 focus:border-[hsl(217,91%,60%)] text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
           </div>
         </div>
+
+        <DiaryEntryList 
+          filters={filters} 
+          onEdit={handleEditEntry}
+          onView={handleViewEntry}
+        />
+
+        <DiaryEntryForm
+          isOpen={isFormOpen}
+          onClose={handleCloseForm}
+          entry={editingEntry}
+        />
+
+        <DiaryEntryDetailModal
+          isOpen={isDetailOpen}
+          onClose={() => {
+            setIsDetailOpen(false);
+            setViewingEntry(null);
+          }}
+          entry={viewingEntry}
+          onEdit={handleEditFromDetail}
+          onDelete={handleDeleteFromDetail}
+        />
       </div>
-
-      <DiaryEntryList 
-        filters={filters} 
-        onEdit={handleEditEntry}
-        onView={handleViewEntry}
-      />
-
-      <DiaryEntryForm
-        isOpen={isFormOpen}
-        onClose={handleCloseForm}
-        entry={editingEntry}
-      />
-
-      <DiaryEntryDetailModal
-        isOpen={isDetailOpen}
-        onClose={() => {
-          setIsDetailOpen(false);
-          setViewingEntry(null);
-        }}
-        entry={viewingEntry}
-        onEdit={handleEditFromDetail}
-        onDelete={handleDeleteFromDetail}
-      />
     </DashboardLayout>
   );
 };

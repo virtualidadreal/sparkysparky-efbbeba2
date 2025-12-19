@@ -37,20 +37,20 @@ const StatCard = ({
   trend?: number;
   trendLabel?: string;
 }) => (
-  <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+  <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg rounded-[18px] border border-white/50 dark:border-white/10 p-6 shadow-sm">
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
         <p className="text-3xl font-bold text-foreground mt-1">{value}</p>
         {trend !== undefined && (
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <ArrowTrendingUpIcon className="h-3 w-3 text-primary" />
+            <ArrowTrendingUpIcon className="h-3 w-3 text-[hsl(217,91%,60%)]" />
             {trend} {trendLabel}
           </p>
         )}
       </div>
-      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-        <Icon className="h-6 w-6 text-primary" />
+      <div className="h-12 w-12 rounded-xl bg-[hsl(217,91%,60%)]/10 flex items-center justify-center">
+        <Icon className="h-6 w-6 text-[hsl(217,91%,60%)]" />
       </div>
     </div>
   </div>
@@ -63,7 +63,7 @@ const ChartCard = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+  <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg rounded-[18px] border border-white/50 dark:border-white/10 p-6 shadow-sm">
     <h3 className="text-lg font-semibold text-foreground mb-4">{title}</h3>
     {children}
   </div>
@@ -307,7 +307,7 @@ const Insights = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/5 rounded-xl border border-border p-6">
+        <div className="bg-gradient-to-r from-[hsl(217,91%,60%)]/10 via-[hsl(217,91%,60%)]/5 to-transparent rounded-[18px] border border-white/50 dark:border-white/10 p-6">
           <div className="flex items-center gap-2 mb-4">
             <SparklesIcon className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold text-foreground">Resumen Rápido</h3>

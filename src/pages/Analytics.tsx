@@ -42,13 +42,13 @@ const MetricCard = ({
   icon: React.ElementType;
   iconColor: string;
 }) => (
-  <div className="bg-card border border-border rounded-xl p-5">
+  <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/50 dark:border-white/10 rounded-[18px] p-5">
     <div className="flex items-start justify-between">
       <div>
         <p className="text-sm text-muted-foreground">{title}</p>
         <p className="text-3xl font-bold text-foreground mt-1">{value}</p>
         {change !== undefined && (
-          <div className={`flex items-center gap-1 mt-2 text-sm ${change >= 0 ? 'text-success' : 'text-destructive'}`}>
+          <div className={`flex items-center gap-1 mt-2 text-sm ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {change >= 0 ? (
               <ArrowTrendingUpIcon className="h-4 w-4" />
             ) : (
@@ -58,7 +58,7 @@ const MetricCard = ({
           </div>
         )}
       </div>
-      <div className={`p-3 rounded-lg ${iconColor}`}>
+      <div className={`p-3 rounded-xl ${iconColor}`}>
         <Icon className="h-6 w-6" />
       </div>
     </div>
@@ -73,7 +73,7 @@ export default function Analytics() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
@@ -113,7 +113,7 @@ export default function Analytics() {
         </div>
 
         {/* Gráfico de actividad diaria */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/50 dark:border-white/10 rounded-[18px] p-5">
           <h2 className="text-lg font-semibold text-foreground mb-4">
             Actividad últimos 14 días
           </h2>
@@ -173,7 +173,7 @@ export default function Analytics() {
         {/* Gráficos en grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Productividad semanal */}
-          <div className="bg-card border border-border rounded-xl p-5">
+          <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/50 dark:border-white/10 rounded-[18px] p-5">
             <h2 className="text-lg font-semibold text-foreground mb-4">
               Productividad semanal
             </h2>
@@ -206,7 +206,7 @@ export default function Analytics() {
           </div>
 
           {/* Tareas por estado */}
-          <div className="bg-card border border-border rounded-xl p-5">
+          <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/50 dark:border-white/10 rounded-[18px] p-5">
             <h2 className="text-lg font-semibold text-foreground mb-4">
               Tareas por estado
             </h2>
@@ -241,7 +241,7 @@ export default function Analytics() {
           </div>
 
           {/* Ideas por categoría */}
-          <div className="bg-card border border-border rounded-xl p-5">
+          <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/50 dark:border-white/10 rounded-[18px] p-5">
             <h2 className="text-lg font-semibold text-foreground mb-4">
               Ideas por categoría
             </h2>
@@ -279,7 +279,7 @@ export default function Analytics() {
           </div>
 
           {/* Resumen rápido */}
-          <div className="bg-card border border-border rounded-xl p-5">
+          <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/50 dark:border-white/10 rounded-[18px] p-5">
             <h2 className="text-lg font-semibold text-foreground mb-4">
               Resumen rápido
             </h2>
