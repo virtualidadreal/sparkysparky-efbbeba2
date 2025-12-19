@@ -24,6 +24,7 @@ import { useLocation } from 'react-router-dom';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { IdeaPreviewModal } from '@/components/ideas/IdeaPreviewModal';
 import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
+import { SparkyChat } from '@/components/chat/SparkyChat';
 import { Idea } from '@/types/Idea.types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -159,13 +160,14 @@ const Dashboard = () => {
                 Captura rápida
               </Link>
 
-              <Link
-                to="/chat"
-                className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors"
-              >
-                <Mic className="h-4 w-4" />
-                Hablar con Sparky
-              </Link>
+              <SparkyChat
+                trigger={
+                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                    <Mic className="h-4 w-4" />
+                    Hablar con Sparky
+                  </button>
+                }
+              />
             </div>
           </div>
         </div>
@@ -194,12 +196,13 @@ const Dashboard = () => {
                   "{sparkyMessage}"
                 </p>
                 <div className="flex gap-3">
-                  <Link
-                    to="/chat"
-                    className="px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors"
-                  >
-                    Sí, cuéntame
-                  </Link>
+                  <SparkyChat
+                    trigger={
+                      <button className="px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                        Sí, cuéntame
+                      </button>
+                    }
+                  />
                   <button
                     className="px-5 py-2.5 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl font-medium text-sm transition-colors"
                   >
