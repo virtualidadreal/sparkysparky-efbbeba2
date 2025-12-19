@@ -215,7 +215,7 @@ const Dashboard = () => {
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Escribe tu pregunta aquí..."
+                  placeholder="¿Qué tienes en mente?"
                   className="w-full px-5 py-4 bg-muted/50 border border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(217,91%,60%)]/50 focus:border-[hsl(217,91%,60%)] transition-all pr-12"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && chatInput.trim()) {
