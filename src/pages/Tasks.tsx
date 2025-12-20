@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react';
 import { useTasks, useTasksWithSubtasks, useCreateTask, useToggleTaskComplete, useDeleteTask, useTaskCounts } from '@/hooks/useTasks';
-import { useTaskListsWithCounts, useCreateTaskList, TaskList } from '@/hooks/useTaskLists';
+import { useTaskListsWithCounts, useCreateTaskList } from '@/hooks/useTaskLists';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TaskEditPanel } from '@/components/tasks/TaskEditPanel';
-import type { Task, TasksFilters } from '@/types/Task.types';
+import type { Task } from '@/types/Task.types';
 import { format, isToday, isTomorrow, isPast, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -206,10 +206,10 @@ const Tasks = () => {
           </div>
         </div>
 
-        {/* Right Sidebar - Task Views & Lists */}
-        <div className="w-72 border-l border-border flex flex-col bg-muted/20">
+        {/* Right Sidebar - Same style as Dashboard */}
+        <div className="w-[300px] bg-card rounded-[24px] p-5 shadow-sm flex flex-col m-3 ml-0">
           {/* User Profile */}
-          <div className="p-4 border-b border-border">
+          <div className="mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
                 {getUserDisplayName().charAt(0).toUpperCase()}
@@ -222,7 +222,7 @@ const Tasks = () => {
           </div>
 
           {/* Search */}
-          <div className="p-3">
+          <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
@@ -236,17 +236,17 @@ const Tasks = () => {
                     setSelectedDateView(null);
                   }
                 }}
-                className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
+                className="w-full pl-9 pr-3 py-2.5 bg-muted/50 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
 
           {/* Date Views */}
-          <div className="px-2 py-2">
-            <p className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Vistas por fecha
-            </p>
-            <nav className="mt-1 space-y-0.5">
+          <div className="mb-6">
+            <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-3">
+              VISTAS POR FECHA
+            </h3>
+            <nav className="space-y-1">
               {dateViews.map((view) => (
                 <button
                   key={view.id}
@@ -256,7 +256,7 @@ const Tasks = () => {
                     setSearchTerm('');
                   }}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors',
                     selectedDateView === view.id && !selectedListId && !searchTerm
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-foreground hover:bg-muted/50',
@@ -279,14 +279,14 @@ const Tasks = () => {
           </div>
 
           {/* Divider */}
-          <div className="mx-4 my-2 border-t border-border" />
+          <div className="border-t border-border mb-6" />
 
           {/* Lists */}
-          <div className="flex-1 px-2 py-2 overflow-y-auto">
-            <div className="flex items-center justify-between px-3 py-1">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Mis listas
-              </p>
+          <div className="flex-1 overflow-y-auto">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-muted-foreground tracking-wider">
+                MIS LISTAS
+              </h3>
               <button
                 onClick={() => setIsCreatingList(true)}
                 className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
@@ -296,7 +296,7 @@ const Tasks = () => {
             </div>
 
             {isCreatingList && (
-              <form onSubmit={handleCreateList} className="px-3 py-2">
+              <form onSubmit={handleCreateList} className="mb-3">
                 <input
                   type="text"
                   value={newListName}
@@ -308,12 +308,12 @@ const Tasks = () => {
                       setIsCreatingList(false);
                     }
                   }}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </form>
             )}
 
-            <nav className="mt-1 space-y-0.5">
+            <nav className="space-y-1">
               {taskLists?.map((list) => (
                 <button
                   key={list.id}
@@ -323,7 +323,7 @@ const Tasks = () => {
                     setSearchTerm('');
                   }}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group',
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors group',
                     selectedListId === list.id && !selectedDateView && !searchTerm
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-foreground hover:bg-muted/50'
@@ -343,7 +343,7 @@ const Tasks = () => {
               ))}
 
               {(!taskLists || taskLists.length === 0) && !isCreatingList && (
-                <p className="px-3 py-2 text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   No hay listas creadas
                 </p>
               )}
