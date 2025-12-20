@@ -244,6 +244,51 @@ export type Database = {
           },
         ]
       }
+      intelligent_connections: {
+        Row: {
+          created_at: string
+          id: string
+          reasoning: string | null
+          relationship: string
+          source_id: string
+          source_type: string
+          strength: number
+          target_id: string
+          target_title: string
+          target_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reasoning?: string | null
+          relationship: string
+          source_id: string
+          source_type: string
+          strength?: number
+          target_id: string
+          target_title: string
+          target_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reasoning?: string | null
+          relationship?: string
+          source_id?: string
+          source_type?: string
+          strength?: number
+          target_id?: string
+          target_title?: string
+          target_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       memory_entries: {
         Row: {
           category: string | null

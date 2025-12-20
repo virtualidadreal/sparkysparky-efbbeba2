@@ -74,7 +74,7 @@ export const useSemanticSearch = () => {
 };
 
 /**
- * Hook para encontrar conexiones inteligentes
+ * Hook para obtener conexiones inteligentes (desde DB, pre-calculadas)
  */
 export const useIntelligentConnections = () => {
   const { user } = useAuth();
@@ -89,23 +89,33 @@ export const useIntelligentConnections = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('semantic-search', {
-        body: { 
-          userId: user.id, 
-          mode: 'connections',
-          itemId,
-          itemType,
-        },
-      });
+      // Fetch from pre-calculated connections table
+      const { data, error } = await supabase
+        .from('intelligent_connections')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('source_id', itemId)
+        .eq('source_type', itemType)
+        .order('strength', { ascending: false });
 
       if (error) throw error;
       
-      const foundConnections = data?.connections || [];
+      const foundConnections: Connection[] = (data || []).map((c: any) => ({
+        sourceId: c.source_id,
+        sourceType: c.source_type,
+        targetId: c.target_id,
+        targetType: c.target_type as SearchResultType,
+        targetTitle: c.target_title,
+        relationship: c.relationship,
+        strength: Number(c.strength),
+        reasoning: c.reasoning,
+      }));
+      
       setConnections(foundConnections);
       return foundConnections;
     } catch (error) {
       console.error('Connections error:', error);
-      toast.error('Error buscando conexiones');
+      setConnections([]);
       return [];
     } finally {
       setIsLoading(false);
