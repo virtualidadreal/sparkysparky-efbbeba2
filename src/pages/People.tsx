@@ -13,13 +13,13 @@ import {
   Settings,
   Plus,
   Lightbulb,
-  TrendingUp,
   FolderOpen,
   CheckSquare,
   Brain,
   BarChart3,
   ShieldCheck,
   Mic,
+  BookOpen,
 } from 'lucide-react';
 
 /**
@@ -74,11 +74,12 @@ const People = () => {
             {/* Nav Items */}
             <nav className="space-y-0.5 flex-1">
               {[
-              { to: '/dashboard', icon: Home, label: 'Dashboard' },
+                { to: '/dashboard', icon: Home, label: 'Dashboard' },
                 { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
                 { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
                 { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
                 { to: '/people', icon: Users, label: 'Personas' },
+                { to: '/diary', icon: BookOpen, label: 'Diario' },
                 { to: '/memory', icon: Brain, label: 'Memoria' },
                 { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
                 { to: '/settings', icon: Settings, label: 'Configuración' },
