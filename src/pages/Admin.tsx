@@ -44,6 +44,7 @@ import {
   ShieldCheck,
   Mic,
   BookOpen,
+  Key,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { SparkyChat } from '@/components/chat/SparkyChat';
@@ -51,7 +52,7 @@ import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 
 type CategoryKey = keyof typeof PROMPT_CATEGORIES;
 type SettingsCategoryKey = keyof typeof SETTINGS_CATEGORIES;
-type TabType = 'prompts' | 'settings';
+type TabType = 'prompts' | 'settings' | 'apis';
 
 const categoryIcons: Record<string, React.ElementType> = {
   DocumentTextIcon,
@@ -691,6 +692,111 @@ const Admin = () => {
                 </div>
               )}
 
+              {/* APIS TAB */}
+              {activeTab === 'apis' && (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 px-1">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Key className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-foreground">Claves de API</h2>
+                      <p className="text-sm text-muted-foreground">Configura las claves de acceso a servicios de IA</p>
+                    </div>
+                  </div>
+
+                  {/* OpenAI API Key */}
+                  <Card className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                        <svg className="h-6 w-6 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.6 8.3829l2.02-1.1638a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">OpenAI API Key</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Clave para acceder a los modelos GPT-4, GPT-5 y otros de OpenAI
+                        </p>
+                        <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-sm font-medium text-foreground">Estado: </span>
+                              <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                Configurada
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              La clave se gestiona como secreto seguro
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Lovable AI Key */}
+                  <Card className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                        <SparklesIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">Lovable AI Gateway</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Acceso a modelos Gemini y GPT a través de Lovable Cloud
+                        </p>
+                        <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-sm font-medium text-foreground">Estado: </span>
+                              <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                Activo
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Auto-gestionado por Lovable
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <h4 className="text-sm font-medium text-foreground mb-2">Modelos disponibles:</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="text-xs p-2 bg-background rounded border border-border">
+                              <span className="font-medium">Gemini 2.5 Flash</span>
+                              <span className="text-muted-foreground ml-1">(default)</span>
+                            </div>
+                            <div className="text-xs p-2 bg-background rounded border border-border">
+                              <span className="font-medium">Gemini 2.5 Pro</span>
+                            </div>
+                            <div className="text-xs p-2 bg-background rounded border border-border">
+                              <span className="font-medium">GPT-5</span>
+                            </div>
+                            <div className="text-xs p-2 bg-background rounded border border-border">
+                              <span className="font-medium">GPT-5 Mini</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Usage Info */}
+                  <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                    <div className="flex items-start gap-3">
+                      <CpuChipIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-foreground">Uso de IA</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          El modelo por defecto es <strong>Gemini 2.5 Flash</strong> a través de Lovable AI. 
+                          Puedes configurar modelos específicos para cada prompt en la sección de "Prompts de IA".
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
               {/* Info Card */}
               <Card className="p-4 bg-primary/5 border-primary/20">
                 <div className="flex items-start gap-3">
@@ -700,7 +806,9 @@ const Admin = () => {
                     <p className="text-sm text-muted-foreground mt-1">
                       {activeTab === 'prompts' 
                         ? 'Los prompts y configuraciones de IA se cargan dinámicamente por las edge functions. Cada prompt puede usar un modelo diferente según tus necesidades.'
-                        : 'Las configuraciones globales afectan el comportamiento de Sparky para todos los usuarios. Los cambios se aplican inmediatamente.'
+                        : activeTab === 'apis'
+                          ? 'Las claves de API se almacenan de forma segura como secretos en Lovable Cloud y nunca se exponen en el código.'
+                          : 'Las configuraciones globales afectan el comportamiento de Sparky para todos los usuarios. Los cambios se aplican inmediatamente.'
                       }
                     </p>
                   </div>
@@ -742,6 +850,18 @@ const Admin = () => {
                 >
                   <Cog6ToothIcon className="h-5 w-5" />
                   Config. Globales
+                </button>
+                <button
+                  onClick={() => setActiveTab('apis')}
+                  className={clsx(
+                    'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left',
+                    activeTab === 'apis'
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  )}
+                >
+                  <Key className="h-5 w-5" />
+                  APIs de IA
                 </button>
               </div>
             </div>
