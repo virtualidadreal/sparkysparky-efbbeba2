@@ -500,7 +500,7 @@ INSTRUCCIONES PARA IDEAS:
         const ideaTags = classification.data.tags || [];
         
         // Use project_id from AI if provided, otherwise auto-match
-        let matchedProjectId = classification.data.project_id || null;
+        matchedProjectId = classification.data.project_id || null;
         
         if (!matchedProjectId && userProjects && userProjects.length > 0) {
           matchedProjectId = findMatchingProject(
