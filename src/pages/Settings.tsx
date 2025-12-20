@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { ThreeColumnLayout } from '@/components/layout';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { 
   useProfile, 
   useUpdateProfile, 
@@ -17,13 +18,53 @@ import {
   ArrowRightOnRectangleIcon,
   CameraIcon,
 } from '@heroicons/react/24/outline';
+import {
+  Home,
+  Users,
+  Settings as SettingsIcon,
+  Plus,
+  Lightbulb,
+  FolderOpen,
+  CheckSquare,
+  Brain,
+  BarChart3,
+  ShieldCheck,
+  Mic,
+  BookOpen,
+  User,
+  Lock,
+  Palette,
+  Bell,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { SparkyChat } from '@/components/chat/SparkyChat';
+import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
+import clsx from 'clsx';
+
+const navItems = [
+  { to: '/dashboard', icon: Home, label: 'Dashboard' },
+  { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
+  { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
+  { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
+  { to: '/people', icon: Users, label: 'Personas' },
+  { to: '/diary', icon: BookOpen, label: 'Diario' },
+  { to: '/memory', icon: Brain, label: 'Memoria' },
+  { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
+  { to: '/settings', icon: SettingsIcon, label: 'Configuración' },
+];
+
+type SettingsTab = 'profile' | 'security' | 'appearance' | 'notifications';
+
+const settingsTabs = [
+  { id: 'profile' as SettingsTab, icon: User, label: 'Perfil' },
+  { id: 'security' as SettingsTab, icon: Lock, label: 'Seguridad' },
+  { id: 'appearance' as SettingsTab, icon: Palette, label: 'Apariencia' },
+  { id: 'notifications' as SettingsTab, icon: Bell, label: 'Notificaciones' },
+];
 
 const SettingsSection = ({
   title,
@@ -57,12 +98,15 @@ const defaultPreferences: UserPreferences = {
 const Settings = () => {
   const { user, signOut } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: isAdmin } = useIsAdmin();
   const updateProfile = useUpdateProfile();
   const updatePassword = useUpdatePassword();
   const uploadAvatar = useUploadAvatar();
   const navigate = useNavigate();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [displayName, setDisplayName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -169,283 +213,412 @@ const Settings = () => {
 
   if (profileLoading) {
     return (
-      <ThreeColumnLayout>
-        <div className="bg-card rounded-[24px] p-6 shadow-sm flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
+          <div className="hidden lg:block">
+            <div className="bg-card rounded-[24px] h-full" />
+          </div>
+          <div className="bg-card rounded-[24px] flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+          </div>
+          <div className="hidden lg:block">
+            <div className="bg-card rounded-[24px] h-full" />
+          </div>
         </div>
-      </ThreeColumnLayout>
+      </div>
     );
   }
 
   return (
-    <ThreeColumnLayout>
-      <div className="bg-card rounded-[24px] p-6 shadow-sm flex-1">
-        <div className="space-y-8 max-w-4xl">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Configuración</h1>
-          <p className="text-muted-foreground mt-1">
-            Gestiona tu perfil y preferencias de la aplicación
-          </p>
+    <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 overflow-hidden">
+      {/* 3-column grid layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
+        
+        {/* Left Sidebar - Fixed Navigation */}
+        <div className="hidden lg:flex flex-col h-full">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm h-full flex flex-col overflow-hidden">
+            <nav className="space-y-0.5 flex-1 overflow-y-auto">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* Admin link */}
+              {isAdmin && (
+                <>
+                  <div className="border-t border-border my-3" />
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                  >
+                    <ShieldCheck className="h-5 w-5" />
+                    Admin
+                  </Link>
+                </>
+              )}
+            </nav>
+
+            {/* Bottom Actions */}
+            <div className="mt-4 pt-4 border-t border-border space-y-3">
+              <QuickCapturePopup
+                trigger={
+                  <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
+                    <Plus className="h-4 w-4" />
+                    Captura rápida
+                  </button>
+                }
+              />
+              <SparkyChat
+                trigger={
+                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                    <Mic className="h-4 w-4" />
+                    Hablar con Sparky
+                  </button>
+                }
+              />
+            </div>
+          </div>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="bg-white/60 dark:bg-card/60 backdrop-blur-lg p-1 rounded-xl border border-white/50 dark:border-white/10">
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <UserCircleIcon className="h-4 w-4" />
-              Perfil
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2">
-              <ShieldCheckIcon className="h-4 w-4" />
-              Seguridad
-            </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center gap-2">
-              <PaintBrushIcon className="h-4 w-4" />
-              Apariencia
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <BellIcon className="h-4 w-4" />
-              Notificaciones
-            </TabsTrigger>
-          </TabsList>
+        {/* Main Content - Scrollable */}
+        <div className="flex flex-col gap-3 h-full overflow-y-auto">
+          {/* Header */}
+          <div className="bg-card rounded-[24px] p-6 shadow-sm">
+            <h1 className="text-2xl font-bold text-foreground">Configuración</h1>
+            <p className="text-muted-foreground mt-1">
+              Gestiona tu perfil y preferencias de la aplicación
+            </p>
+          </div>
 
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            <SettingsSection
-              title="Información del perfil"
-              description="Actualiza tu información personal"
-            >
-              <div className="space-y-4">
-                {/* Avatar */}
-                <div className="flex items-center gap-4">
-                  <div className="relative group">
-                    {profile?.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt="Avatar"
-                        className="h-20 w-20 rounded-full object-cover border-2 border-border"
-                      />
-                    ) : (
-                      <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                        <UserCircleIcon className="h-12 w-12 text-primary" />
+          {/* Content */}
+          <div className="bg-card rounded-[24px] p-6 shadow-sm flex-1">
+            <div className="space-y-6 max-w-3xl">
+              {/* Profile Tab */}
+              {activeTab === 'profile' && (
+                <>
+                  <SettingsSection
+                    title="Información del perfil"
+                    description="Actualiza tu información personal"
+                  >
+                    <div className="space-y-4">
+                      {/* Avatar */}
+                      <div className="flex items-center gap-4">
+                        <div className="relative group">
+                          {profile?.avatar_url ? (
+                            <img
+                              src={profile.avatar_url}
+                              alt="Avatar"
+                              className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                            />
+                          ) : (
+                            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                              <UserCircleIcon className="h-12 w-12 text-primary" />
+                            </div>
+                          )}
+                          <button
+                            onClick={handleAvatarClick}
+                            disabled={uploadAvatar.isPending}
+                            className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <CameraIcon className="h-6 w-6 text-white" />
+                          </button>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                            className="hidden"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {profile?.display_name || user?.email?.split('@')[0]}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{user?.email}</p>
+                          <button
+                            onClick={handleAvatarClick}
+                            disabled={uploadAvatar.isPending}
+                            className="text-sm text-primary hover:underline mt-1"
+                          >
+                            {uploadAvatar.isPending ? 'Subiendo...' : 'Cambiar foto'}
+                          </button>
+                        </div>
                       </div>
-                    )}
-                    <button
-                      onClick={handleAvatarClick}
-                      disabled={uploadAvatar.isPending}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <CameraIcon className="h-6 w-6 text-white" />
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarChange}
-                      className="hidden"
+
+                      <div className="grid gap-4 pt-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="displayName">Nombre para mostrar</Label>
+                          <Input
+                            id="displayName"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="Tu nombre"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Correo electrónico</Label>
+                          <Input
+                            id="email"
+                            value={user?.email || ''}
+                            disabled
+                            className="bg-muted"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            El correo electrónico no se puede cambiar
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-4">
+                        <Button
+                          onClick={handleUpdateProfile}
+                          disabled={updateProfile.isPending}
+                        >
+                          {updateProfile.isPending ? 'Guardando...' : 'Guardar cambios'}
+                        </Button>
+                      </div>
+                    </div>
+                  </SettingsSection>
+
+                  <SettingsSection
+                    title="Cuenta"
+                    description="Gestiona tu sesión"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">Cerrar sesión</p>
+                        <p className="text-sm text-muted-foreground">
+                          Cierra tu sesión en este dispositivo
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        onClick={handleSignOut}
+                        className="flex items-center gap-2"
+                      >
+                        <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                        Cerrar sesión
+                      </Button>
+                    </div>
+                  </SettingsSection>
+                </>
+              )}
+
+              {/* Security Tab */}
+              {activeTab === 'security' && (
+                <>
+                  <SettingsSection
+                    title="Cambiar contraseña"
+                    description="Actualiza tu contraseña de acceso"
+                  >
+                    <div className="space-y-4 max-w-md">
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">Nueva contraseña</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                        />
+                      </div>
+
+                      <div className="pt-2">
+                        <Button
+                          onClick={handleUpdatePassword}
+                          disabled={updatePassword.isPending || !newPassword || !confirmPassword}
+                        >
+                          <KeyIcon className="h-4 w-4 mr-2" />
+                          {updatePassword.isPending ? 'Actualizando...' : 'Actualizar contraseña'}
+                        </Button>
+                      </div>
+                    </div>
+                  </SettingsSection>
+
+                  <SettingsSection
+                    title="Sesiones activas"
+                    description="Gestiona tus sesiones en otros dispositivos"
+                  >
+                    <div className="text-sm text-muted-foreground">
+                      <p>Sesión actual: {user?.email}</p>
+                      <p className="mt-1">
+                        Último acceso: {new Date(user?.last_sign_in_at || '').toLocaleString('es-ES')}
+                      </p>
+                    </div>
+                  </SettingsSection>
+                </>
+              )}
+
+              {/* Appearance Tab */}
+              {activeTab === 'appearance' && (
+                <SettingsSection
+                  title="Tema"
+                  description="Personaliza la apariencia de la aplicación"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">Modo oscuro</p>
+                      <p className="text-sm text-muted-foreground">
+                        Activa el tema oscuro para reducir la fatiga visual
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isDarkMode}
+                      onCheckedChange={handleToggleDarkMode}
                     />
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">
+                </SettingsSection>
+              )}
+
+              {/* Notifications Tab */}
+              {activeTab === 'notifications' && (
+                <SettingsSection
+                  title="Preferencias de notificaciones"
+                  description="Configura cómo quieres recibir notificaciones"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">Recordatorios de tareas</p>
+                        <p className="text-sm text-muted-foreground">
+                          Recibe recordatorios de tareas pendientes
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={preferences.notifications.task_reminders}
+                        onCheckedChange={(checked) => handleNotificationChange('task_reminders', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">Resumen semanal</p>
+                        <p className="text-sm text-muted-foreground">
+                          Recibe un resumen de tu actividad semanal
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={preferences.notifications.weekly_summary}
+                        onCheckedChange={(checked) => handleNotificationChange('weekly_summary', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">Actualizaciones del producto</p>
+                        <p className="text-sm text-muted-foreground">
+                          Recibe noticias sobre nuevas funcionalidades
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={preferences.notifications.product_updates}
+                        onCheckedChange={(checked) => handleNotificationChange('product_updates', checked)}
+                      />
+                    </div>
+                  </div>
+                </SettingsSection>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar - Settings Sections */}
+        <div className="hidden lg:flex flex-col h-full">
+          <div className="bg-card rounded-[24px] p-5 shadow-sm h-full flex flex-col overflow-hidden">
+            {/* Settings Tabs */}
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
+                SECCIONES
+              </h3>
+              <div className="space-y-2">
+                {settingsTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={clsx(
+                      'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left',
+                      activeTab === tab.id
+                        ? 'bg-primary text-primary-foreground font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    )}
+                  >
+                    <tab.icon className="h-5 w-5" />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Separador */}
+            <div className="border-t border-border mb-6" />
+
+            {/* Quick Info */}
+            <div className="flex-1">
+              <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
+                TU CUENTA
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt="Avatar"
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {profile?.display_name || user?.email?.split('@')[0]}
                     </p>
-                    <p className="text-sm text-muted-foreground">{user?.email}</p>
-                    <button
-                      onClick={handleAvatarClick}
-                      disabled={uploadAvatar.isPending}
-                      className="text-sm text-primary hover:underline mt-1"
-                    >
-                      {uploadAvatar.isPending ? 'Subiendo...' : 'Cambiar foto'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="displayName">Nombre para mostrar</Label>
-                    <Input
-                      id="displayName"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Tu nombre"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Correo electrónico</Label>
-                    <Input
-                      id="email"
-                      value={user?.email || ''}
-                      disabled
-                      className="bg-muted"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      El correo electrónico no se puede cambiar
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user?.email}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-4">
-                  <Button
-                    onClick={handleUpdateProfile}
-                    disabled={updateProfile.isPending}
-                  >
-                    {updateProfile.isPending ? 'Guardando...' : 'Guardar cambios'}
-                  </Button>
-                </div>
-              </div>
-            </SettingsSection>
-
-            <SettingsSection
-              title="Cuenta"
-              description="Gestiona tu sesión"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Cerrar sesión</p>
-                  <p className="text-sm text-muted-foreground">
-                    Cierra tu sesión en este dispositivo
+                <div className="bg-muted/30 rounded-xl p-4">
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {activeTab === 'profile' && 'Actualiza tu nombre y foto de perfil para personalizar tu cuenta.'}
+                    {activeTab === 'security' && 'Mantén tu cuenta segura actualizando tu contraseña regularmente.'}
+                    {activeTab === 'appearance' && 'Personaliza cómo se ve la aplicación según tus preferencias.'}
+                    {activeTab === 'notifications' && 'Controla qué notificaciones quieres recibir de Sparky.'}
                   </p>
                 </div>
-                <Button
-                  variant="destructive"
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
-                  Cerrar sesión
-                </Button>
               </div>
-            </SettingsSection>
-          </TabsContent>
-
-          {/* Security Tab */}
-          <TabsContent value="security" className="space-y-6">
-            <SettingsSection
-              title="Cambiar contraseña"
-              description="Actualiza tu contraseña de acceso"
-            >
-              <div className="space-y-4 max-w-md">
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nueva contraseña</Label>
-                  <Input
-                    id="newPassword"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <Button
-                    onClick={handleUpdatePassword}
-                    disabled={updatePassword.isPending || !newPassword || !confirmPassword}
-                  >
-                    <KeyIcon className="h-4 w-4 mr-2" />
-                    {updatePassword.isPending ? 'Actualizando...' : 'Actualizar contraseña'}
-                  </Button>
-                </div>
-              </div>
-            </SettingsSection>
-
-            <SettingsSection
-              title="Sesiones activas"
-              description="Gestiona tus sesiones en otros dispositivos"
-            >
-              <div className="text-sm text-muted-foreground">
-                <p>Sesión actual: {user?.email}</p>
-                <p className="mt-1">
-                  Último acceso: {new Date(user?.last_sign_in_at || '').toLocaleString('es-ES')}
-                </p>
-              </div>
-            </SettingsSection>
-          </TabsContent>
-
-          {/* Appearance Tab */}
-          <TabsContent value="appearance" className="space-y-6">
-            <SettingsSection
-              title="Tema"
-              description="Personaliza la apariencia de la aplicación"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Modo oscuro</p>
-                  <p className="text-sm text-muted-foreground">
-                    Activa el tema oscuro para reducir la fatiga visual
-                  </p>
-                </div>
-                <Switch
-                  checked={isDarkMode}
-                  onCheckedChange={handleToggleDarkMode}
-                />
-              </div>
-            </SettingsSection>
-          </TabsContent>
-
-          {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
-            <SettingsSection
-              title="Preferencias de notificaciones"
-              description="Configura cómo quieres recibir notificaciones"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Recordatorios de tareas</p>
-                    <p className="text-sm text-muted-foreground">
-                      Recibe recordatorios de tareas pendientes
-                    </p>
-                  </div>
-                  <Switch 
-                    checked={preferences.notifications.task_reminders}
-                    onCheckedChange={(checked) => handleNotificationChange('task_reminders', checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Resumen semanal</p>
-                    <p className="text-sm text-muted-foreground">
-                      Recibe un resumen de tu actividad semanal
-                    </p>
-                  </div>
-                  <Switch 
-                    checked={preferences.notifications.weekly_summary}
-                    onCheckedChange={(checked) => handleNotificationChange('weekly_summary', checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Actualizaciones del producto</p>
-                    <p className="text-sm text-muted-foreground">
-                      Recibe noticias sobre nuevas funcionalidades
-                    </p>
-                  </div>
-                  <Switch 
-                    checked={preferences.notifications.product_updates}
-                    onCheckedChange={(checked) => handleNotificationChange('product_updates', checked)}
-                  />
-                </div>
-              </div>
-            </SettingsSection>
-          </TabsContent>
-        </Tabs>
+            </div>
+          </div>
         </div>
       </div>
-    </ThreeColumnLayout>
+    </div>
   );
 };
 
