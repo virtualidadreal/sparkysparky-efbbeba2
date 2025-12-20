@@ -14,41 +14,24 @@ export default {
     },
     extend: {
       colors: {
-        // Paleta de colores Sparky
-        primary: {
-          DEFAULT: '#4A90E2',
-          50: '#EBF4FC',
-          100: '#D7E9F9',
-          200: '#B0D3F3',
-          300: '#88BDED',
-          400: '#61A6E7',
-          500: '#4A90E2',
-          600: '#2B73C9',
-          700: '#205693',
-          800: '#163A62',
-          900: '#0B1D31',
-          light: '#6BA6E8',
-          dark: '#3A7BC8',
-        },
-        secondary: {
-          DEFAULT: '#50E3C2',
-          50: '#EAFAF6',
-          100: '#D5F5ED',
-          500: '#50E3C2',
-          600: '#2DC9A5',
-          light: '#7AEAD4',
-          dark: '#3BC9A8',
-        },
-        success: '#2ECC71',
-        error: '#E74C3C',
-        warning: '#F39C12',
-        info: '#3498DB',
-        // Colores de sistema shadcn
+        // Colores de sistema shadcn - usando HSL variables
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -75,6 +58,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Colores semánticos adicionales
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
       },
       borderRadius: {
         lg: "var(--radius)",
