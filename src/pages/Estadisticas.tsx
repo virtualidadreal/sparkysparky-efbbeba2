@@ -121,15 +121,15 @@ const Estadisticas = () => {
   const isLoading = loadingInsights;
 
   return (
-    <div className="min-h-screen bg-[hsl(220,14%,96%)] p-3">
+    <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 overflow-hidden">
       {/* 3-column grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto min-h-[calc(100vh-24px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
         
-        {/* Left Sidebar */}
-        <div className="flex flex-col">
-          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col flex-1">
+        {/* Left Sidebar - fixed height */}
+        <div className="hidden lg:flex flex-col h-full">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col h-full overflow-hidden">
             {/* Nav Items */}
-            <nav className="space-y-0.5 flex-1">
+            <nav className="space-y-0.5 flex-1 overflow-y-auto">
               {[
                 { to: '/dashboard', icon: Home, label: 'Dashboard' },
                 { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
@@ -179,7 +179,7 @@ const Estadisticas = () => {
             </nav>
 
             {/* Bottom Actions */}
-            <div className="mt-4 pt-4 border-t border-border space-y-3">
+            <div className="mt-4 pt-4 border-t border-border space-y-3 shrink-0">
               <QuickCapturePopup
                 trigger={
                   <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
@@ -201,8 +201,8 @@ const Estadisticas = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex flex-col gap-4">
+        {/* Main Content - scrollable */}
+        <div className="flex flex-col gap-4 h-full overflow-y-auto">
           {/* Header */}
           <div className="px-2">
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
@@ -546,8 +546,9 @@ const Estadisticas = () => {
           </div>
         </div>
 
-        {/* Right Sidebar */}
-        <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col">
+        {/* Right Sidebar - fixed height */}
+        <div className="hidden lg:flex flex-col h-full">
+          <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col h-full overflow-hidden">
           {/* Métricas rápidas */}
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
@@ -594,6 +595,7 @@ const Estadisticas = () => {
                 </p>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
