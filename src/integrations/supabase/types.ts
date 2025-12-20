@@ -576,44 +576,103 @@ export type Database = {
         }
         Relationships: []
       }
+      task_lists: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
+          completed_at: string | null
           created_at: string
           description: string | null
           due_date: string | null
           id: string
+          list_id: string | null
+          parent_task_id: string | null
           priority: string | null
           project_id: string | null
+          sort_order: number | null
           status: string | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          completed_at?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
+          list_id?: string | null
+          parent_task_id?: string | null
           priority?: string | null
           project_id?: string | null
+          sort_order?: number | null
           status?: string | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          completed_at?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
+          list_id?: string | null
+          parent_task_id?: string | null
           priority?: string | null
           project_id?: string | null
+          sort_order?: number | null
           status?: string | null
           title?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "task_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
