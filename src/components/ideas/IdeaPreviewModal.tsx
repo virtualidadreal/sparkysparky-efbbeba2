@@ -104,17 +104,6 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
     }
   };
 
-  const sentimentColors = {
-    positive: 'success',
-    neutral: 'neutral',
-    negative: 'error',
-  } as const;
-
-  const priorityColors = {
-    low: 'neutral',
-    medium: 'warning',
-    high: 'error',
-  } as const;
 
   return (
     <>
@@ -227,29 +216,6 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                         </div>
                       )}
 
-                      {/* Sentimiento y emociones */}
-                      {(idea.sentiment || idea.detected_emotions.length > 0) && (
-                        <div>
-                          <h3 className="text-sm font-semibold text-foreground mb-2">
-                            Análisis emocional
-                          </h3>
-                          <div className="flex flex-wrap gap-2">
-                            {idea.sentiment && (
-                              <Badge 
-                                text={
-                                  idea.sentiment === 'positive' ? '😊 Positivo' :
-                                  idea.sentiment === 'neutral' ? '😐 Neutral' :
-                                  '😔 Negativo'
-                                }
-                                variant={sentimentColors[idea.sentiment]}
-                              />
-                            )}
-                            {idea.detected_emotions.map((emotion, idx) => (
-                              <Badge key={idx} text={emotion} variant="neutral" />
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
                       {/* Etiquetas */}
                       {idea.tags.length > 0 && (
@@ -418,13 +384,13 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                                 <div className="flex-1">
                                   <p className="text-foreground">{step.step}</p>
                                   {step.priority && (
-                                    <Badge
+                                    <Badge 
                                       text={
                                         step.priority === 'low' ? 'Baja prioridad' :
                                         step.priority === 'medium' ? 'Prioridad media' :
                                         'Alta prioridad'
                                       }
-                                      variant={priorityColors[step.priority]}
+                                      variant={step.priority === 'low' ? 'neutral' : step.priority === 'medium' ? 'warning' : 'error'}
                                       className="mt-1"
                                     />
                                   )}
