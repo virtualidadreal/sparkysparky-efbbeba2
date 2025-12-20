@@ -1,5 +1,7 @@
 import { useProjects, useArchiveProject } from '@/hooks/useProjects';
+import { useUnassignedIdeasCount } from '@/hooks/useIdeas';
 import { ProjectCard } from './ProjectCard';
+import { LooseIdeasCard } from './LooseIdeasCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FolderIcon } from '@heroicons/react/24/outline';
 import type { ProjectsFilters } from '@/types/Project.types';
@@ -25,7 +27,11 @@ interface ProjectListProps {
  */
 export const ProjectList = ({ filters, onEdit }: ProjectListProps) => {
   const { data: projects, isLoading, error } = useProjects(filters);
+  const { data: unassignedCount = 0 } = useUnassignedIdeasCount();
   const archiveProject = useArchiveProject();
+  
+  // Solo mostrar "Ideas sueltas" si no hay filtros de estado o si el filtro es "all"
+  const showLooseIdeas = !filters?.status || filters.status === 'all';
 
   // Handlers para acciones
   const handleEdit = (projectId: string) => {
@@ -116,6 +122,11 @@ export const ProjectList = ({ filters, onEdit }: ProjectListProps) => {
   // Grid de proyectos
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Tarjeta especial de Ideas sueltas - siempre primero */}
+      {showLooseIdeas && (
+        <LooseIdeasCard ideasCount={unassignedCount} />
+      )}
+      
       {projects.map((project) => (
         <ProjectCard 
           key={project.id} 

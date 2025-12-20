@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 const QUERY_KEYS = {
   ideas: (filters?: IdeasFilters) => ['ideas', filters],
   idea: (id: string) => ['idea', id],
+  unassignedCount: () => ['ideas', 'unassigned-count'],
 };
 
 /**
@@ -58,6 +59,25 @@ export const useIdeas = (filters?: IdeasFilters) => {
 
       if (error) throw error;
       return (data || []).map(transformIdea);
+    },
+  });
+};
+
+/**
+ * Hook para contar ideas sin proyecto asignado
+ */
+export const useUnassignedIdeasCount = () => {
+  return useQuery({
+    queryKey: QUERY_KEYS.unassignedCount(),
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('ideas')
+        .select('*', { count: 'exact', head: true })
+        .is('project_id', null)
+        .neq('status', 'archived');
+
+      if (error) throw error;
+      return count || 0;
     },
   });
 };
