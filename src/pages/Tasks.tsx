@@ -1,40 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useRef } from 'react';
 import { useTasks, useTasksWithSubtasks, useCreateTask, useToggleTaskComplete, useDeleteTask, useTaskCounts } from '@/hooks/useTasks';
-import { useTaskListsWithCounts, useCreateTaskList, useDeleteTaskList, TaskList } from '@/hooks/useTaskLists';
+import { useTaskListsWithCounts, useCreateTaskList, TaskList } from '@/hooks/useTaskLists';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
-import { useIsAdmin } from '@/hooks/useAdmin';
-import { SparkyChat } from '@/components/chat/SparkyChat';
-import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TaskEditPanel } from '@/components/tasks/TaskEditPanel';
 import type { Task, TasksFilters } from '@/types/Task.types';
 import { format, isToday, isTomorrow, isPast, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
-  Home,
-  Users,
-  Settings,
   Plus,
-  Lightbulb,
-  FolderOpen,
   CheckSquare,
-  Brain,
-  BarChart3,
-  ShieldCheck,
-  Mic,
   Calendar,
   CalendarDays,
   Clock,
   AlertCircle,
   List,
   Search,
-  ChevronRight,
   GripVertical,
   Eye,
   EyeOff,
-  MoreHorizontal,
-  Trash2,
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -42,10 +27,8 @@ import { cn } from '@/lib/utils';
 type DateView = 'today' | 'tomorrow' | 'upcoming' | 'overdue' | 'all' | null;
 
 const Tasks = () => {
-  const location = useLocation();
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const { data: isAdmin } = useIsAdmin();
   
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [selectedDateView, setSelectedDateView] = useState<DateView>(null);
@@ -65,15 +48,6 @@ const Tasks = () => {
   const toggleComplete = useToggleTaskComplete();
   const deleteTask = useDeleteTask();
   const createList = useCreateTaskList();
-  const deleteList = useDeleteTaskList();
-
-  // Build filters
-  const filters: TasksFilters = {
-    ...(selectedListId && { list_id: selectedListId }),
-    ...(selectedDateView && { dateView: selectedDateView }),
-    ...(searchTerm && { search: searchTerm }),
-    ...(!showCompleted && { status: 'todo' }),
-  };
 
   const { data: tasks, isLoading } = useTasksWithSubtasks(
     searchTerm ? { search: searchTerm } : 
@@ -82,7 +56,6 @@ const Tasks = () => {
     { ...(!showCompleted && { status: 'todo' }) }
   );
 
-  // Get completed tasks count
   const { data: allTasks } = useTasks({});
   const completedCount = allTasks?.filter(t => t.status === 'done').length || 0;
 
@@ -146,270 +119,252 @@ const Tasks = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[hsl(220,14%,96%)] flex">
-      {/* Left Sidebar - Navigation */}
-      <div className="w-72 bg-card border-r border-border flex flex-col h-screen sticky top-0">
-        {/* User Profile */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-              {getUserDisplayName().charAt(0).toUpperCase()}
+    <DashboardLayout>
+      <div className="flex h-full -m-6 lg:-m-8">
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-h-[calc(100vh-72px)]">
+          {/* Header */}
+          <div className="border-b border-border px-6 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold text-foreground">{getViewTitle()}</h1>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDragMode(!dragMode)}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
+                    dragMode ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
+                  )}
+                >
+                  <GripVertical className="h-4 w-4" />
+                  Reordenar
+                </button>
+                <button
+                  onClick={() => setShowCompleted(!showCompleted)}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
+                    showCompleted ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
+                  )}
+                >
+                  {showCompleted ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  {completedCount} completadas
+                </button>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{getUserDisplayName()}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+          </div>
+
+          {/* New Task Input */}
+          <div className="px-6 py-3 border-b border-border">
+            <form onSubmit={handleCreateTask} className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
+              <input
+                ref={newTaskInputRef}
+                type="text"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                placeholder="Añadir tarea..."
+                className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              {newTaskTitle && (
+                <button
+                  type="submit"
+                  className="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  Añadir
+                </button>
+              )}
+            </form>
+          </div>
+
+          {/* Task List */}
+          <div className="flex-1 overflow-y-auto">
+            {isLoading ? (
+              <div className="p-6 space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-muted/50 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : tasks && tasks.length > 0 ? (
+              <div className="divide-y divide-border">
+                {tasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onToggle={() => toggleComplete.mutate(task)}
+                    onClick={() => setSelectedTask(task)}
+                    dragMode={dragMode}
+                    level={0}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                <CheckSquare className="h-12 w-12 mb-4 opacity-50" />
+                <p className="text-lg font-medium">No hay tareas</p>
+                <p className="text-sm">Añade una tarea para empezar</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Sidebar - Task Views & Lists */}
+        <div className="w-72 border-l border-border flex flex-col bg-muted/20">
+          {/* User Profile */}
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
+                {getUserDisplayName().charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{getUserDisplayName()}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Search */}
-        <div className="p-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar tareas..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                if (e.target.value) {
-                  setSelectedListId(null);
-                  setSelectedDateView(null);
-                }
-              }}
-              className="w-full pl-9 pr-3 py-2 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-        </div>
-
-        {/* Date Views */}
-        <div className="px-2 py-2">
-          <p className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Vistas por fecha
-          </p>
-          <nav className="mt-1 space-y-0.5">
-            {dateViews.map((view) => (
-              <button
-                key={view.id}
-                onClick={() => {
-                  setSelectedDateView(view.id);
-                  setSelectedListId(null);
-                  setSearchTerm('');
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                  selectedDateView === view.id && !selectedListId && !searchTerm
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-foreground hover:bg-muted/50',
-                  view.danger && view.count > 0 && 'text-destructive'
-                )}
-              >
-                <view.icon className={cn('h-4 w-4', view.danger && view.count > 0 && 'text-destructive')} />
-                <span className="flex-1 text-left">{view.label}</span>
-                {view.count > 0 && (
-                  <span className={cn(
-                    'text-xs px-1.5 py-0.5 rounded-full',
-                    view.danger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'
-                  )}>
-                    {view.count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Divider */}
-        <div className="mx-4 my-2 border-t border-border" />
-
-        {/* Lists */}
-        <div className="flex-1 px-2 py-2 overflow-y-auto">
-          <div className="flex items-center justify-between px-3 py-1">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Mis listas
-            </p>
-            <button
-              onClick={() => setIsCreatingList(true)}
-              className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-
-          {isCreatingList && (
-            <form onSubmit={handleCreateList} className="px-3 py-2">
+          {/* Search */}
+          <div className="p-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
-                value={newListName}
-                onChange={(e) => setNewListName(e.target.value)}
-                placeholder="Nombre de la lista..."
-                autoFocus
-                onBlur={() => {
-                  if (!newListName.trim()) {
-                    setIsCreatingList(false);
+                placeholder="Buscar tareas..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (e.target.value) {
+                    setSelectedListId(null);
+                    setSelectedDateView(null);
                   }
                 }}
-                className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
               />
-            </form>
-          )}
+            </div>
+          </div>
 
-          <nav className="mt-1 space-y-0.5">
-            {taskLists?.map((list) => (
-              <button
-                key={list.id}
-                onClick={() => {
-                  setSelectedListId(list.id);
-                  setSelectedDateView(null);
-                  setSearchTerm('');
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group',
-                  selectedListId === list.id && !selectedDateView && !searchTerm
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-foreground hover:bg-muted/50'
-                )}
-              >
-                <div 
-                  className="w-3 h-3 rounded-sm" 
-                  style={{ backgroundColor: list.color }}
-                />
-                <span className="flex-1 text-left truncate">{list.name}</span>
-                {(list.task_count || 0) > 0 && (
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                    {list.task_count}
-                  </span>
-                )}
-              </button>
-            ))}
+          {/* Date Views */}
+          <div className="px-2 py-2">
+            <p className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Vistas por fecha
+            </p>
+            <nav className="mt-1 space-y-0.5">
+              {dateViews.map((view) => (
+                <button
+                  key={view.id}
+                  onClick={() => {
+                    setSelectedDateView(view.id);
+                    setSelectedListId(null);
+                    setSearchTerm('');
+                  }}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                    selectedDateView === view.id && !selectedListId && !searchTerm
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-foreground hover:bg-muted/50',
+                    view.danger && view.count > 0 && 'text-destructive'
+                  )}
+                >
+                  <view.icon className={cn('h-4 w-4', view.danger && view.count > 0 && 'text-destructive')} />
+                  <span className="flex-1 text-left">{view.label}</span>
+                  {view.count > 0 && (
+                    <span className={cn(
+                      'text-xs px-1.5 py-0.5 rounded-full',
+                      view.danger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'
+                    )}>
+                      {view.count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-            {(!taskLists || taskLists.length === 0) && !isCreatingList && (
-              <p className="px-3 py-2 text-sm text-muted-foreground">
-                No hay listas creadas
+          {/* Divider */}
+          <div className="mx-4 my-2 border-t border-border" />
+
+          {/* Lists */}
+          <div className="flex-1 px-2 py-2 overflow-y-auto">
+            <div className="flex items-center justify-between px-3 py-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Mis listas
               </p>
-            )}
-          </nav>
-        </div>
-
-        {/* Bottom Nav Links */}
-        <div className="p-2 border-t border-border space-y-0.5">
-          {[
-            { to: '/dashboard', icon: Home, label: 'Dashboard' },
-            { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-            { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
-            { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
-            { to: '/settings', icon: Settings, label: 'Configuración' },
-          ].map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Header */}
-        <div className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-foreground">{getViewTitle()}</h1>
-            <div className="flex items-center gap-2">
               <button
-                onClick={() => setDragMode(!dragMode)}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
-                  dragMode ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
-                )}
+                onClick={() => setIsCreatingList(true)}
+                className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <GripVertical className="h-4 w-4" />
-                Reordenar
-              </button>
-              <button
-                onClick={() => setShowCompleted(!showCompleted)}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
-                  showCompleted ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
-                )}
-              >
-                {showCompleted ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                {completedCount} completadas
+                <Plus className="h-4 w-4" />
               </button>
             </div>
+
+            {isCreatingList && (
+              <form onSubmit={handleCreateList} className="px-3 py-2">
+                <input
+                  type="text"
+                  value={newListName}
+                  onChange={(e) => setNewListName(e.target.value)}
+                  placeholder="Nombre de la lista..."
+                  autoFocus
+                  onBlur={() => {
+                    if (!newListName.trim()) {
+                      setIsCreatingList(false);
+                    }
+                  }}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </form>
+            )}
+
+            <nav className="mt-1 space-y-0.5">
+              {taskLists?.map((list) => (
+                <button
+                  key={list.id}
+                  onClick={() => {
+                    setSelectedListId(list.id);
+                    setSelectedDateView(null);
+                    setSearchTerm('');
+                  }}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group',
+                    selectedListId === list.id && !selectedDateView && !searchTerm
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  <div 
+                    className="w-3 h-3 rounded-sm" 
+                    style={{ backgroundColor: list.color }}
+                  />
+                  <span className="flex-1 text-left truncate">{list.name}</span>
+                  {(list.task_count || 0) > 0 && (
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                      {list.task_count}
+                    </span>
+                  )}
+                </button>
+              ))}
+
+              {(!taskLists || taskLists.length === 0) && !isCreatingList && (
+                <p className="px-3 py-2 text-sm text-muted-foreground">
+                  No hay listas creadas
+                </p>
+              )}
+            </nav>
           </div>
         </div>
 
-        {/* New Task Input */}
-        <div className="px-6 py-3 bg-card border-b border-border">
-          <form onSubmit={handleCreateTask} className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
-            <input
-              ref={newTaskInputRef}
-              type="text"
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              placeholder="Añadir tarea..."
-              className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
-            />
-            {newTaskTitle && (
-              <button
-                type="submit"
-                className="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
-                Añadir
-              </button>
-            )}
-          </form>
-        </div>
-
-        {/* Task List */}
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="p-6 space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-muted/50 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          ) : tasks && tasks.length > 0 ? (
-            <div className="divide-y divide-border">
-              {tasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  onToggle={() => toggleComplete.mutate(task)}
-                  onClick={() => setSelectedTask(task)}
-                  dragMode={dragMode}
-                  level={0}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-              <CheckSquare className="h-12 w-12 mb-4 opacity-50" />
-              <p className="text-lg font-medium">No hay tareas</p>
-              <p className="text-sm">Añade una tarea para empezar</p>
-            </div>
-          )}
-        </div>
+        {/* Task Edit Panel */}
+        {selectedTask && (
+          <TaskEditPanel
+            task={selectedTask}
+            taskLists={taskLists || []}
+            onClose={() => setSelectedTask(null)}
+            onDelete={() => {
+              deleteTask.mutate(selectedTask.id);
+              setSelectedTask(null);
+            }}
+          />
+        )}
       </div>
-
-      {/* Task Edit Panel */}
-      {selectedTask && (
-        <TaskEditPanel
-          task={selectedTask}
-          taskLists={taskLists || []}
-          onClose={() => setSelectedTask(null)}
-          onDelete={() => {
-            deleteTask.mutate(selectedTask.id);
-            setSelectedTask(null);
-          }}
-        />
-      )}
-    </div>
+    </DashboardLayout>
   );
 };
 
@@ -459,26 +414,27 @@ const TaskRow = ({ task, onToggle, onClick, dragMode, level }: TaskRowProps) => 
             }}
             className="p-0.5 hover:bg-muted rounded"
           >
-            <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', !isExpanded && '-rotate-90')} />
+            <ChevronDown className={cn(
+              'h-4 w-4 text-muted-foreground transition-transform',
+              !isExpanded && '-rotate-90'
+            )} />
           </button>
         )}
-
+        
         <button
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
           }}
           className={cn(
-            'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0',
+            'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',
             task.status === 'done'
-              ? 'bg-primary border-primary'
+              ? 'border-primary bg-primary text-primary-foreground'
               : 'border-muted-foreground/30 hover:border-primary'
           )}
         >
           {task.status === 'done' && (
-            <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
+            <CheckSquare className="h-3 w-3" />
           )}
         </button>
 
@@ -493,8 +449,10 @@ const TaskRow = ({ task, onToggle, onClick, dragMode, level }: TaskRowProps) => 
 
         {dateLabel && (
           <span className={cn(
-            'text-xs px-2 py-0.5 rounded',
-            isOverdue ? 'text-destructive bg-destructive/10' : 'text-muted-foreground'
+            'text-xs px-2 py-0.5 rounded-full',
+            isOverdue 
+              ? 'bg-destructive/10 text-destructive' 
+              : 'bg-muted text-muted-foreground'
           )}>
             {dateLabel}
           </span>
@@ -502,34 +460,25 @@ const TaskRow = ({ task, onToggle, onClick, dragMode, level }: TaskRowProps) => 
 
         {hasSubtasks && (
           <span className="text-xs text-muted-foreground">
-            {task.subtasks!.filter(s => s.status === 'done').length}/{task.subtasks!.length}
+            {task.subtasks?.filter(s => s.status === 'done').length}/{task.subtasks?.length}
           </span>
         )}
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-opacity"
-        >
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </button>
       </div>
 
+      {/* Subtasks */}
       {hasSubtasks && isExpanded && (
-        <div>
-          {task.subtasks!.map((subtask) => (
+        <>
+          {task.subtasks?.map((subtask) => (
             <TaskRow
               key={subtask.id}
               task={subtask}
               onToggle={() => toggleComplete.mutate(subtask)}
-              onClick={() => {}}
+              onClick={onClick}
               dragMode={dragMode}
               level={level + 1}
             />
           ))}
-        </div>
+        </>
       )}
     </>
   );
