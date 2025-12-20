@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DashboardLayout } from '@/components/layout';
+import { Link, useLocation } from 'react-router-dom';
 import { Card } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +25,23 @@ import {
 } from '@heroicons/react/24/outline';
 import { formatDistanceToNow, format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useIsAdmin } from '@/hooks/useAdmin';
+import { SparkyChat } from '@/components/chat/SparkyChat';
+import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
+import {
+  Home,
+  Users,
+  Settings,
+  Plus,
+  Lightbulb,
+  TrendingUp,
+  FolderOpen,
+  CheckSquare,
+  Brain,
+  BarChart3,
+  ShieldCheck,
+  Mic,
+} from 'lucide-react';
 
 const patternTypeLabels: Record<string, string> = {
   recurring_theme: 'Tema recurrente',
@@ -46,6 +63,8 @@ const patternTypeColors: Record<string, string> = {
 
 const Memory = () => {
   const [activeTab, setActiveTab] = useState('summaries');
+  const location = useLocation();
+  const { data: isAdmin } = useIsAdmin();
   
   const { data: summaries, isLoading: loadingSummaries } = useSummaries();
   const { data: patterns, isLoading: loadingPatterns } = useDetectedPatterns('active');
@@ -79,280 +98,421 @@ const Memory = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Memoria & Patrones</h1>
-            <p className="text-muted-foreground">
-              Tu asistente aprende de ti para ayudarte mejor
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleAnalyzePatterns}
-              disabled={analyzePatterns.isPending}
-              className="gap-2"
-            >
-              {analyzePatterns.isPending ? (
-                <ArrowPathIcon className="h-4 w-4 animate-spin" />
-              ) : (
-                <CpuChipIcon className="h-4 w-4" />
+    <div className="min-h-screen bg-[hsl(220,14%,96%)] p-3">
+      {/* 3-column grid layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto min-h-[calc(100vh-24px)]">
+        
+        {/* Left Sidebar */}
+        <div className="flex flex-col">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col flex-1">
+            {/* Nav Items */}
+            <nav className="space-y-0.5 flex-1">
+              {[
+                { to: '/dashboard', icon: Home, label: 'Dashboard' },
+                { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
+                { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
+                { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
+                { to: '/people', icon: Users, label: 'Personas' },
+                { to: '/memory', icon: Brain, label: 'Memoria' },
+                { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+                { to: '/insights', icon: TrendingUp, label: 'Insights' },
+                { to: '/settings', icon: Settings, label: 'Configuración' },
+              ].map((item) => {
+                const isActive = location.pathname === item.to || 
+                  (item.to === '/dashboard' && location.pathname === '/');
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* Admin link */}
+              {isAdmin && (
+                <>
+                  <div className="border-t border-border my-3" />
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                      location.pathname === '/admin'
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
+                    <ShieldCheck className="h-5 w-5" />
+                    Admin
+                  </Link>
+                </>
               )}
-              Analizar patrones
-            </Button>
-            <Button
-              onClick={handleGenerateWeeklySummary}
-              disabled={generateSummary.isPending}
-              className="gap-2"
-            >
-              {generateSummary.isPending ? (
-                <ArrowPathIcon className="h-4 w-4 animate-spin" />
-              ) : (
-                <SparklesIcon className="h-4 w-4" />
-              )}
-              Generar resumen semanal
-            </Button>
+            </nav>
+
+            {/* Bottom Actions */}
+            <div className="mt-4 pt-4 border-t border-border space-y-3">
+              <QuickCapturePopup
+                trigger={
+                  <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
+                    <Plus className="h-4 w-4" />
+                    Captura rápida
+                  </button>
+                }
+              />
+
+              <SparkyChat
+                trigger={
+                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                    <Mic className="h-4 w-4" />
+                    Hablar con Sparky
+                  </button>
+                }
+              />
+            </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white/60 dark:bg-card/60 backdrop-blur-lg p-1 rounded-xl border border-white/50 dark:border-white/10">
-            <TabsTrigger value="summaries" className="gap-2">
-              <DocumentTextIcon className="h-4 w-4" />
-              Resúmenes
-            </TabsTrigger>
-            <TabsTrigger value="patterns" className="gap-2">
-              <LightBulbIcon className="h-4 w-4" />
-              Patrones
-              {patterns && patterns.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {patterns.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="memory" className="gap-2">
-              <CpuChipIcon className="h-4 w-4" />
-              Memoria
-            </TabsTrigger>
-          </TabsList>
+        {/* Main Content */}
+        <div className="flex flex-col gap-4">
+          {/* Header */}
+          <div className="flex items-center justify-between px-2">
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+                Memoria & Patrones
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Tu asistente aprende de ti para ayudarte mejor
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleAnalyzePatterns}
+                disabled={analyzePatterns.isPending}
+                className="gap-2"
+              >
+                {analyzePatterns.isPending ? (
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CpuChipIcon className="h-4 w-4" />
+                )}
+                Analizar
+              </Button>
+              <Button
+                onClick={handleGenerateWeeklySummary}
+                disabled={generateSummary.isPending}
+                className="gap-2"
+              >
+                {generateSummary.isPending ? (
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <SparklesIcon className="h-4 w-4" />
+                )}
+                Resumen semanal
+              </Button>
+            </div>
+          </div>
 
-          {/* Summaries Tab */}
-          <TabsContent value="summaries" className="mt-6">
-            {loadingSummaries ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-48 w-full" />
-                ))}
-              </div>
-            ) : summaries && summaries.length > 0 ? (
-              <div className="space-y-4">
-                {summaries.map((summary) => (
-                  <Card key={summary.id} padding="lg" className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">
-                          {summary.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {summary.period_start && summary.period_end && (
-                            <>
-                              {format(new Date(summary.period_start), 'd MMM', { locale: es })} -{' '}
-                              {format(new Date(summary.period_end), 'd MMM yyyy', { locale: es })}
-                            </>
-                          )}
+          {/* Tabs */}
+          <div className="bg-card rounded-[24px] p-5 shadow-sm flex-1">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="bg-muted/50 p-1 rounded-xl mb-4">
+                <TabsTrigger value="summaries" className="gap-2 rounded-lg">
+                  <DocumentTextIcon className="h-4 w-4" />
+                  Resúmenes
+                </TabsTrigger>
+                <TabsTrigger value="patterns" className="gap-2 rounded-lg">
+                  <LightBulbIcon className="h-4 w-4" />
+                  Patrones
+                  {patterns && patterns.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {patterns.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="memory" className="gap-2 rounded-lg">
+                  <CpuChipIcon className="h-4 w-4" />
+                  Memoria
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Summaries Tab */}
+              <TabsContent value="summaries" className="mt-4">
+                {loadingSummaries ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-48 w-full rounded-xl" />
+                    ))}
+                  </div>
+                ) : summaries && summaries.length > 0 ? (
+                  <div className="space-y-4">
+                    {summaries.map((summary) => (
+                      <Card key={summary.id} padding="lg" className="space-y-4 rounded-xl">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-foreground">
+                              {summary.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {summary.period_start && summary.period_end && (
+                                <>
+                                  {format(new Date(summary.period_start), 'd MMM', { locale: es })} -{' '}
+                                  {format(new Date(summary.period_end), 'd MMM yyyy', { locale: es })}
+                                </>
+                              )}
+                            </p>
+                          </div>
+                          <Badge variant="outline">{summary.summary_type}</Badge>
+                        </div>
+
+                        <p className="text-foreground whitespace-pre-line">{summary.content}</p>
+
+                        {summary.key_insights && summary.key_insights.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-foreground mb-2">
+                              Insights clave
+                            </h4>
+                            <ul className="space-y-1">
+                              {summary.key_insights.map((insight, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                  <CheckCircleIcon className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                                  {insight}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {summary.action_items && summary.action_items.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-foreground mb-2">
+                              Acciones sugeridas
+                            </h4>
+                            <ul className="space-y-1">
+                              {summary.action_items.map((action, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                  <span className="text-primary">→</span>
+                                  {action}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-muted-foreground">
+                          Generado {formatDistanceToNow(new Date(summary.created_at), { addSuffix: true, locale: es })}
                         </p>
-                      </div>
-                      <Badge variant="outline">{summary.summary_type}</Badge>
-                    </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card padding="lg" className="text-center py-12 rounded-xl">
+                    <DocumentTextIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
+                      No hay resúmenes aún
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      Genera tu primer resumen semanal para obtener insights
+                    </p>
+                    <Button onClick={handleGenerateWeeklySummary} disabled={generateSummary.isPending}>
+                      Generar resumen semanal
+                    </Button>
+                  </Card>
+                )}
+              </TabsContent>
 
-                    <p className="text-foreground whitespace-pre-line">{summary.content}</p>
+              {/* Patterns Tab */}
+              <TabsContent value="patterns" className="mt-4">
+                {loadingPatterns ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-32 w-full rounded-xl" />
+                    ))}
+                  </div>
+                ) : patterns && patterns.length > 0 ? (
+                  <div className="space-y-4">
+                    {patterns.map((pattern) => (
+                      <Card key={pattern.id} padding="lg" className="space-y-3 rounded-xl">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            {pattern.pattern_type === 'blocker' ? (
+                              <ExclamationTriangleIcon className="h-5 w-5 text-destructive" />
+                            ) : (
+                              <InformationCircleIcon className="h-5 w-5 text-primary" />
+                            )}
+                            <h3 className="font-semibold text-foreground">{pattern.title}</h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs px-2 py-1 rounded-full ${patternTypeColors[pattern.pattern_type]}`}>
+                              {patternTypeLabels[pattern.pattern_type]}
+                            </span>
+                            {pattern.occurrences && pattern.occurrences > 1 && (
+                              <Badge variant="outline">×{pattern.occurrences}</Badge>
+                            )}
+                          </div>
+                        </div>
 
-                    {summary.key_insights && summary.key_insights.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-foreground mb-2">
-                          Insights clave
-                        </h4>
-                        <ul className="space-y-1">
-                          {summary.key_insights.map((insight, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                              <CheckCircleIcon className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
-                              {insight}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                        {pattern.description && (
+                          <p className="text-muted-foreground">{pattern.description}</p>
+                        )}
 
-                    {summary.action_items && summary.action_items.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-foreground mb-2">
-                          Acciones sugeridas
-                        </h4>
-                        <ul className="space-y-1">
-                          {summary.action_items.map((action, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                              <span className="text-primary">→</span>
-                              {action}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                        {pattern.suggestions && pattern.suggestions.length > 0 && (
+                          <div className="bg-muted/50 p-3 rounded-lg">
+                            <h4 className="text-sm font-medium text-foreground mb-1">Sugerencias</h4>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                              {pattern.suggestions.map((suggestion, i) => (
+                                <li key={i}>• {suggestion}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
 
-                    <p className="text-xs text-muted-foreground">
-                      Generado {formatDistanceToNow(new Date(summary.created_at), { addSuffix: true, locale: es })}
+                        <div className="flex items-center justify-between pt-2">
+                          <p className="text-xs text-muted-foreground">
+                            Detectado {formatDistanceToNow(new Date(pattern.last_detected_at), { addSuffix: true, locale: es })}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDismissPattern(pattern.id)}
+                            >
+                              Descartar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAcknowledgePattern(pattern.id)}
+                            >
+                              Entendido
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card padding="lg" className="text-center py-12 rounded-xl">
+                    <LightBulbIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
+                      No hay patrones detectados
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      Analiza tus datos para descubrir patrones
+                    </p>
+                    <Button onClick={handleAnalyzePatterns} disabled={analyzePatterns.isPending}>
+                      Analizar patrones
+                    </Button>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* Memory Tab */}
+              <TabsContent value="memory" className="mt-4">
+                {loadingMemories ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                    ))}
+                  </div>
+                ) : memories && memories.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {memories.map((memory) => (
+                      <Card key={memory.id} padding="md" className="space-y-2 rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="text-xs">
+                            {memory.entry_type}
+                          </Badge>
+                          {memory.category && (
+                            <span className="text-xs text-muted-foreground">{memory.category}</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-foreground">{memory.content}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(memory.created_at), { addSuffix: true, locale: es })}
+                        </p>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card padding="lg" className="text-center py-12 rounded-xl">
+                    <CpuChipIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
+                      La memoria está vacía
+                    </h3>
+                    <p className="text-muted-foreground">
+                      A medida que uses Sparky, aprenderá sobre ti
                     </p>
                   </Card>
-                ))}
-              </div>
-            ) : (
-              <Card padding="lg" className="text-center py-12">
-                <DocumentTextIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  No hay resúmenes aún
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Genera tu primer resumen semanal para obtener insights sobre tu progreso
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col">
+          {/* Acciones */}
+          <div className="mb-6">
+            <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
+              ACCIONES RÁPIDAS
+            </h3>
+            <div className="space-y-2">
+              <Button 
+                onClick={handleGenerateWeeklySummary}
+                disabled={generateSummary.isPending}
+                className="w-full gap-2"
+              >
+                <SparklesIcon className="h-4 w-4" />
+                Resumen Semanal
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleAnalyzePatterns}
+                disabled={analyzePatterns.isPending}
+                className="w-full gap-2"
+              >
+                <CpuChipIcon className="h-4 w-4" />
+                Analizar Patrones
+              </Button>
+            </div>
+          </div>
+
+          {/* Separador */}
+          <div className="border-t border-border mb-6" />
+
+          {/* Tips */}
+          <div className="flex-1">
+            <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
+              ¿CÓMO FUNCIONA?
+            </h3>
+            <div className="space-y-3">
+              <div className="bg-muted/30 rounded-xl p-4">
+                <p className="text-sm text-foreground leading-relaxed">
+                  🧠 Sparky analiza tus ideas y entradas para encontrar patrones.
                 </p>
-                <Button onClick={handleGenerateWeeklySummary} disabled={generateSummary.isPending}>
-                  Generar resumen semanal
-                </Button>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Patterns Tab */}
-          <TabsContent value="patterns" className="mt-6">
-            {loadingPatterns ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-32 w-full" />
-                ))}
               </div>
-            ) : patterns && patterns.length > 0 ? (
-              <div className="space-y-4">
-                {patterns.map((pattern) => (
-                  <Card key={pattern.id} padding="lg" className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        {pattern.pattern_type === 'blocker' ? (
-                          <ExclamationTriangleIcon className="h-5 w-5 text-destructive" />
-                        ) : (
-                          <InformationCircleIcon className="h-5 w-5 text-primary" />
-                        )}
-                        <h3 className="font-semibold text-foreground">{pattern.title}</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${patternTypeColors[pattern.pattern_type]}`}>
-                          {patternTypeLabels[pattern.pattern_type]}
-                        </span>
-                        {pattern.occurrences && pattern.occurrences > 1 && (
-                          <Badge variant="outline">×{pattern.occurrences}</Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {pattern.description && (
-                      <p className="text-muted-foreground">{pattern.description}</p>
-                    )}
-
-                    {pattern.suggestions && pattern.suggestions.length > 0 && (
-                      <div className="bg-muted/50 p-3 rounded-lg">
-                        <h4 className="text-sm font-medium text-foreground mb-1">Sugerencias</h4>
-                        <ul className="text-sm text-muted-foreground space-y-1">
-                          {pattern.suggestions.map((suggestion, i) => (
-                            <li key={i}>• {suggestion}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between pt-2">
-                      <p className="text-xs text-muted-foreground">
-                        Detectado {formatDistanceToNow(new Date(pattern.last_detected_at), { addSuffix: true, locale: es })}
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDismissPattern(pattern.id)}
-                        >
-                          Descartar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAcknowledgePattern(pattern.id)}
-                        >
-                          Entendido
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card padding="lg" className="text-center py-12">
-                <LightBulbIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  No hay patrones detectados
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Analiza tus datos para descubrir patrones de comportamiento y productividad
+              <div className="bg-muted/30 rounded-xl p-4">
+                <p className="text-sm text-foreground leading-relaxed">
+                  📊 Los resúmenes semanales te dan una visión general de tu progreso.
                 </p>
-                <Button onClick={handleAnalyzePatterns} disabled={analyzePatterns.isPending}>
-                  Analizar patrones
-                </Button>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Memory Tab */}
-          <TabsContent value="memory" className="mt-6">
-            {loadingMemories ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Skeleton key={i} className="h-24 w-full" />
-                ))}
               </div>
-            ) : memories && memories.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {memories.map((memory) => (
-                  <Card key={memory.id} padding="md" className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">
-                        {memory.entry_type}
-                      </Badge>
-                      {memory.category && (
-                        <span className="text-xs text-muted-foreground">{memory.category}</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-foreground">{memory.content}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(memory.created_at), { addSuffix: true, locale: es })}
-                    </p>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card padding="lg" className="text-center py-12">
-                <CpuChipIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  La memoria está vacía
-                </h3>
-                <p className="text-muted-foreground">
-                  A medida que uses Sparky, aprenderá sobre ti y guardará información relevante
+              <div className="bg-muted/30 rounded-xl p-4">
+                <p className="text-sm text-foreground leading-relaxed">
+                  💡 La memoria guarda información relevante para ayudarte mejor.
                 </p>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 
