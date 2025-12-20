@@ -177,6 +177,7 @@ export type Database = {
           project_id: string | null
           related_people: string[] | null
           sentiment: string | null
+          sparky_take: string | null
           status: string | null
           suggested_improvements: Json | null
           summary: string | null
@@ -201,6 +202,7 @@ export type Database = {
           project_id?: string | null
           related_people?: string[] | null
           sentiment?: string | null
+          sparky_take?: string | null
           status?: string | null
           suggested_improvements?: Json | null
           summary?: string | null
@@ -225,6 +227,7 @@ export type Database = {
           project_id?: string | null
           related_people?: string[] | null
           sentiment?: string | null
+          sparky_take?: string | null
           status?: string | null
           suggested_improvements?: Json | null
           summary?: string | null

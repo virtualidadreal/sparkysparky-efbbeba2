@@ -222,15 +222,41 @@ serve(async (req) => {
     }
 
     // Fallback prompt if not found in DB
-    const systemPrompt = promptData?.prompt || `Eres Sparky, un asistente inteligente que clasifica contenido.
+    const basePrompt = promptData?.prompt || `Eres Sparky, un asistente inteligente que clasifica contenido.
 Clasifica el texto como: idea, task, diary, o person.`;
 
-    // Get user's projects for auto-matching
+    // Get user's projects and recent ideas for context
     const { data: userProjects } = await supabase
       .from('projects')
       .select('id, title, tags, keywords')
       .eq('user_id', userId)
       .eq('status', 'active');
+
+    const { data: recentIdeas } = await supabase
+      .from('ideas')
+      .select('id, title, tags')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    // Build context for AI
+    const projectsList = userProjects?.map(p => `- ${p.title} (ID: ${p.id}, tags: ${(p.tags || []).join(', ')})`).join('\n') || 'Ninguno';
+    const recentIdeasList = recentIdeas?.map(i => `- ${i.title}`).join('\n') || 'Ninguna';
+
+    const systemPrompt = `${basePrompt}
+
+CONTEXTO DEL USUARIO:
+Proyectos activos:
+${projectsList}
+
+Ideas recientes:
+${recentIdeasList}
+
+INSTRUCCIONES PARA IDEAS:
+- Genera un título de 5-8 palabras, específico y descriptivo
+- El summary debe capturar QUÉ quiere hacer Y POR QUÉ en 2-3 frases
+- sparky_take: 1-2 frases con tu comentario (conexión, pregunta, patrón o siguiente paso). Nunca halagos vacíos.
+- project_id: asigna un ID de proyecto si hay match claro (>80%), sino null`;
 
     // Use tool calling for structured output
     const classificationTool = {
@@ -250,13 +276,15 @@ Clasifica el texto como: idea, task, diary, o person.`;
             data: {
               type: "object",
               properties: {
-                title: { type: "string", description: "Título breve (máx 100 chars)" },
-                summary: { type: "string", description: "Resumen del contenido" },
+                title: { type: "string", description: "Título de 5-8 palabras, específico y descriptivo" },
+                summary: { type: "string", description: "2-3 frases en prosa: QUÉ quiere hacer y POR QUÉ. No bullets." },
+                sparky_take: { type: "string", description: "1-2 frases: conexión, pregunta retadora, patrón detectado, o siguiente paso. Nunca halagos vacíos." },
+                project_id: { type: "string", description: "ID del proyecto si hay match claro (>80%)" },
                 content: { type: "string", description: "Contenido completo (para diary)" },
                 description: { type: "string", description: "Descripción (para task)" },
                 category: { type: "string" },
                 priority: { type: "string", enum: ["low", "medium", "high"] },
-                mood: { type: "string", enum: ["great", "good", "neutral", "bad", "terrible"], description: "Estado de ánimo: great (muy bien), good (bien), neutral, bad (mal), terrible (muy mal)" },
+                mood: { type: "string", enum: ["great", "good", "neutral", "bad", "terrible"], description: "Estado de ánimo" },
                 sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
                 detected_emotions: { type: "array", items: { type: "string" } },
                 related_people: { type: "array", items: { type: "string" } },
@@ -471,8 +499,10 @@ Clasifica el texto como: idea, task, diary, o person.`;
         tableName = 'ideas';
         const ideaTags = classification.data.tags || [];
         
-        // Auto-match idea to project based on tags and keywords
-        if (userProjects && userProjects.length > 0) {
+        // Use project_id from AI if provided, otherwise auto-match
+        let matchedProjectId = classification.data.project_id || null;
+        
+        if (!matchedProjectId && userProjects && userProjects.length > 0) {
           matchedProjectId = findMatchingProject(
             userProjects as Project[],
             ideaTags,
@@ -504,6 +534,7 @@ Clasifica el texto como: idea, task, diary, o person.`;
             next_steps: classification.data.next_steps || [],
             tags: ideaTags,
             project_id: matchedProjectId,
+            sparky_take: classification.data.sparky_take || null,
             metadata: {}
           })
           .select()
