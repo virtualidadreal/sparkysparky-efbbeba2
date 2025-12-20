@@ -99,19 +99,25 @@ export const ProjectList = ({ filters, onEdit }: ProjectListProps) => {
     );
   }
 
-  // Empty state
+  // Empty state - aún mostramos Ideas sueltas
   if (!projects || projects.length === 0) {
     return (
-      <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-          <FolderIcon className="h-8 w-8 text-gray-400" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Tarjeta especial de Ideas sueltas - siempre visible */}
+        <LooseIdeasCard ideasCount={unassignedCount} />
+        
+        {/* Empty state para proyectos */}
+        <div className="bg-card rounded-lg border-2 border-dashed border-border p-8 text-center col-span-1 sm:col-span-1 lg:col-span-2">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <FolderIcon className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-base font-semibold text-foreground mb-2">
+            No hay más proyectos
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Crea un proyecto para organizar tus ideas
+          </p>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          No hay proyectos aún
-        </h3>
-        <p className="text-gray-600 mb-6">
-          Crea tu primer proyecto para organizar tus ideas y tareas
-        </p>
       </div>
     );
   }
