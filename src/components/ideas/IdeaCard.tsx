@@ -9,7 +9,6 @@ import {
   ArchiveBoxIcon, 
   TrashIcon,
   UserIcon,
-  FaceSmileIcon,
   FolderIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
@@ -27,14 +26,6 @@ interface IdeaCardProps {
   onDelete?: () => void;
 }
 
-/**
- * Mapeo de sentimientos a colores
- */
-const sentimentConfig = {
-  positive: { label: 'Positivo', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-  neutral: { label: 'Neutral', color: 'bg-muted text-muted-foreground' },
-  negative: { label: 'Negativo', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-};
 
 /**
  * Componente IdeaCard
@@ -52,8 +43,6 @@ export const IdeaCard = ({ idea, onEdit, onArchive, onDelete }: IdeaCardProps) =
     action?.();
   };
 
-  const sentiment = idea.sentiment ? sentimentConfig[idea.sentiment] : null;
-  const emotions = idea.detected_emotions || [];
   const relatedPeople = idea.related_people || [];
   const tags = idea.tags || [];
 
@@ -135,23 +124,6 @@ export const IdeaCard = ({ idea, onEdit, onArchive, onDelete }: IdeaCardProps) =
           </div>
         )}
 
-        {/* Emociones detectadas */}
-        {emotions.length > 0 && (
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <FaceSmileIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            {emotions.slice(0, 3).map((emotion, index) => (
-              <span
-                key={index}
-                className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
-              >
-                {emotion}
-              </span>
-            ))}
-            {emotions.length > 3 && (
-              <span className="text-xs text-muted-foreground">+{emotions.length - 3}</span>
-            )}
-          </div>
-        )}
 
         {/* Personas relacionadas */}
         {relatedPeople.length > 0 && (
@@ -193,20 +165,12 @@ export const IdeaCard = ({ idea, onEdit, onArchive, onDelete }: IdeaCardProps) =
           <TagSelector ideaId={idea.id} />
         </div>
 
-        {/* Footer: timestamp y sentiment */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <ClockIcon className="h-3 w-3" />
-            <span>
-              {format(new Date(idea.created_at), "d MMM yyyy, HH:mm", { locale: es })}
-            </span>
-          </div>
-          
-          {sentiment && (
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${sentiment.color}`}>
-              {sentiment.label}
-            </span>
-          )}
+        {/* Footer: timestamp */}
+        <div className="flex items-center text-xs text-muted-foreground">
+          <ClockIcon className="h-3 w-3 mr-1" />
+          <span>
+            {format(new Date(idea.created_at), "d MMM yyyy, HH:mm", { locale: es })}
+          </span>
         </div>
       </Card>
     </div>
