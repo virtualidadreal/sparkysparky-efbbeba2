@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ThreeColumnLayout } from '@/components/layout';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Card, Button } from '@/components/common';
 import { 
   useIsAdmin, 
@@ -32,7 +31,23 @@ import {
   BellIcon,
   CircleStackIcon,
 } from '@heroicons/react/24/outline';
+import {
+  Home,
+  Users,
+  Settings,
+  Plus,
+  Lightbulb,
+  FolderOpen,
+  CheckSquare,
+  Brain,
+  BarChart3,
+  ShieldCheck,
+  Mic,
+  BookOpen,
+} from 'lucide-react';
 import clsx from 'clsx';
+import { SparkyChat } from '@/components/chat/SparkyChat';
+import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 
 type CategoryKey = keyof typeof PROMPT_CATEGORIES;
 type SettingsCategoryKey = keyof typeof SETTINGS_CATEGORIES;
@@ -50,6 +65,18 @@ const categoryIcons: Record<string, React.ElementType> = {
   CircleStackIcon,
   Cog6ToothIcon,
 };
+
+const navItems = [
+  { to: '/dashboard', icon: Home, label: 'Dashboard' },
+  { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
+  { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
+  { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
+  { to: '/people', icon: Users, label: 'Personas' },
+  { to: '/diary', icon: BookOpen, label: 'Diario' },
+  { to: '/memory', icon: Brain, label: 'Memoria' },
+  { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
+  { to: '/settings', icon: Settings, label: 'Configuración' },
+];
 
 /**
  * Panel de Administración con secciones de prompts y configuraciones globales
@@ -107,13 +134,18 @@ const Admin = () => {
   const categoryConfig = PROMPT_CATEGORIES[activeCategory];
   const categoryPrompts = categoryConfig.prompts;
 
+  const location = useLocation();
+
   if (checkingAdmin || loadingPrompts || loadingSettings) {
     return (
-      <ThreeColumnLayout>
-        <div className="bg-card rounded-[24px] p-6 shadow-sm flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+      <div className="min-h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 max-w-[1600px] mx-auto min-h-[calc(100vh-24px)]">
+          <div className="hidden lg:block" />
+          <div className="bg-card rounded-[24px] p-6 shadow-sm flex items-center justify-center min-h-[60vh]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+          </div>
         </div>
-      </ThreeColumnLayout>
+      </div>
     );
   }
 
@@ -184,47 +216,112 @@ const Admin = () => {
   const CategoryIcon = categoryIcons[categoryConfig.icon] || DocumentTextIcon;
 
   return (
-    <ThreeColumnLayout>
-      <div className="bg-card rounded-[24px] p-6 shadow-sm flex-1">
-        <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <ShieldCheckIcon className="h-8 w-8 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Panel de Administración</h1>
-            <p className="text-muted-foreground">Configura los prompts y ajustes globales de Sparky</p>
+    <div className="min-h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 max-w-[1600px] mx-auto min-h-[calc(100vh-24px)]">
+        
+        {/* Left Sidebar - Navigation + Admin Tabs */}
+        <div className="hidden lg:flex flex-col">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col flex-1">
+            {/* Nav Items */}
+            <nav className="space-y-0.5 flex-1">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* Admin link - active */}
+              <div className="border-t border-border my-3" />
+              <Link
+                to="/admin"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/10 text-primary font-medium"
+              >
+                <ShieldCheck className="h-5 w-5" />
+                Admin
+              </Link>
+            </nav>
+
+            {/* Admin Tabs */}
+            <div className="mt-4 pt-4 border-t border-border space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground tracking-wider px-2 mb-2">SECCIONES ADMIN</p>
+              <button
+                onClick={() => setActiveTab('prompts')}
+                className={clsx(
+                  'w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors text-left',
+                  activeTab === 'prompts'
+                    ? 'bg-primary text-primary-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                )}
+              >
+                <SparklesIcon className="h-5 w-5" />
+                Prompts de IA
+              </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={clsx(
+                  'w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors text-left',
+                  activeTab === 'settings'
+                    ? 'bg-primary text-primary-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                )}
+              >
+                <Cog6ToothIcon className="h-5 w-5" />
+                Config. Globales
+              </button>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="mt-4 pt-4 border-t border-border space-y-3">
+              <QuickCapturePopup
+                trigger={
+                  <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
+                    <Plus className="h-4 w-4" />
+                    Captura rápida
+                  </button>
+                }
+              />
+              <SparkyChat
+                trigger={
+                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                    <Mic className="h-4 w-4" />
+                    Hablar con Sparky
+                  </button>
+                }
+              />
+            </div>
           </div>
         </div>
 
-        {/* Main Tabs */}
-        <div className="flex gap-2 border-b border-border pb-2">
-          <button
-            onClick={() => setActiveTab('prompts')}
-            className={clsx(
-              'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all',
-              activeTab === 'prompts'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted'
-            )}
-          >
-            <SparklesIcon className="h-5 w-5" />
-            Prompts de IA
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={clsx(
-              'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all',
-              activeTab === 'settings'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted'
-            )}
-          >
-            <Cog6ToothIcon className="h-5 w-5" />
-            Configuraciones Globales
-          </button>
-        </div>
+        {/* Main Content */}
+        <div className="flex flex-col gap-3">
+          {/* Header */}
+          <div className="bg-card rounded-[24px] p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <ShieldCheckIcon className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Panel de Administración</h1>
+                <p className="text-muted-foreground">Configura los prompts y ajustes globales de Sparky</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Card */}
+          <div className="bg-card rounded-[24px] p-6 shadow-sm flex-1">
+            <div className="space-y-6">
 
         {/* PROMPTS TAB */}
         {activeTab === 'prompts' && (
@@ -628,9 +725,11 @@ const Admin = () => {
             </div>
           </div>
         </Card>
+            </div>
+          </div>
+        </div>
       </div>
-      </div>
-    </ThreeColumnLayout>
+    </div>
   );
 };
 
