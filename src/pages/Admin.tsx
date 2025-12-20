@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout';
+import { ThreeColumnLayout } from '@/components/layout';
 import { Card, Button } from '@/components/common';
 import { 
   useIsAdmin, 
@@ -109,11 +109,11 @@ const Admin = () => {
 
   if (checkingAdmin || loadingPrompts || loadingSettings) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
+      <ThreeColumnLayout>
+        <div className="bg-card rounded-[24px] p-6 shadow-sm flex items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
         </div>
-      </DashboardLayout>
+      </ThreeColumnLayout>
     );
   }
 
@@ -184,8 +184,9 @@ const Admin = () => {
   const CategoryIcon = categoryIcons[categoryConfig.icon] || DocumentTextIcon;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <ThreeColumnLayout>
+      <div className="bg-card rounded-[24px] p-6 shadow-sm flex-1">
+        <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
@@ -628,7 +629,8 @@ const Admin = () => {
           </div>
         </Card>
       </div>
-    </DashboardLayout>
+      </div>
+    </ThreeColumnLayout>
   );
 };
 

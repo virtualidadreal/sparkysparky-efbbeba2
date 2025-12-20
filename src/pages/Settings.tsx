@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { DashboardLayout } from '@/components/layout';
+import { ThreeColumnLayout } from '@/components/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   useProfile, 
@@ -169,17 +169,18 @@ const Settings = () => {
 
   if (profileLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
+      <ThreeColumnLayout>
+        <div className="bg-card rounded-[24px] p-6 shadow-sm flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
-      </DashboardLayout>
+      </ThreeColumnLayout>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-8 max-w-4xl">
+    <ThreeColumnLayout>
+      <div className="bg-card rounded-[24px] p-6 shadow-sm flex-1">
+        <div className="space-y-8 max-w-4xl">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">Configuración</h1>
@@ -442,8 +443,9 @@ const Settings = () => {
             </SettingsSection>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </DashboardLayout>
+    </ThreeColumnLayout>
   );
 };
 
