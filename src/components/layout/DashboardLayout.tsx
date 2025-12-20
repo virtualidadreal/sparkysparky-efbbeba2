@@ -41,8 +41,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { to: '/people', icon: Users, label: 'Personas' },
     { to: '/diary', icon: BookOpen, label: 'Diario' },
     { to: '/memory', icon: Brain, label: 'Memoria' },
-    { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { to: '/insights', icon: TrendingUp, label: 'Insights' },
+    { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
     { to: '/settings', icon: Settings, label: 'Configuración' },
   ];
 
