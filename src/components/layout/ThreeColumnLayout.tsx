@@ -40,13 +40,13 @@ export const ThreeColumnLayout = ({ children, rightSidebar }: ThreeColumnLayoutP
   const { data: isAdmin } = useIsAdmin();
 
   return (
-    <div className="min-h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3">
-      <div className={`grid grid-cols-1 ${rightSidebar ? 'lg:grid-cols-[280px_1fr_300px]' : 'lg:grid-cols-[280px_1fr]'} gap-3 max-w-[1800px] mx-auto min-h-[calc(100vh-24px)]`}>
+    <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 overflow-hidden">
+      <div className={`grid grid-cols-1 ${rightSidebar ? 'lg:grid-cols-[280px_1fr_300px]' : 'lg:grid-cols-[280px_1fr]'} gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]`}>
         
-        {/* Left Sidebar - Navigation */}
-        <div className="hidden lg:flex flex-col">
-          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col flex-1">
-            <nav className="space-y-0.5 flex-1">
+        {/* Left Sidebar - Navigation (fixed height, no scroll) */}
+        <div className="hidden lg:flex flex-col h-full">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col h-full overflow-hidden">
+            <nav className="space-y-0.5 flex-1 overflow-y-auto">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.to || 
                   (item.to === '/dashboard' && location.pathname === '/');
@@ -84,7 +84,7 @@ export const ThreeColumnLayout = ({ children, rightSidebar }: ThreeColumnLayoutP
               )}
             </nav>
 
-            <div className="mt-4 pt-4 border-t border-border space-y-3">
+            <div className="mt-4 pt-4 border-t border-border space-y-3 shrink-0">
               <QuickCapturePopup
                 trigger={
                   <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
@@ -106,15 +106,17 @@ export const ThreeColumnLayout = ({ children, rightSidebar }: ThreeColumnLayoutP
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex flex-col gap-3">
+        {/* Main Content (scrollable) */}
+        <div className="flex flex-col gap-3 h-full overflow-y-auto">
           {children}
         </div>
 
-        {/* Right Sidebar (optional) */}
+        {/* Right Sidebar (fixed height, no scroll) */}
         {rightSidebar && (
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col">
-            {rightSidebar}
+          <div className="hidden lg:flex flex-col h-full">
+            <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col h-full overflow-y-auto">
+              {rightSidebar}
+            </div>
           </div>
         )}
       </div>

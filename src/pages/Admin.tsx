@@ -216,14 +216,14 @@ const Admin = () => {
   const CategoryIcon = categoryIcons[categoryConfig.icon] || DocumentTextIcon;
 
   return (
-    <div className="min-h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3">
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 max-w-[1600px] mx-auto min-h-[calc(100vh-24px)]">
+    <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 max-w-[1600px] mx-auto h-[calc(100vh-24px)]">
         
         {/* Left Sidebar - Navigation + Admin Tabs */}
-        <div className="hidden lg:flex flex-col">
-          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col flex-1">
+        <div className="hidden lg:flex flex-col h-full">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col h-full overflow-hidden">
             {/* Nav Items */}
-            <nav className="space-y-0.5 flex-1">
+            <nav className="space-y-0.5 flex-1 overflow-y-auto">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.to;
                 return (
