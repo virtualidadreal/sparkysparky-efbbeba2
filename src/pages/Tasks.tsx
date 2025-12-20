@@ -1,16 +1,27 @@
 import { useState, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useTasks, useTasksWithSubtasks, useCreateTask, useToggleTaskComplete, useDeleteTask, useTaskCounts } from '@/hooks/useTasks';
 import { useTaskListsWithCounts, useCreateTaskList } from '@/hooks/useTaskLists';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { TaskEditPanel } from '@/components/tasks/TaskEditPanel';
 import type { Task } from '@/types/Task.types';
 import { format, isToday, isTomorrow, isPast, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
+  Home,
+  Users,
+  Settings,
   Plus,
+  Lightbulb,
+  FolderOpen,
   CheckSquare,
+  Brain,
+  BarChart3,
+  ShieldCheck,
+  Mic,
+  BookOpen,
   Calendar,
   CalendarDays,
   Clock,
@@ -23,12 +34,16 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SparkyChat } from '@/components/chat/SparkyChat';
+import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 
 type DateView = 'today' | 'tomorrow' | 'upcoming' | 'overdue' | 'all' | null;
 
 const Tasks = () => {
+  const location = useLocation();
   const { user } = useAuth();
   const { data: profile } = useProfile();
+  const { data: isAdmin } = useIsAdmin();
   
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [selectedDateView, setSelectedDateView] = useState<DateView>(null);
@@ -118,15 +133,90 @@ const Tasks = () => {
     { id: 'all' as DateView, label: 'Todas', icon: List, count: taskCounts?.all || 0 },
   ];
 
+  const navItems = [
+    { to: '/dashboard', icon: Home, label: 'Dashboard' },
+    { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
+    { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
+    { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
+    { to: '/people', icon: Users, label: 'Personas' },
+    { to: '/diary', icon: BookOpen, label: 'Diario' },
+    { to: '/memory', icon: Brain, label: 'Memoria' },
+    { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
+    { to: '/settings', icon: Settings, label: 'Configuración' },
+  ];
+
   return (
-    <DashboardLayout>
-      <div className="flex h-full -m-6 lg:-m-8">
+    <div className="min-h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto min-h-[calc(100vh-24px)]">
+        
+        {/* Left Sidebar - Navigation (same as Dashboard) */}
+        <div className="hidden lg:flex flex-col">
+          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col flex-1">
+            <nav className="space-y-0.5 flex-1">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {isAdmin && (
+                <>
+                  <div className="border-t border-border my-3" />
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                      location.pathname === '/admin'
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
+                    <ShieldCheck className="h-5 w-5" />
+                    Admin
+                  </Link>
+                </>
+              )}
+            </nav>
+
+            <div className="mt-4 pt-4 border-t border-border space-y-3">
+              <QuickCapturePopup
+                trigger={
+                  <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
+                    <Plus className="h-4 w-4" />
+                    Captura rápida
+                  </button>
+                }
+              />
+
+              <SparkyChat
+                trigger={
+                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                    <Mic className="h-4 w-4" />
+                    Hablar con Sparky
+                  </button>
+                }
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-h-[calc(100vh-72px)]">
+        <div className="flex flex-col gap-3">
           {/* Header */}
-          <div className="border-b border-border px-6 py-4">
+          <div className="bg-card rounded-[24px] p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-semibold text-foreground">{getViewTitle()}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{getViewTitle()}</h1>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setDragMode(!dragMode)}
@@ -152,62 +242,65 @@ const Tasks = () => {
             </div>
           </div>
 
-          {/* New Task Input */}
-          <div className="px-6 py-3 border-b border-border">
-            <form onSubmit={handleCreateTask} className="flex items-center gap-3">
-              <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
-              <input
-                ref={newTaskInputRef}
-                type="text"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                placeholder="Añadir tarea..."
-                className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
-              />
-              {newTaskTitle && (
-                <button
-                  type="submit"
-                  className="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-                >
-                  Añadir
-                </button>
-              )}
-            </form>
-          </div>
+          {/* Task List Card */}
+          <div className="bg-card rounded-[24px] shadow-sm flex-1 flex flex-col overflow-hidden">
+            {/* New Task Input */}
+            <div className="px-6 py-4 border-b border-border">
+              <form onSubmit={handleCreateTask} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
+                <input
+                  ref={newTaskInputRef}
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  placeholder="Añadir tarea..."
+                  className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
+                />
+                {newTaskTitle && (
+                  <button
+                    type="submit"
+                    className="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    Añadir
+                  </button>
+                )}
+              </form>
+            </div>
 
-          {/* Task List */}
-          <div className="flex-1 overflow-y-auto">
-            {isLoading ? (
-              <div className="p-6 space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-muted/50 rounded-lg animate-pulse" />
-                ))}
-              </div>
-            ) : tasks && tasks.length > 0 ? (
-              <div className="divide-y divide-border">
-                {tasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    onToggle={() => toggleComplete.mutate(task)}
-                    onClick={() => setSelectedTask(task)}
-                    dragMode={dragMode}
-                    level={0}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <CheckSquare className="h-12 w-12 mb-4 opacity-50" />
-                <p className="text-lg font-medium">No hay tareas</p>
-                <p className="text-sm">Añade una tarea para empezar</p>
-              </div>
-            )}
+            {/* Task List */}
+            <div className="flex-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="p-6 space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-12 bg-muted/50 rounded-lg animate-pulse" />
+                  ))}
+                </div>
+              ) : tasks && tasks.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {tasks.map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      onToggle={() => toggleComplete.mutate(task)}
+                      onClick={() => setSelectedTask(task)}
+                      dragMode={dragMode}
+                      level={0}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                  <CheckSquare className="h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No hay tareas</p>
+                  <p className="text-sm">Añade una tarea para empezar</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Right Sidebar - Same style as Dashboard */}
-        <div className="w-[300px] bg-card rounded-[24px] p-5 shadow-sm flex flex-col m-3 ml-0">
+        {/* Right Sidebar - Task Filters */}
+        <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col">
           {/* User Profile */}
           <div className="mb-6">
             <div className="flex items-center gap-3">
@@ -350,21 +443,21 @@ const Tasks = () => {
             </nav>
           </div>
         </div>
-
-        {/* Task Edit Panel */}
-        {selectedTask && (
-          <TaskEditPanel
-            task={selectedTask}
-            taskLists={taskLists || []}
-            onClose={() => setSelectedTask(null)}
-            onDelete={() => {
-              deleteTask.mutate(selectedTask.id);
-              setSelectedTask(null);
-            }}
-          />
-        )}
       </div>
-    </DashboardLayout>
+
+      {/* Task Edit Panel */}
+      {selectedTask && (
+        <TaskEditPanel
+          task={selectedTask}
+          taskLists={taskLists || []}
+          onClose={() => setSelectedTask(null)}
+          onDelete={() => {
+            deleteTask.mutate(selectedTask.id);
+            setSelectedTask(null);
+          }}
+        />
+      )}
+    </div>
   );
 };
 
