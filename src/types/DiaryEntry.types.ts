@@ -26,6 +26,8 @@ export interface DiaryEntry {
   entry_date: string;
   tags: string[];
   related_people: string[];
+  detected_emotions: string[];
+  sentiment: Sentiment | null;
   created_at: string;
   updated_at: string;
 }

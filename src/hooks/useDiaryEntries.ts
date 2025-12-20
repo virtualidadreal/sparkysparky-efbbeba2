@@ -49,7 +49,12 @@ export const useDiaryEntries = (filters?: DiaryEntriesFilters) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []) as DiaryEntry[];
+      return (data || []).map(entry => ({
+        ...entry,
+        tags: entry.tags || [],
+        related_people: entry.related_people || [],
+        detected_emotions: entry.detected_emotions || [],
+      })) as DiaryEntry[];
     },
   });
 };
