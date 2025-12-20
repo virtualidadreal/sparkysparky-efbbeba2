@@ -13,11 +13,10 @@ const Projects = lazy(() => import('@/pages/Projects'));
 const Tasks = lazy(() => import('@/pages/Tasks'));
 const People = lazy(() => import('@/pages/People'));
 const Diary = lazy(() => import('@/pages/Diary'));
-const Insights = lazy(() => import('@/pages/Insights'));
+const Estadisticas = lazy(() => import('@/pages/Estadisticas'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const Admin = lazy(() => import('@/pages/Admin'));
 const Memory = lazy(() => import('@/pages/Memory'));
-const Analytics = lazy(() => import('@/pages/Analytics'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading fallback component
@@ -48,10 +47,11 @@ const App = () => {
               <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
               <Route path="/people" element={<ProtectedRoute><People /></ProtectedRoute>} />
               <Route path="/diary" element={<ProtectedRoute><Diary /></ProtectedRoute>} />
-              <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
+              <Route path="/estadisticas" element={<ProtectedRoute><Estadisticas /></ProtectedRoute>} />
+              <Route path="/insights" element={<Navigate to="/estadisticas" replace />} />
+              <Route path="/analytics" element={<Navigate to="/estadisticas" replace />} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/memory" element={<ProtectedRoute><Memory /></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
 
               {/* Catch-all para 404 */}
