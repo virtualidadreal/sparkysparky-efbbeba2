@@ -56,6 +56,7 @@ export interface Idea {
   detected_emotions: string[];
   metadata: Record<string, unknown>;
   project_id: string | null;
+  sparky_take: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -72,6 +73,7 @@ export function parseIdea(data: Record<string, unknown>): Idea {
     related_people: (data.related_people as string[]) || [],
     detected_emotions: (data.detected_emotions as string[]) || [],
     metadata: (data.metadata as Record<string, unknown>) || {},
+    sparky_take: (data.sparky_take as string) || null,
   } as Idea;
 }
 

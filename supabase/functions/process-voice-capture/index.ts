@@ -311,9 +311,38 @@ serve(async (req) => {
     const isDiaryByHeuristic = diaryPatterns.some(pattern => transcriptionLower.includes(pattern));
     console.log('Heuristic diary detection:', isDiaryByHeuristic, 'for:', transcription.substring(0, 50));
 
-    // Fallback prompt if not found in DB - use tool calling for structured output
-    const systemPrompt = `Eres un asistente que clasifica transcripciones de notas de voz. Usa la función classify_content para clasificar.`;
-    
+    // Get user's projects and recent ideas for context
+    const { data: userProjects } = await supabase
+      .from('projects')
+      .select('id, title, tags, keywords')
+      .eq('user_id', authenticatedUserId)
+      .eq('status', 'active');
+
+    const { data: recentIdeas } = await supabase
+      .from('ideas')
+      .select('id, title, tags')
+      .eq('user_id', authenticatedUserId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    // Build context for AI
+    const projectsList = userProjects?.map(p => `- ${p.title} (tags: ${(p.tags || []).join(', ')})`).join('\n') || 'Ninguno';
+    const recentIdeasList = recentIdeas?.map(i => `- ${i.title}`).join('\n') || 'Ninguna';
+
+    // New Sparky prompt for voice capture
+    const systemPrompt = `Eres Sparky, un asistente personal de ideas. El usuario acaba de capturar una idea por voz.
+
+CONTEXTO DEL USUARIO:
+Proyectos activos:
+${projectsList}
+
+Ideas recientes:
+${recentIdeasList}
+
+INSTRUCCIONES:
+Clasifica el contenido. Si habla de su día, experiencias personales o emociones, es "diary".
+Para ideas, genera un título específico, un resumen con INTENCIÓN (qué quiere hacer Y por qué), y un comentario de Sparky.`;
+
     const classificationTool = {
       type: "function",
       function: {
@@ -327,8 +356,10 @@ serve(async (req) => {
               enum: ["diary", "idea", "task", "person"],
               description: "diary: reflexiones personales, cómo ha sido el día, emociones, experiencias vividas. idea: conceptos creativos, proyectos, negocios. task: acciones pendientes, recordatorios. person: información sobre alguien."
             },
-            title: { type: "string", description: "Título breve (máx 50 chars)" },
-            summary: { type: "string", description: "Resumen (máx 200 chars)" },
+            title: { type: "string", description: "Título de 5-8 palabras, específico y descriptivo. No genérico." },
+            summary: { type: "string", description: "2-3 frases en prosa que capturen QUÉ quiere hacer el usuario y POR QUÉ/PARA QUÉ. No uses bullets. Sintetiza la intención." },
+            project_id: { type: "string", description: "ID del proyecto si hay match claro (>80%), o null si no" },
+            sparky_take: { type: "string", description: "1-2 frases con tu comentario. Elige: conexión con ideas anteriores, pregunta que rete la idea, patrón detectado, o siguiente paso concreto. Nunca halagos vacíos. Sé específico." },
             category: { type: "string", enum: ["personal", "trabajo", "proyecto", "aprendizaje", "salud", "finanzas", "relaciones", "creatividad", "general"] },
             priority: { type: "string", enum: ["low", "medium", "high"] },
             sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
@@ -499,6 +530,29 @@ serve(async (req) => {
       );
     }
 
+    // Auto-match project if AI suggested one or find best match
+    let matchedProjectId = parsedData.project_id || null;
+    
+    if (!matchedProjectId && userProjects && userProjects.length > 0) {
+      const ideaTags = parsedData.tags || [];
+      const contentLower = `${parsedData.title || ''} ${transcription}`.toLowerCase();
+      
+      for (const project of userProjects) {
+        const projectTags = (project.tags || []).map((t: string) => t.toLowerCase());
+        const keywords = (project.keywords || []).map((k: string) => k.toLowerCase());
+        
+        const tagMatch = ideaTags.some((t: string) => projectTags.includes(t.toLowerCase()));
+        const keywordMatch = keywords.some((k: string) => contentLower.includes(k));
+        const titleMatch = contentLower.includes(project.title.toLowerCase());
+        
+        if (tagMatch || keywordMatch || titleMatch) {
+          matchedProjectId = project.id;
+          console.log('Auto-matched to project:', project.title);
+          break;
+        }
+      }
+    }
+
     // Update the existing idea with transcription and analysis (for type 'idea' or 'person')
     const { data: updatedIdea, error: updateError } = await supabase
       .from('ideas')
@@ -518,6 +572,8 @@ serve(async (req) => {
         suggested_improvements: parsedData.suggested_improvements || [],
         next_steps: parsedData.next_steps || [],
         tags: parsedData.tags || ['voz'],
+        project_id: matchedProjectId,
+        sparky_take: parsedData.sparky_take || null,
         metadata: { source: 'voice', processed: true, whisper_model: 'whisper-1' }
       })
       .eq('id', ideaId)
