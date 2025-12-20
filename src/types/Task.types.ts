@@ -12,8 +12,14 @@ export interface Task {
   priority: string | null;
   due_date: string | null;
   project_id: string | null;
+  list_id: string | null;
+  parent_task_id: string | null;
+  sort_order: number;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
+  // Virtual field for subtasks
+  subtasks?: Task[];
 }
 
 export interface CreateTaskInput {
@@ -23,6 +29,9 @@ export interface CreateTaskInput {
   status?: string;
   due_date?: string;
   project_id?: string;
+  list_id?: string;
+  parent_task_id?: string;
+  sort_order?: number;
 }
 
 export interface UpdateTaskInput {
@@ -32,6 +41,10 @@ export interface UpdateTaskInput {
   priority?: string;
   due_date?: string;
   project_id?: string;
+  list_id?: string;
+  parent_task_id?: string;
+  sort_order?: number;
+  completed_at?: string | null;
 }
 
 export interface TasksFilters {
@@ -40,4 +53,11 @@ export interface TasksFilters {
   priority?: string;
   due_date?: string;
   search?: string;
+  list_id?: string;
+  parent_task_id?: string | null;
+  // Date-based views
+  dateView?: 'today' | 'tomorrow' | 'upcoming' | 'overdue' | 'all' | 'no-date';
 }
+
+export type TaskStatus = 'todo' | 'in_progress' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high';
