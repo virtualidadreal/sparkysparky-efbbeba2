@@ -116,10 +116,19 @@ export const useCreateIdea = () => {
         .single();
 
       if (error) throw error;
+      
+      // Trigger background connection analysis for the new idea
+      supabase.functions.invoke('analyze-idea-connections', {
+        body: { ideaId: data.id }
+      }).catch(err => {
+        console.log('Connection analysis background task:', err);
+      });
+      
       return transformIdea(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      queryClient.invalidateQueries({ queryKey: ['intelligentConnections'] });
       toast.success('Idea guardada exitosamente');
     },
     onError: (error: Error) => {
