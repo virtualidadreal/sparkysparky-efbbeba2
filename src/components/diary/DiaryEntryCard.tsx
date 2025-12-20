@@ -112,6 +112,35 @@ export const DiaryEntryCard = ({ entry, onClick, onEdit, onDelete }: DiaryEntryC
           </div>
         )}
 
+        {/* Emociones detectadas */}
+        {entry.detected_emotions && entry.detected_emotions.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {entry.detected_emotions.map((emotion, i) => (
+              <span 
+                key={`emotion-${i}`} 
+                className="px-2 py-1 bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300 rounded-md text-xs font-medium"
+              >
+                {emotion}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Sentimiento */}
+        {entry.sentiment && (
+          <div className="mb-3">
+            <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+              entry.sentiment === 'positive' 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                : entry.sentiment === 'negative'
+                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                  : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+            }`}>
+              {entry.sentiment === 'positive' ? '😊 Positivo' : entry.sentiment === 'negative' ? '😔 Negativo' : '😐 Neutral'}
+            </span>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
           <div className="flex items-center gap-3">

@@ -117,10 +117,12 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          detected_emotions: string[] | null
           entry_date: string
           id: string
           mood: string | null
           related_people: string[] | null
+          sentiment: string | null
           summary: string | null
           tags: string[] | null
           title: string | null
@@ -130,10 +132,12 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          detected_emotions?: string[] | null
           entry_date?: string
           id?: string
           mood?: string | null
           related_people?: string[] | null
+          sentiment?: string | null
           summary?: string | null
           tags?: string[] | null
           title?: string | null
@@ -143,10 +147,12 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          detected_emotions?: string[] | null
           entry_date?: string
           id?: string
           mood?: string | null
           related_people?: string[] | null
+          sentiment?: string | null
           summary?: string | null
           tags?: string[] | null
           title?: string | null
