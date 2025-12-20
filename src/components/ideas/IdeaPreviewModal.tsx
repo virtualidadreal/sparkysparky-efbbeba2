@@ -267,16 +267,16 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                       <Disclosure>
                         {({ open }) => (
                           <div className="mb-6">
-                            <Disclosure.Button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                            <Disclosure.Button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 border border-border rounded-lg transition-colors">
                               <ChevronDownIcon 
-                                className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} 
+                                className={`h-4 w-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} 
                               />
-                              Ver transcripción original
+                              {open ? 'Ocultar transcripción' : 'Ver transcripción original'}
                             </Disclosure.Button>
-                            <Disclosure.Panel className="mt-3">
-                              <p className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg leading-relaxed">
+                            <Disclosure.Panel className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                              <div className="text-sm text-muted-foreground bg-muted/50 border border-border p-4 rounded-lg leading-relaxed">
                                 {idea.transcription}
-                              </p>
+                              </div>
                             </Disclosure.Panel>
                           </div>
                         )}
