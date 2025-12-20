@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { MicrophoneIcon, StopIcon } from '@heroicons/react/24/solid';
+import { useState, useEffect } from 'react';
+import { MicrophoneIcon } from '@heroicons/react/24/solid';
 import { ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useRecordVoice } from '@/hooks/useRecordVoice';
+import { VoiceRecordModal } from './VoiceRecordModal';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
 
@@ -18,11 +19,7 @@ export interface VoiceRecordButtonProps {
 /**
  * Componente VoiceRecordButton
  * 
- * Botón para grabar audio con estados visuales:
- * - Idle: Botón con icono de micrófono
- * - Grabando: Botón rojo pulsante + timer
- * - Procesando: Loading spinner (manejado por padre)
- * - Estado de permiso visible
+ * Botón para grabar audio que abre un modal con visualizador
  */
 export const VoiceRecordButton = ({ 
   onRecordingComplete, 
@@ -30,11 +27,8 @@ export const VoiceRecordButton = ({
   disabled = false,
   showPermissionStatus = false,
 }: VoiceRecordButtonProps) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const {
-    isRecording,
-    recordingTime,
-    startRecording,
-    stopRecording,
     error,
     permissionState,
     hasPermission,
@@ -49,31 +43,15 @@ export const VoiceRecordButton = ({
     }
   }, [error, onError]);
 
-  // Formatear tiempo de grabación (mm:ss)
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   // Handler para click del botón
   const handleClick = async () => {
-    if (isRecording) {
-      // Detener grabación
-      const audioBlob = await stopRecording();
-      if (audioBlob) {
-        onRecordingComplete(audioBlob);
-      }
-    } else {
-      // Si no tiene permiso, solicitar primero
-      if (permissionState === 'denied') {
-        toast.error('El acceso al micrófono está bloqueado. Haz clic en el icono de candado en la barra de direcciones para permitirlo.');
-        return;
-      }
-      
-      // Iniciar grabación
-      await startRecording();
+    if (permissionState === 'denied') {
+      toast.error('El acceso al micrófono está bloqueado. Haz clic en el icono de candado en la barra de direcciones para permitirlo.');
+      return;
     }
+    
+    // Abrir modal de grabación
+    setIsModalOpen(true);
   };
 
   // Solicitar permiso al primer uso
@@ -86,87 +64,80 @@ export const VoiceRecordButton = ({
     }
   };
 
+  // Handler cuando se completa la grabación
+  const handleRecordingComplete = (audioBlob: Blob) => {
+    onRecordingComplete(audioBlob);
+  };
+
   return (
-    <div className="flex items-center gap-3">
-      {/* Botón de permiso si está en estado 'prompt' y showPermissionStatus */}
-      {showPermissionStatus && permissionState === 'prompt' && !isRecording && (
+    <>
+      <div className="flex items-center gap-3">
+        {/* Botón de permiso si está en estado 'prompt' y showPermissionStatus */}
+        {showPermissionStatus && permissionState === 'prompt' && (
+          <button
+            type="button"
+            onClick={handleRequestPermission}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors dark:bg-amber-900/30 dark:text-amber-400"
+          >
+            <ExclamationTriangleIcon className="h-4 w-4" />
+            Permitir micrófono
+          </button>
+        )}
+
+        {/* Indicador de permiso concedido */}
+        {showPermissionStatus && hasPermission && (
+          <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+            <CheckCircleIcon className="h-4 w-4" />
+            <span>Micrófono listo</span>
+          </div>
+        )}
+
+        {/* Botón principal */}
         <button
           type="button"
-          onClick={handleRequestPermission}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors dark:bg-amber-900/30 dark:text-amber-400"
-        >
-          <ExclamationTriangleIcon className="h-4 w-4" />
-          Permitir micrófono
-        </button>
-      )}
-
-      {/* Indicador de permiso concedido */}
-      {showPermissionStatus && hasPermission && !isRecording && (
-        <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-          <CheckCircleIcon className="h-4 w-4" />
-          <span>Micrófono listo</span>
-        </div>
-      )}
-
-      {/* Botón principal */}
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={disabled || permissionState === 'checking'}
-        className={clsx(
-          'relative flex items-center justify-center',
-          'w-12 h-12 rounded-full',
-          'transition-all duration-200',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          isRecording 
-            ? 'bg-red-500 hover:bg-red-600 animate-pulse shadow-lg shadow-red-500/50' 
-            : permissionState === 'denied'
+          onClick={handleClick}
+          disabled={disabled || permissionState === 'checking'}
+          className={clsx(
+            'relative flex items-center justify-center',
+            'w-12 h-12 rounded-full',
+            'transition-all duration-200',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            permissionState === 'denied'
               ? 'bg-muted text-muted-foreground cursor-not-allowed'
               : 'bg-primary hover:bg-primary/90 shadow-md'
-        )}
-        title={
-          permissionState === 'denied' 
-            ? 'Micrófono bloqueado' 
-            : isRecording 
-              ? 'Detener grabación' 
+          )}
+          title={
+            permissionState === 'denied' 
+              ? 'Micrófono bloqueado' 
               : 'Grabar audio'
-        }
-        aria-label={isRecording ? 'Detener grabación de audio' : 'Iniciar grabación de audio'}
-      >
-        {isRecording ? (
-          <StopIcon className="h-6 w-6 text-white" />
-        ) : (
+          }
+          aria-label="Iniciar grabación de audio"
+        >
           <MicrophoneIcon className={clsx(
             'h-6 w-6',
             permissionState === 'denied' ? 'text-muted-foreground' : 'text-white'
           )} />
-        )}
-        
-        {/* Indicador de estado del micrófono */}
-        {hasPermission && !isRecording && (
-          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" />
-        )}
-      </button>
+          
+          {/* Indicador de estado del micrófono */}
+          {hasPermission && (
+            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" />
+          )}
+        </button>
 
-      {/* Timer */}
-      {isRecording && (
-        <div className="flex items-center gap-2 animate-fade-in">
-          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-sm font-mono text-foreground font-medium">
-            {formatTime(recordingTime)}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            (máx 5:00)
-          </span>
-        </div>
-      )}
+        {/* Mensaje de error si el permiso está denegado */}
+        {permissionState === 'denied' && (
+          <div className="text-xs text-red-500 dark:text-red-400 max-w-[200px]">
+            Micrófono bloqueado. Haz clic en el candado 🔒 de la barra de direcciones.
+          </div>
+        )}
+      </div>
 
-      {/* Mensaje de error si el permiso está denegado */}
-      {permissionState === 'denied' && !isRecording && (
-        <div className="text-xs text-red-500 dark:text-red-400 max-w-[200px]">
-          Micrófono bloqueado. Haz clic en el candado 🔒 de la barra de direcciones.
-        </div>
-      )}
-    </div>
+      {/* Modal de grabación */}
+      <VoiceRecordModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onRecordingComplete={handleRecordingComplete}
+      />
+    </>
   );
 };
