@@ -7,6 +7,7 @@ import type { PeopleFilters } from '@/types/Person.types';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
+import { MobileFooter } from '@/components/layout/MobileFooter';
 import {
   Home,
   Users,
@@ -64,7 +65,7 @@ const People = () => {
     : null;
 
   return (
-    <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 overflow-hidden">
+    <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 pb-24 lg:pb-3 overflow-hidden">
       {/* 3-column grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
         
@@ -257,6 +258,9 @@ const People = () => {
         onClose={handleCloseForm}
         person={editingPerson}
       />
+
+      {/* Mobile Footer */}
+      <MobileFooter />
     </div>
   );
 };
