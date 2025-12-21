@@ -272,23 +272,25 @@ const Dashboard = () => {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Chat Input - Bottom */}
-          <QuickCapturePopup
-            trigger={
-              <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 cursor-pointer hover:bg-muted/30 transition-all border-2 border-border/50">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 relative">
-                    <div className="w-full px-4 py-3.5 bg-muted/50 border border-border rounded-2xl text-muted-foreground">
-                      🎙️ ¿Qué tienes en mente?
+          {/* Chat Input - Bottom (hidden on mobile) */}
+          <div className="hidden lg:block">
+            <QuickCapturePopup
+              trigger={
+                <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 cursor-pointer hover:bg-muted/30 transition-all border-2 border-border/50">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 relative">
+                      <div className="w-full px-4 py-3.5 bg-muted/50 border border-border rounded-2xl text-muted-foreground">
+                        🎙️ ¿Qué tienes en mente?
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center w-12 h-12 bg-foreground rounded-full shrink-0">
+                      <Mic className="h-5 w-5 text-card" />
                     </div>
                   </div>
-                  <div className="flex items-center justify-center w-12 h-12 bg-foreground rounded-full shrink-0">
-                    <Mic className="h-5 w-5 text-card" />
-                  </div>
                 </div>
-              </div>
-            }
-          />
+              }
+            />
+          </div>
         </div>
 
         {/* Right Sidebar - fixed height */}
