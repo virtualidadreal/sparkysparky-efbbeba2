@@ -28,7 +28,7 @@ export const Card = ({
 }: CardProps) => {
   // Clases base - transparente con borde
   const baseClasses = clsx(
-    'bg-transparent backdrop-blur-sm border border-border/50 rounded-lg',
+    'bg-transparent backdrop-blur-sm border-2 border-border/50 rounded-lg',
     'transition-all duration-200'
   );
 

@@ -44,7 +44,7 @@ const Ideas = () => {
         
         {/* Left Sidebar - fixed height */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border-2 border-border/50">
             {/* Nav Items */}
             <nav className="space-y-0.5 flex-1 overflow-y-auto">
               {[
@@ -131,7 +131,7 @@ const Ideas = () => {
           </div>
 
           {/* Buscador */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
@@ -145,14 +145,14 @@ const Ideas = () => {
           </div>
 
           {/* Lista de ideas */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex-1 border border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex-1 border-2 border-border/50">
             <IdeaList filters={filters} />
           </div>
         </div>
 
         {/* Right Sidebar - fixed height */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border-2 border-border/50">
           {/* Nueva Idea */}
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
