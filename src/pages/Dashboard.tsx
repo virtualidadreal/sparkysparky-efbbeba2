@@ -100,7 +100,7 @@ const Dashboard = () => {
         
         {/* Left Sidebar - fixed height */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="bg-card/70 backdrop-blur-xl rounded-[24px] p-4 shadow-sm flex flex-col h-full overflow-hidden border border-white/20 dark:border-white/5">
             {/* Nav Items */}
             <nav className="space-y-0.5 flex-1 overflow-y-auto">
               {[
@@ -225,7 +225,7 @@ const Dashboard = () => {
                   <button
                     key={idea.id}
                     onClick={() => setSelectedIdea(idea)}
-                    className="bg-card rounded-[18px] p-5 shadow-sm text-left hover:shadow-md transition-all group"
+                    className="bg-card/70 backdrop-blur-xl rounded-[18px] p-5 shadow-sm text-left hover:shadow-md transition-all group border border-white/20 dark:border-white/5"
                   >
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">💡</span>
@@ -240,7 +240,7 @@ const Dashboard = () => {
                 ))
               ) : (
                 <>
-                  <div className="bg-card rounded-[18px] p-5 shadow-sm">
+                  <div className="bg-card/70 backdrop-blur-xl rounded-[18px] p-5 shadow-sm border border-white/20 dark:border-white/5">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">💡</span>
                     </div>
@@ -248,7 +248,7 @@ const Dashboard = () => {
                       Captura tu primera idea
                     </p>
                   </div>
-                  <div className="bg-card rounded-[18px] p-5 shadow-sm">
+                  <div className="bg-card/70 backdrop-blur-xl rounded-[18px] p-5 shadow-sm border border-white/20 dark:border-white/5">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">💡</span>
                     </div>
@@ -256,7 +256,7 @@ const Dashboard = () => {
                       Dicta o escribe ideas
                     </p>
                   </div>
-                  <div className="bg-card rounded-[18px] p-5 shadow-sm">
+                  <div className="bg-card/70 backdrop-blur-xl rounded-[18px] p-5 shadow-sm border border-white/20 dark:border-white/5">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">💡</span>
                     </div>
@@ -275,7 +275,7 @@ const Dashboard = () => {
           {/* Chat Input - Bottom */}
           <QuickCapturePopup
             trigger={
-              <div className="bg-card rounded-[24px] p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+              <div className="bg-card/70 backdrop-blur-xl rounded-[24px] p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow border border-white/20 dark:border-white/5">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 relative">
                     <div className="w-full px-4 py-3.5 bg-muted/50 border border-border rounded-2xl text-muted-foreground">
@@ -293,7 +293,7 @@ const Dashboard = () => {
 
         {/* Right Sidebar - fixed height */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="bg-card/70 backdrop-blur-xl rounded-[24px] p-5 shadow-sm flex flex-col h-full overflow-hidden border border-white/20 dark:border-white/5">
           {/* En tu cabeza */}
           <div className="mb-8">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
