@@ -16,7 +16,7 @@ import {
 import { TaskCard } from './TaskCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { useTasks, useUpdateTaskStatus } from '@/hooks/useTasks';
+import { useTasks, useTasksWithSubtasks, useUpdateTaskStatus } from '@/hooks/useTasks';
 import type { Task, TasksFilters } from '@/types/Task.types';
 
 /**
@@ -43,7 +43,7 @@ export const TaskKanban = ({
   onEditTask,
   onDeleteTask 
 }: TaskKanbanProps) => {
-  const { data: tasks, isLoading } = useTasks(filters);
+  const { data: tasks, isLoading } = useTasksWithSubtasks(filters);
   const updateTaskStatus = useUpdateTaskStatus();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [showOverloadWarning, setShowOverloadWarning] = useState(false);
