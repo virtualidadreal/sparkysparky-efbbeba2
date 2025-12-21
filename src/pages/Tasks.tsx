@@ -477,7 +477,7 @@ const TaskRow = ({ task, onToggle, onClick, dragMode, level }: TaskRowProps) => 
           'group flex items-center gap-3 px-6 py-3 hover:bg-muted/30 transition-colors cursor-pointer',
           task.status === 'done' && 'opacity-60'
         )}
-        style={{ paddingLeft: level > 0 ? `calc(24px + ${level * 10}%)` : '24px' }}
+        style={{ paddingLeft: `${24 + level * 20}px` }}
       >
         {dragMode && (
           <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
