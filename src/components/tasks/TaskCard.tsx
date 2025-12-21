@@ -67,8 +67,8 @@ export const TaskCard = ({ task, onEdit, onDelete, nestingLevel = 0 }: TaskCardP
     action?.();
   };
 
-  // Calcular margen izquierdo basado en nivel de anidamiento
-  const marginLeft = nestingLevel > 0 ? `${nestingLevel * 24}px` : '0';
+  // Calcular margen izquierdo basado en nivel de anidamiento (10% por nivel)
+  const marginLeft = nestingLevel > 0 ? `${nestingLevel * 10}%` : '0';
 
   return (
     <div style={{ marginLeft }}>
