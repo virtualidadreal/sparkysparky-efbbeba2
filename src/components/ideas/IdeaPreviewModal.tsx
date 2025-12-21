@@ -236,12 +236,6 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                       </div>
                     )}
 
-                    {/* Conexiones Inteligentes con IA */}
-                    <ConnectionsPanel 
-                      itemId={idea.id} 
-                      itemType="idea" 
-                    />
-
                     {/* Ideas relacionadas */}
                     {relatedIdeas && relatedIdeas.length > 0 && (
                       <div className="mb-6">
