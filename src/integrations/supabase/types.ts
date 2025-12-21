@@ -828,6 +828,10 @@ export type Database = {
       check_user_quota: { Args: { p_user_id: string }; Returns: Json }
       increment_user_usage: { Args: { p_user_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
+      owns_person_record: {
+        Args: { _person_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       subscription_plan: "free" | "pro"
