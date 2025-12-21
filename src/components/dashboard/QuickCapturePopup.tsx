@@ -436,64 +436,68 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
             {/* Content - Modo grabación inline (solo móvil) */}
             {isRecordingMode && isMobile ? (
               <div className="p-5 flex flex-col items-center gap-6">
-                {/* Visualizador de ondas profesional estilo Apple */}
-                <div className="w-full h-40 bg-background/80 dark:bg-black/60 rounded-2xl flex flex-col items-center justify-center px-4 py-6 overflow-hidden relative">
-                  {/* Waveform container */}
-                  <div className="flex items-center justify-center h-24 w-full relative">
-                    {/* Barras de audio grabadas (izquierda del playhead) */}
-                    <div className="flex items-center gap-[3px] h-full">
-                      {audioData.slice(0, 25).map((value, index) => (
-                        <div
-                          key={`left-${index}`}
-                          className="w-[3px] rounded-full bg-foreground/90 dark:bg-white/90 transition-all duration-100"
-                          style={{
-                            height: `${Math.max(8, value * 85)}%`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    
-                    {/* Playhead central con indicador */}
-                    <div className="flex flex-col items-center mx-1 h-full relative">
-                      {/* Punto indicador */}
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-lg shadow-primary/50" />
-                      {/* Línea vertical */}
-                      <div className="w-0.5 flex-1 bg-primary rounded-b-full" />
-                    </div>
-                    
-                    {/* Línea punteada (derecha del playhead - tiempo restante) */}
-                    <div className="flex items-center gap-[3px] h-full">
-                      {Array.from({ length: 25 }).map((_, index) => (
-                        <div
-                          key={`right-${index}`}
-                          className="w-[3px] h-[3px] rounded-full bg-muted-foreground/40 dark:bg-white/20"
-                        />
-                      ))}
-                    </div>
+                {/* Visualizador de ondas */}
+                <div className="w-full h-32 bg-muted/50 rounded-xl flex items-center justify-center px-4 overflow-hidden">
+                  <div className="flex items-center justify-center gap-[2px] h-full w-full">
+                    {audioData.map((value, index) => (
+                      <div
+                        key={index}
+                        className={clsx(
+                          'w-1 rounded-full transition-all duration-75',
+                          isPaused ? 'bg-muted-foreground/50' : 'bg-primary'
+                        )}
+                        style={{
+                          height: `${Math.max(4, value * 100)}%`,
+                          opacity: isPaused ? 0.5 : 0.8 + value * 0.2,
+                        }}
+                      />
+                    ))}
                   </div>
                 </div>
 
-                {/* Timer y controles */}
-                <div className="flex items-center justify-between w-full px-2">
-                  {/* Timer */}
-                  <span className="text-3xl font-mono font-bold tracking-tight text-foreground">
+                {/* Timer */}
+                <div className="flex items-center gap-3">
+                  <div className={clsx(
+                    'w-3 h-3 rounded-full',
+                    isPaused ? 'bg-amber-500' : 'bg-red-500 animate-pulse'
+                  )} />
+                  <span className="text-2xl font-mono font-semibold text-foreground">
                     {formatTime(recordingTime)}
                   </span>
+                  <span className="text-sm text-muted-foreground">/ 05:00</span>
+                </div>
 
-                  {/* Botón Stop/Enviar */}
+                {/* Controles */}
+                <div className="flex items-center gap-4">
+                  {/* Botón Pausa/Reanudar */}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handlePauseResume}
+                    className="w-14 h-14 rounded-full p-0"
+                    disabled={!isRecording}
+                  >
+                    {isPaused ? (
+                      <PlayIcon className="h-6 w-6" />
+                    ) : (
+                      <PauseIcon className="h-6 w-6" />
+                    )}
+                  </Button>
+
+                  {/* Botón Enviar */}
                   <Button
                     size="lg"
                     onClick={handleSendRecording}
-                    className="w-14 h-14 rounded-xl p-0 bg-primary hover:bg-primary/90 border-2 border-primary"
+                    className="w-16 h-16 rounded-full p-0 bg-primary hover:bg-primary/90"
                     disabled={!isRecording || recordingTime === 0}
                   >
-                    <div className="w-5 h-5 rounded-sm bg-primary-foreground" />
+                    <PaperAirplaneIcon className="h-7 w-7" />
                   </Button>
                 </div>
 
-                {/* Texto de estado */}
-                <p className="text-xs text-muted-foreground text-center">
-                  {isPaused ? 'En pausa' : 'Grabando...'}
+                {/* Texto de ayuda */}
+                <p className="text-sm text-muted-foreground text-center">
+                  {isPaused ? 'En pausa' : 'Hablando...'}
                 </p>
               </div>
             ) : (
