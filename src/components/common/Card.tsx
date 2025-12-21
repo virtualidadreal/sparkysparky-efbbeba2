@@ -26,9 +26,9 @@ export const Card = ({
   className,
   ...props
 }: CardProps) => {
-  // Clases base con tokens semánticos
+  // Clases base con tokens semánticos - transparentes con backdrop blur
   const baseClasses = clsx(
-    'bg-card border border-border rounded-lg',
+    'bg-card/70 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-lg',
     'shadow-sm transition-all duration-200'
   );
 
