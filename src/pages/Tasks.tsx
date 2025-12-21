@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SparkyChat } from '@/components/chat/SparkyChat';
-import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
+import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton';
 
 type DateView = 'today' | 'tomorrow' | 'upcoming' | 'overdue' | 'all' | null;
 
@@ -190,25 +190,6 @@ const Tasks = () => {
               )}
             </nav>
 
-            <div className="mt-4 pt-4 border-t border-border space-y-3 shrink-0">
-              <QuickCapturePopup
-                trigger={
-                  <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
-                    <Plus className="h-4 w-4" />
-                    Captura rápida
-                  </button>
-                }
-              />
-
-              <SparkyChat
-                trigger={
-                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
-                    <Mic className="h-4 w-4" />
-                    Hablar con Sparky
-                  </button>
-                }
-              />
-            </div>
           </div>
         </div>
 
@@ -579,6 +560,9 @@ const TaskRow = ({ task, onToggle, onClick, dragMode, level }: TaskRowProps) => 
 
       {/* Mobile Footer */}
       <MobileFooter />
+
+      {/* Floating Capture Button - Desktop */}
+      <FloatingCaptureButton />
     </>
   );
 };

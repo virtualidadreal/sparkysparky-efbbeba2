@@ -23,9 +23,9 @@ import {
 import { useLocation } from 'react-router-dom';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { IdeaPreviewModal } from '@/components/ideas/IdeaPreviewModal';
-import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { MobileFooter } from '@/components/layout/MobileFooter';
+import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton';
 import { Idea } from '@/types/Idea.types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -151,25 +151,7 @@ const Dashboard = () => {
               )}
             </nav>
 
-            {/* Bottom Actions */}
-            <div className="mt-4 pt-4 border-t border-border space-y-3 shrink-0">
-              <Link
-                to="/ideas"
-                className="flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Captura rápida
-              </Link>
-
-              <SparkyChat
-                trigger={
-                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
-                    <Mic className="h-4 w-4" />
-                    Hablar con Sparky
-                  </button>
-                }
-              />
-            </div>
+            {/* Bottom - Solo navegación sin acciones */}
           </div>
         </div>
 
@@ -271,26 +253,6 @@ const Dashboard = () => {
 
           {/* Spacer */}
           <div className="flex-1" />
-
-          {/* Chat Input - Bottom (hidden on mobile) */}
-          <div className="hidden lg:block">
-            <QuickCapturePopup
-              trigger={
-                <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 cursor-pointer hover:bg-muted/30 transition-all border-2 border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 relative">
-                      <div className="w-full px-4 py-3.5 bg-muted/50 border border-border rounded-2xl text-muted-foreground">
-                        🎙️ ¿Qué tienes en mente?
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-center w-12 h-12 bg-foreground rounded-full shrink-0">
-                      <Mic className="h-5 w-5 text-card" />
-                    </div>
-                  </div>
-                </div>
-              }
-            />
-          </div>
         </div>
 
         {/* Right Sidebar - fixed height */}
@@ -345,6 +307,18 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
+
+          {/* Botón Hablar con Sparky */}
+          <div className="mt-auto pt-4">
+            <SparkyChat
+              trigger={
+                <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                  <Mic className="h-4 w-4" />
+                  Hablar con Sparky
+                </button>
+              }
+            />
+          </div>
           </div>
         </div>
       </div>
@@ -360,6 +334,9 @@ const Dashboard = () => {
 
       {/* Mobile Footer */}
       <MobileFooter />
+
+      {/* Floating Capture Button - Desktop */}
+      <FloatingCaptureButton />
     </div>
   );
 };
