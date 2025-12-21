@@ -15,8 +15,51 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    
+
+    // ============ AUTHENTICATION CHECK ============
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header provided');
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create auth client to verify the caller
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await authClient.auth.getUser();
+    if (userError || !user) {
+      console.error('Invalid authentication:', userError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify admin access using RLS-protected admin_emails table
+    const { data: isAdminData, error: adminError } = await authClient
+      .from('admin_emails')
+      .select('email')
+      .eq('email', user.email)
+      .maybeSingle();
+
+    if (adminError || !isAdminData) {
+      console.error('Admin access denied for user:', user.email);
+      return new Response(
+        JSON.stringify({ error: 'Admin access required for batch operations' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Admin ${user.email} authorized for batch connection analysis`);
+    // ============ END AUTHENTICATION CHECK ============
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get all users
