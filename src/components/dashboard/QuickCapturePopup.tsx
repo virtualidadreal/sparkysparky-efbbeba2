@@ -45,7 +45,8 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
   // Estado para grabación inline en móvil
   const [isRecordingMode, setIsRecordingMode] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [audioData, setAudioData] = useState<number[]>(new Array(50).fill(0));
+  const [waveformHistory, setWaveformHistory] = useState<number[]>([]);
+  const [currentLevel, setCurrentLevel] = useState(0);
   
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -74,7 +75,11 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Iniciar visualización de audio
+  // Máximo de barras visibles en la onda
+  const MAX_WAVEFORM_BARS = 80;
+  const waveformIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Iniciar visualización de audio estilo iPhone
   const startVisualization = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -83,33 +88,58 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
       audioContextRef.current = new AudioContext();
       const source = audioContextRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 128;
+      analyserRef.current.fftSize = 256;
+      analyserRef.current.smoothingTimeConstant = 0.3;
       source.connect(analyserRef.current);
 
       const bufferLength = analyserRef.current.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
 
-      const draw = () => {
-        if (!analyserRef.current || isPaused) {
-          animationRef.current = requestAnimationFrame(draw);
-          return;
-        }
-
+      // Actualizar nivel actual a 60fps para animación suave
+      const updateLevel = () => {
+        if (!analyserRef.current) return;
+        
         analyserRef.current.getByteFrequencyData(dataArray);
         
-        const bars = 50;
-        const step = Math.floor(bufferLength / bars);
-        const newData = [];
-        for (let i = 0; i < bars; i++) {
-          const value = dataArray[i * step] / 255;
-          newData.push(value);
+        // Calcular nivel promedio ponderado (enfocado en frecuencias de voz)
+        let sum = 0;
+        let count = 0;
+        for (let i = 2; i < Math.min(bufferLength, 40); i++) {
+          sum += dataArray[i];
+          count++;
         }
-        setAudioData(newData);
+        const avgLevel = count > 0 ? (sum / count) / 255 : 0;
+        setCurrentLevel(avgLevel);
 
-        animationRef.current = requestAnimationFrame(draw);
+        animationRef.current = requestAnimationFrame(updateLevel);
       };
 
-      draw();
+      updateLevel();
+
+      // Agregar muestras al historial cada 50ms para efecto de avance
+      waveformIntervalRef.current = setInterval(() => {
+        if (!analyserRef.current || isPaused) return;
+        
+        analyserRef.current.getByteFrequencyData(dataArray);
+        
+        let sum = 0;
+        let count = 0;
+        for (let i = 2; i < Math.min(bufferLength, 40); i++) {
+          sum += dataArray[i];
+          count++;
+        }
+        const avgLevel = count > 0 ? (sum / count) / 255 : 0;
+        
+        setWaveformHistory(prev => {
+          const newHistory = [...prev, avgLevel];
+          // Mantener solo las últimas N barras
+          if (newHistory.length > MAX_WAVEFORM_BARS) {
+            return newHistory.slice(-MAX_WAVEFORM_BARS);
+          }
+          return newHistory;
+        });
+      }, 50);
+
     } catch (err) {
       console.error('Error accessing microphone for visualization:', err);
     }
@@ -121,6 +151,10 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
+    if (waveformIntervalRef.current) {
+      clearInterval(waveformIntervalRef.current);
+      waveformIntervalRef.current = null;
+    }
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
@@ -130,7 +164,8 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
       mediaStreamRef.current = null;
     }
     analyserRef.current = null;
-    setAudioData(new Array(50).fill(0));
+    setWaveformHistory([]);
+    setCurrentLevel(0);
   }, []);
 
   // Manejar errores de grabación
@@ -436,22 +471,64 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
             {/* Content - Modo grabación inline (solo móvil) */}
             {isRecordingMode && isMobile ? (
               <div className="p-5 flex flex-col items-center gap-6">
-                {/* Visualizador de ondas */}
-                <div className="w-full h-32 bg-muted/50 rounded-xl flex items-center justify-center px-4 overflow-hidden">
-                  <div className="flex items-center justify-center gap-[2px] h-full w-full">
-                    {audioData.map((value, index) => (
-                      <div
-                        key={index}
-                        className={clsx(
-                          'w-1 rounded-full transition-all duration-75',
-                          isPaused ? 'bg-muted-foreground/50' : 'bg-primary'
-                        )}
-                        style={{
-                          height: `${Math.max(4, value * 100)}%`,
-                          opacity: isPaused ? 0.5 : 0.8 + value * 0.2,
-                        }}
-                      />
-                    ))}
+                {/* Visualizador de ondas estilo iPhone */}
+                <div className="w-full h-28 bg-gradient-to-b from-muted/30 to-muted/60 rounded-2xl flex items-center justify-end px-2 overflow-hidden relative">
+                  {/* Línea central */}
+                  <div className="absolute inset-y-0 left-0 right-0 flex items-center">
+                    <div className="w-full h-[1px] bg-primary/20" />
+                  </div>
+                  
+                  {/* Indicador de nivel actual (lado derecho) */}
+                  <div 
+                    className="absolute right-3 w-1 bg-primary rounded-full transition-all duration-75"
+                    style={{
+                      height: `${Math.max(8, currentLevel * 80)}%`,
+                      opacity: isPaused ? 0.3 : 0.9,
+                    }}
+                  />
+                  
+                  {/* Historial de ondas que avanza hacia la izquierda */}
+                  <div className="flex items-center gap-[3px] h-full pr-6 overflow-hidden">
+                    {waveformHistory.map((value, index) => {
+                      const isRecent = index >= waveformHistory.length - 5;
+                      const opacity = isPaused 
+                        ? 0.3 
+                        : 0.4 + (index / waveformHistory.length) * 0.5;
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="flex flex-col items-center justify-center gap-[2px]"
+                        >
+                          {/* Barra superior */}
+                          <div
+                            className={clsx(
+                              'w-[3px] rounded-full transition-all',
+                              isRecent ? 'bg-primary' : 'bg-primary/70',
+                              isPaused && 'bg-muted-foreground/40'
+                            )}
+                            style={{
+                              height: `${Math.max(2, value * 45)}%`,
+                              opacity,
+                              transition: isRecent ? 'height 50ms ease-out' : 'none',
+                            }}
+                          />
+                          {/* Barra inferior (espejo) */}
+                          <div
+                            className={clsx(
+                              'w-[3px] rounded-full transition-all',
+                              isRecent ? 'bg-primary' : 'bg-primary/70',
+                              isPaused && 'bg-muted-foreground/40'
+                            )}
+                            style={{
+                              height: `${Math.max(2, value * 45)}%`,
+                              opacity,
+                              transition: isRecent ? 'height 50ms ease-out' : 'none',
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
