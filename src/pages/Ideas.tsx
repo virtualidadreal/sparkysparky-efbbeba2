@@ -5,8 +5,8 @@ import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { IdeasFilters } from '@/types/Idea.types';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { SparkyChat } from '@/components/chat/SparkyChat';
-import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 import { MobileFooter } from '@/components/layout/MobileFooter';
+import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton';
 import {
   Home,
   Users,
@@ -95,26 +95,7 @@ const Ideas = () => {
               )}
             </nav>
 
-            {/* Bottom Actions */}
-            <div className="mt-4 pt-4 border-t border-border space-y-3 shrink-0">
-              <QuickCapturePopup
-                trigger={
-                  <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
-                    <Plus className="h-4 w-4" />
-                    Captura rápida
-                  </button>
-                }
-              />
-
-              <SparkyChat
-                trigger={
-                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
-                    <Mic className="h-4 w-4" />
-                    Hablar con Sparky
-                  </button>
-                }
-              />
-            </div>
+            {/* Bottom - Sin acciones */}
           </div>
         </div>
 
@@ -153,24 +134,6 @@ const Ideas = () => {
         {/* Right Sidebar - fixed height */}
         <div className="hidden lg:flex flex-col h-full">
           <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border-2 border-border/50">
-          {/* Nueva Idea */}
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
-              ACCIONES RÁPIDAS
-            </h3>
-            <QuickCapturePopup
-              trigger={
-                <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
-                  <PlusIcon className="h-4 w-4" />
-                  Nueva Idea
-                </button>
-              }
-            />
-          </div>
-
-          {/* Separador */}
-          <div className="border-t border-border mb-6" />
-
           {/* Tips */}
           <div className="flex-1">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
@@ -193,13 +156,28 @@ const Ideas = () => {
                 </p>
               </div>
             </div>
-            </div>
+          </div>
+
+          {/* Botón Hablar con Sparky */}
+          <div className="mt-auto pt-4">
+            <SparkyChat
+              trigger={
+                <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                  <Mic className="h-4 w-4" />
+                  Hablar con Sparky
+                </button>
+              }
+            />
+          </div>
           </div>
         </div>
       </div>
 
       {/* Mobile Footer */}
       <MobileFooter />
+
+      {/* Floating Capture Button - Desktop */}
+      <FloatingCaptureButton />
     </div>
   );
 };
