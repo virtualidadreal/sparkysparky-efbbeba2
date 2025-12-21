@@ -4,6 +4,7 @@ import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
 import { useProactiveInsights } from '@/hooks/useProactiveInsights';
 import { useProfile } from '@/hooks/useProfile';
+import { useDiaryEntries } from '@/hooks/useDiaryEntries';
 import { Link } from 'react-router-dom';
 import {
   Home,
@@ -35,6 +36,7 @@ const Dashboard = () => {
   const { data: ideas } = useIdeas({ status: 'active' });
   const { data: projects } = useProjects();
   const { data: profile } = useProfile();
+  const { data: diaryEntries } = useDiaryEntries();
   const { data: isAdmin } = useIsAdmin();
   const location = useLocation();
 
@@ -81,6 +83,7 @@ const Dashboard = () => {
   };
 
   const recentIdeas = ideas?.slice(0, 3) || [];
+  const recentDiaryEntries = diaryEntries?.slice(0, 3) || [];
 
   // En tu cabeza - proyectos activos
   const activeProjects = projects?.filter(p => p.status === 'active').slice(0, 4) || [];
@@ -244,6 +247,66 @@ const Dashboard = () => {
                     </div>
                     <p className="text-muted-foreground text-sm">
                       Sparky las organiza
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Latest Diary Entries */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground tracking-wider mb-3 px-1">
+              ÚLTIMAS ENTRADAS DEL DIARIO
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {recentDiaryEntries.length > 0 ? (
+                recentDiaryEntries.map((entry) => (
+                  <Link
+                    key={entry.id}
+                    to="/diary"
+                    className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 text-left hover:bg-muted/30 transition-all group border-2 border-border/50"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xl">📖</span>
+                      {entry.mood && (
+                        <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded-md">
+                          {entry.mood}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-foreground font-medium leading-relaxed line-clamp-2 text-sm mb-3">
+                      {entry.title || entry.content.substring(0, 50)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Hace {getRelativeTime(entry.created_at)}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <>
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xl">📖</span>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      Escribe tu primera entrada
+                    </p>
+                  </div>
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xl">📖</span>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      Reflexiona sobre tu día
+                    </p>
+                  </div>
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xl">📖</span>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      Captura tus pensamientos
                     </p>
                   </div>
                 </>
