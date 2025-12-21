@@ -8,7 +8,9 @@ import {
   LinkIcon, 
   CheckCircleIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  PencilIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
@@ -23,6 +25,7 @@ import { Loader2 } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useUpdateIdea } from '@/hooks/useIdeas';
 
 interface IdeaPreviewModalProps {
   isOpen: boolean;
@@ -44,6 +47,51 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
   const [showContextInput, setShowContextInput] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(idea.project_id);
   const queryClient = useQueryClient();
+  
+  // Estados de edición
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(idea.title);
+  const [editSummary, setEditSummary] = useState(idea.summary || '');
+  const [editTags, setEditTags] = useState((idea.tags || []).join(', '));
+  const updateIdea = useUpdateIdea();
+
+  // Sincronizar estados cuando cambia la idea
+  useEffect(() => {
+    setEditTitle(idea.title);
+    setEditSummary(idea.summary || '');
+    setEditTags((idea.tags || []).join(', '));
+    setSelectedProjectId(idea.project_id);
+  }, [idea]);
+
+  const handleSaveEdit = async () => {
+    const tagsArray = editTags
+      .split(',')
+      .map(tag => tag.trim().replace(/^#/, ''))
+      .filter(tag => tag.length > 0);
+
+    updateIdea.mutate(
+      {
+        id: idea.id,
+        updates: {
+          title: editTitle,
+          summary: editSummary || null,
+          tags: tagsArray,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+        },
+      }
+    );
+  };
+
+  const handleCancelEdit = () => {
+    setEditTitle(idea.title);
+    setEditSummary(idea.summary || '');
+    setEditTags((idea.tags || []).join(', '));
+    setIsEditing(false);
+  };
 
   // Generate signed URL for audio on demand
   useEffect(() => {
@@ -184,16 +232,53 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                       Volver
                     </button>
                     <div className="flex items-center gap-2">
-                      {idea.status !== 'converted' && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setIsConvertModalOpen(true)}
-                          className="gap-1.5"
-                        >
-                          <CheckCircleIcon className="h-4 w-4" />
-                          Crear tarea
-                        </Button>
+                      {isEditing ? (
+                        <>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={handleSaveEdit}
+                            disabled={updateIdea.isPending}
+                            className="gap-1.5"
+                          >
+                            {updateIdea.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <CheckIcon className="h-4 w-4" />
+                            )}
+                            Guardar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                          >
+                            Cancelar
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsEditing(true)}
+                            className="gap-1.5"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                            Editar
+                          </Button>
+                          {idea.status !== 'converted' && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setIsConvertModalOpen(true)}
+                              className="gap-1.5"
+                            >
+                              <CheckCircleIcon className="h-4 w-4" />
+                              Crear tarea
+                            </Button>
+                          )}
+                        </>
                       )}
                       <button
                         onClick={onClose}
@@ -207,17 +292,35 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
 
                   {/* Contenido principal */}
                   <div className="px-6 py-6 max-h-[75vh] overflow-y-auto">
-                    {/* Título */}
-                    <h1 className="text-2xl font-bold text-foreground mb-4">
-                      {idea.title}
-                    </h1>
+                    {/* Título - Editable */}
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full text-2xl font-bold text-foreground bg-muted/50 border border-border rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        placeholder="Título de la idea"
+                      />
+                    ) : (
+                      <h1 className="text-2xl font-bold text-foreground mb-4">
+                        {idea.title}
+                      </h1>
+                    )}
 
-                    {/* Summary */}
-                    {idea.summary && (
+                    {/* Summary - Editable */}
+                    {isEditing ? (
+                      <textarea
+                        value={editSummary}
+                        onChange={(e) => setEditSummary(e.target.value)}
+                        className="w-full text-foreground/90 leading-relaxed bg-muted/50 border border-border rounded-lg px-3 py-2 mb-6 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        placeholder="Resumen de la idea..."
+                        rows={3}
+                      />
+                    ) : idea.summary ? (
                       <p className="text-foreground/90 leading-relaxed mb-6">
                         {idea.summary}
                       </p>
-                    )}
+                    ) : null}
 
                     {/* Sparky Take - Destacado */}
                     {idea.sparky_take && (
@@ -403,14 +506,27 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                       </div>
                     )}
 
-                    {/* Etiquetas */}
-                    {idea.tags.length > 0 && (
+                    {/* Etiquetas - Editable */}
+                    {isEditing ? (
+                      <div className="mb-6">
+                        <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                          Etiquetas (separadas por coma)
+                        </label>
+                        <input
+                          type="text"
+                          value={editTags}
+                          onChange={(e) => setEditTags(e.target.value)}
+                          className="w-full text-sm bg-muted/50 border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          placeholder="trabajo, importante, proyecto..."
+                        />
+                      </div>
+                    ) : idea.tags.length > 0 ? (
                       <div className="flex flex-wrap gap-2 mb-6">
                         {idea.tags.map((tag, idx) => (
                           <Badge key={idx} text={`#${tag}`} variant="neutral" />
                         ))}
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Footer con proyecto y fecha */}
