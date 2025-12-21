@@ -26,10 +26,10 @@ export const Card = ({
   className,
   ...props
 }: CardProps) => {
-  // Clases base - transparentes con backdrop blur
+  // Clases base - transparente con borde
   const baseClasses = clsx(
-    'bg-white/60 dark:bg-black/40 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-lg',
-    'shadow-sm transition-all duration-200'
+    'bg-transparent backdrop-blur-sm border border-border/50 rounded-lg',
+    'transition-all duration-200'
   );
 
   // Clases por variante
