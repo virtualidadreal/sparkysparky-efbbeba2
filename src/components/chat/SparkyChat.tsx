@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { useSparkyChat, ChatMessage } from '@/hooks/useSparkyChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, Transition } from '@headlessui/react';
 import { 
   SparklesIcon, 
   PaperAirplaneIcon,
@@ -214,122 +214,144 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
         {trigger || defaultTrigger}
       </div>
       
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent 
-          className="max-w-none w-[95vw] h-[85vh] md:w-[600px] md:h-[77vh] p-0 gap-0 rounded-3xl border border-white/30 dark:border-white/10 shadow-2xl overflow-hidden bg-white/70 dark:bg-card/70 backdrop-blur-2xl flex flex-col"
-          hideCloseButton
-        >
-          <DialogTitle className="sr-only">Chat con Sparky</DialogTitle>
-          
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-foreground/5 flex items-center justify-center">
-                <SparklesIcon className="h-4 w-4 text-foreground/70" />
-              </div>
-              <div>
-                <h2 className="font-medium text-sm">Sparky</h2>
-                <p className="text-[10px] text-muted-foreground">
-                  {messages.length > 0 ? `${messages.length} mensajes` : 'Asistente personal'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={clearChat}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                disabled={messages.length === 0}
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              >
-                <XMarkIcon className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <ScrollArea 
-            ref={scrollRef}
-            className="flex-1 min-h-0"
+      <Transition appear show={isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setIsOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
           >
-            <div className="px-6 py-4">
-              {messages.length === 0 && !isLoading ? (
-                <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-                  <div className="h-12 w-12 rounded-full bg-foreground/5 flex items-center justify-center mb-4">
-                    <SparklesIcon className="h-6 w-6 text-foreground/40" />
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-                    Tengo acceso a todas tus ideas, tareas, proyectos y más. ¿En qué puedo ayudarte?
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-center max-w-md">
-                    {['¿Qué tengo pendiente?', 'Resume mis ideas', 'Ayúdame a priorizar'].map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        className="px-3 py-1.5 text-xs bg-muted/50 hover:bg-muted rounded-full transition-colors"
-                        onClick={() => {
-                          setInput(suggestion);
-                          inputRef.current?.focus();
-                        }}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  {messagesWithSeparators.map(({ message, showDateSeparator, dateSeparatorLabel }) => (
-                    <MessageBubble 
-                      key={message.id} 
-                      message={message}
-                      showDateSeparator={showDateSeparator}
-                      dateSeparatorLabel={dateSeparatorLabel}
-                    />
-                  ))}
-                  {isLoading && !messages.some(m => m.isStreaming) && (
-                    <div className="flex justify-start mb-4">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span className="text-xs">Pensando...</span>
+            <div className="fixed inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-2xl" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-2xl h-[80vh] transform overflow-hidden rounded-2xl bg-card border border-border shadow-2xl transition-all flex flex-col">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <SparklesIcon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <Dialog.Title className="font-medium text-sm text-foreground">Sparky</Dialog.Title>
+                        <p className="text-[10px] text-muted-foreground">
+                          {messages.length > 0 ? `${messages.length} mensajes` : 'Asistente personal'}
+                        </p>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={clearChat}
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        disabled={messages.length === 0}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                      <button
+                        onClick={() => setIsOpen(false)}
+                        className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                        aria-label="Cerrar"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
 
-          {/* Input */}
-          <form onSubmit={handleSubmit} className="px-6 py-4 border-t border-border/50">
-            <div className="flex gap-3">
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribe tu mensaje..."
-                disabled={isLoading}
-                className="flex-1 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl"
-              />
-              <Button 
-                type="submit" 
-                size="icon"
-                disabled={isLoading || !input.trim()}
-                className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
-              >
-                <PaperAirplaneIcon className="h-4 w-4" />
-              </Button>
+                  {/* Messages */}
+                  <ScrollArea 
+                    ref={scrollRef}
+                    className="flex-1 min-h-0"
+                  >
+                    <div className="px-6 py-4">
+                      {messages.length === 0 && !isLoading ? (
+                        <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <SparklesIcon className="h-6 w-6 text-primary" />
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                            Tengo acceso a todas tus ideas, tareas, proyectos y más. ¿En qué puedo ayudarte?
+                          </p>
+                          <div className="flex flex-wrap gap-2 justify-center max-w-md">
+                            {['¿Qué tengo pendiente?', 'Resume mis ideas', 'Ayúdame a priorizar'].map((suggestion) => (
+                              <button
+                                key={suggestion}
+                                className="px-3 py-1.5 text-xs bg-muted/50 hover:bg-muted rounded-full transition-colors"
+                                onClick={() => {
+                                  setInput(suggestion);
+                                  inputRef.current?.focus();
+                                }}
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          {messagesWithSeparators.map(({ message, showDateSeparator, dateSeparatorLabel }) => (
+                            <MessageBubble 
+                              key={message.id} 
+                              message={message}
+                              showDateSeparator={showDateSeparator}
+                              dateSeparatorLabel={dateSeparatorLabel}
+                            />
+                          ))}
+                          {isLoading && !messages.some(m => m.isStreaming) && (
+                            <div className="flex justify-start mb-4">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <span className="text-xs">Pensando...</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+
+                  {/* Input */}
+                  <form onSubmit={handleSubmit} className="px-6 py-4 border-t border-border">
+                    <div className="flex gap-3">
+                      <Input
+                        ref={inputRef}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Escribe tu mensaje..."
+                        disabled={isLoading}
+                        className="flex-1 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl"
+                      />
+                      <Button 
+                        type="submit" 
+                        size="icon"
+                        disabled={isLoading || !input.trim()}
+                        className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
+                      >
+                        <PaperAirplaneIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </form>
+                </Dialog.Panel>
+              </Transition.Child>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </Dialog>
+      </Transition>
     </>
   );
 };
