@@ -1,15 +1,23 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { MicrophoneIcon, PauseIcon, PlayIcon, PaperAirplaneIcon, XMarkIcon } from '@heroicons/react/24/solid';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { PaperAirplaneIcon, XMarkIcon, StopIcon } from '@heroicons/react/24/solid';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useRecordVoice } from '@/hooks/useRecordVoice';
 import toast from 'react-hot-toast';
-import clsx from 'clsx';
 
 export interface VoiceRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRecordingComplete: (audioBlob: Blob) => void;
+}
+
+function formatTime(ms: number) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
 export const VoiceRecordModal = ({
@@ -19,7 +27,6 @@ export const VoiceRecordModal = ({
 }: VoiceRecordModalProps) => {
   const {
     isRecording,
-    recordingTime,
     startRecording,
     stopRecording,
     cancelRecording,
@@ -27,80 +34,207 @@ export const VoiceRecordModal = ({
     permissionState,
   } = useRecordVoice();
 
-  const [isPaused, setIsPaused] = useState(false);
-  const [audioData, setAudioData] = useState<number[]>(new Array(50).fill(0));
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const animationRef = useRef<number | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastSampleAtRef = useRef<number>(0);
+  const startedAtRef = useRef<number>(0);
+  const ampsRef = useRef<number[]>([]);
 
-  // Formatear tiempo
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  const [elapsedMs, setElapsedMs] = useState(0);
 
-  // Iniciar visualización de audio
-  const startVisualization = useCallback(async () => {
+  const ui = useMemo(() => ({
+    bg: 'hsl(var(--background))',
+    fg: 'hsl(var(--foreground))',
+    accent: 'hsl(var(--primary))',
+    dim: 'hsl(var(--muted-foreground) / 0.35)',
+  }), []);
+
+  // Cleanup al desmontar o cerrar
+  useEffect(() => {
+    return () => stopVisualization(true);
+  }, []);
+
+  // Cleanup cuando el modal se cierra
+  useEffect(() => {
+    if (!isOpen) {
+      stopVisualization(true);
+      ampsRef.current = [];
+      setElapsedMs(0);
+    }
+  }, [isOpen]);
+
+  function stopVisualization(silent = false) {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+
+    try {
+      sourceRef.current?.disconnect();
+      analyserRef.current?.disconnect();
+      audioCtxRef.current?.close();
+    } catch {}
+
+    sourceRef.current = null;
+    analyserRef.current = null;
+    audioCtxRef.current = null;
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    }
+  }
+
+  async function startVisualization() {
+    ampsRef.current = [];
+    setElapsedMs(0);
+    lastSampleAtRef.current = 0;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
-      
-      audioContextRef.current = new AudioContext();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 128;
-      source.connect(analyserRef.current);
 
-      const bufferLength = analyserRef.current.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx: AudioContext = new AudioCtx();
+      audioCtxRef.current = ctx;
 
-      const draw = () => {
-        if (!analyserRef.current || isPaused) {
-          animationRef.current = requestAnimationFrame(draw);
-          return;
-        }
+      if (ctx.state === 'suspended') await ctx.resume();
 
-        analyserRef.current.getByteFrequencyData(dataArray);
-        
-        // Tomar solo 50 barras y normalizar
-        const bars = 50;
-        const step = Math.floor(bufferLength / bars);
-        const newData = [];
-        for (let i = 0; i < bars; i++) {
-          const value = dataArray[i * step] / 255;
-          newData.push(value);
-        }
-        setAudioData(newData);
+      const source = ctx.createMediaStreamSource(stream);
+      sourceRef.current = source;
 
-        animationRef.current = requestAnimationFrame(draw);
-      };
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.85;
+      analyserRef.current = analyser;
 
-      draw();
+      source.connect(analyser);
+
+      startedAtRef.current = performance.now();
+      loopDraw();
     } catch (err) {
-      console.error('Error accessing microphone for visualization:', err);
+      console.error('Error starting visualization:', err);
     }
-  }, [isPaused]);
+  }
 
-  // Detener visualización
-  const stopVisualization = useCallback(() => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = null;
+  function loopDraw() {
+    const canvas = canvasRef.current;
+    const analyser = analyserRef.current;
+    if (!canvas || !analyser) return;
+
+    const ctx2d = canvas.getContext('2d');
+    if (!ctx2d) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    const w = Math.floor(cssW * dpr);
+    const h = Math.floor(cssH * dpr);
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
     }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+
+    const now = performance.now();
+    const elapsed = now - startedAtRef.current;
+    setElapsedMs(elapsed);
+
+    // Time-domain data para RMS
+    const buffer = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(buffer);
+
+    let sumSq = 0;
+    for (let i = 0; i < buffer.length; i++) {
+      const v = (buffer[i] - 128) / 128;
+      sumSq += v * v;
     }
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
-      mediaStreamRef.current = null;
+    const rms = Math.sqrt(sumSq / buffer.length);
+    const amp = Math.min(1, Math.max(0, rms * 1.8));
+
+    const sampleEveryMs = 60;
+    if (elapsed - lastSampleAtRef.current >= sampleEveryMs) {
+      lastSampleAtRef.current = elapsed;
+      ampsRef.current.push(amp);
     }
-    analyserRef.current = null;
-    setAudioData(new Array(50).fill(0));
-  }, []);
+
+    drawWaveform(ctx2d, w, h, ampsRef.current);
+
+    rafRef.current = requestAnimationFrame(loopDraw);
+  }
+
+  function drawWaveform(
+    g: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    amps: number[]
+  ) {
+    // Obtener colores computados del CSS
+    const computedStyle = getComputedStyle(document.documentElement);
+    const bgColor = computedStyle.getPropertyValue('--background').trim();
+    const fgColor = computedStyle.getPropertyValue('--foreground').trim();
+    const primaryColor = computedStyle.getPropertyValue('--primary').trim();
+    const mutedFgColor = computedStyle.getPropertyValue('--muted-foreground').trim();
+
+    g.clearRect(0, 0, w, h);
+
+    // Fondo
+    g.fillStyle = `hsl(${bgColor})`;
+    g.fillRect(0, 0, w, h);
+
+    const centerY = h / 2;
+    const paddingX = w * 0.06;
+    const playheadX = w * 0.55;
+
+    // Línea punteada a la derecha
+    g.strokeStyle = `hsl(${mutedFgColor} / 0.35)`;
+    g.lineWidth = Math.max(1, w * 0.002);
+    g.setLineDash([Math.max(2, w * 0.006), Math.max(2, w * 0.006)]);
+    g.beginPath();
+    g.moveTo(playheadX + w * 0.02, centerY);
+    g.lineTo(w - paddingX, centerY);
+    g.stroke();
+    g.setLineDash([]);
+
+    // Barras de amplitud
+    const barW = Math.max(2, Math.floor(w * 0.008));
+    const gap = Math.max(2, Math.floor(w * 0.006));
+    const step = barW + gap;
+
+    const maxBars = Math.floor((playheadX - paddingX) / step);
+    const visible = amps.slice(Math.max(0, amps.length - maxBars));
+    const startX = playheadX - visible.length * step;
+
+    g.strokeStyle = `hsl(${fgColor})`;
+    g.lineWidth = barW;
+    g.lineCap = 'round';
+
+    for (let i = 0; i < visible.length; i++) {
+      const a = visible[i];
+      const barH = a * (h * 0.55);
+      const x = startX + i * step;
+
+      g.beginPath();
+      g.moveTo(x, centerY - barH);
+      g.lineTo(x, centerY + barH);
+      g.stroke();
+    }
+
+    // Playhead con color primario
+    g.strokeStyle = `hsl(${primaryColor})`;
+    g.lineWidth = Math.max(2, w * 0.004);
+    g.beginPath();
+    g.moveTo(playheadX, centerY - h * 0.32);
+    g.lineTo(playheadX, centerY + h * 0.32);
+    g.stroke();
+
+    // Punto arriba del playhead
+    g.fillStyle = `hsl(${primaryColor})`;
+    g.beginPath();
+    g.arc(playheadX, centerY - h * 0.32, Math.max(4, w * 0.01), 0, Math.PI * 2);
+    g.fill();
+  }
 
   // Iniciar grabación cuando se abre el modal
   useEffect(() => {
@@ -111,12 +245,6 @@ export const VoiceRecordModal = ({
       };
       start();
     }
-    
-    return () => {
-      if (!isOpen) {
-        stopVisualization();
-      }
-    };
   }, [isOpen]);
 
   // Manejar errores
@@ -126,13 +254,6 @@ export const VoiceRecordModal = ({
       onClose();
     }
   }, [error, onClose]);
-
-  // Manejar pausa (simular con stop visual)
-  const handlePauseResume = () => {
-    setIsPaused(!isPaused);
-    // Nota: MediaRecorder no soporta pausa en todos los navegadores
-    // Por ahora solo pausamos la visualización
-  };
 
   // Enviar grabación
   const handleSend = async () => {
@@ -153,84 +274,74 @@ export const VoiceRecordModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
-      <DialogContent className="sm:max-w-md" hideCloseButton>
+      <DialogContent className="sm:max-w-md border-border/50 bg-background" hideCloseButton>
         <div className="flex flex-col items-center gap-6 py-4">
           {/* Header */}
           <div className="flex items-center justify-between w-full">
-            <h3 className="text-lg font-semibold text-foreground">Grabando audio</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Nueva grabación</h3>
+              <p className="text-sm text-muted-foreground">
+                {new Date().toLocaleDateString('es-ES', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleCancel}
-              className="h-8 w-8"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
             >
               <XMarkIcon className="h-5 w-5" />
             </Button>
           </div>
 
-          {/* Visualizador de ondas */}
-          <div className="w-full h-32 bg-muted/50 rounded-xl flex items-center justify-center px-4 overflow-hidden">
-            <div className="flex items-center justify-center gap-[2px] h-full w-full">
-              {audioData.map((value, index) => (
-                <div
-                  key={index}
-                  className={clsx(
-                    'w-1 rounded-full transition-all duration-75',
-                    isPaused ? 'bg-muted-foreground/50' : 'bg-primary'
-                  )}
-                  style={{
-                    height: `${Math.max(4, value * 100)}%`,
-                    opacity: isPaused ? 0.5 : 0.8 + value * 0.2,
-                  }}
-                />
-              ))}
+          {/* Canvas visualizador */}
+          <div className="w-full h-32 bg-muted/30 rounded-xl overflow-hidden">
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full"
+              style={{ display: 'block' }}
+            />
+          </div>
+
+          {/* Timer y controles */}
+          <div className="flex items-center justify-between w-full">
+            <span className="text-3xl font-mono font-semibold text-foreground">
+              {formatTime(elapsedMs)}
+            </span>
+
+            <div className="flex items-center gap-3">
+              {/* Botón Stop/Cancelar */}
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleCancel}
+                className="w-12 h-12 rounded-full p-0 border-destructive/50 text-destructive hover:bg-destructive/10"
+              >
+                <StopIcon className="h-5 w-5" />
+              </Button>
+
+              {/* Botón Enviar */}
+              <Button
+                size="lg"
+                onClick={handleSend}
+                className="w-14 h-14 rounded-full p-0 bg-primary hover:bg-primary/90"
+                disabled={!isRecording || elapsedMs < 1000}
+              >
+                <PaperAirplaneIcon className="h-6 w-6" />
+              </Button>
             </div>
           </div>
 
-          {/* Timer */}
-          <div className="flex items-center gap-3">
-            <div className={clsx(
-              'w-3 h-3 rounded-full',
-              isPaused ? 'bg-amber-500' : 'bg-red-500 animate-pulse'
-            )} />
-            <span className="text-2xl font-mono font-semibold text-foreground">
-              {formatTime(recordingTime)}
-            </span>
-            <span className="text-sm text-muted-foreground">/ 05:00</span>
+          {/* Indicador de grabación */}
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-sm text-muted-foreground">Grabando...</span>
           </div>
-
-          {/* Controles */}
-          <div className="flex items-center gap-4">
-            {/* Botón Pausa/Reanudar */}
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handlePauseResume}
-              className="w-14 h-14 rounded-full p-0"
-              disabled={!isRecording}
-            >
-              {isPaused ? (
-                <PlayIcon className="h-6 w-6" />
-              ) : (
-                <PauseIcon className="h-6 w-6" />
-              )}
-            </Button>
-
-            {/* Botón Enviar */}
-            <Button
-              size="lg"
-              onClick={handleSend}
-              className="w-16 h-16 rounded-full p-0 bg-primary hover:bg-primary/90"
-              disabled={!isRecording || recordingTime === 0}
-            >
-              <PaperAirplaneIcon className="h-7 w-7" />
-            </Button>
-          </div>
-
-          {/* Texto de ayuda */}
-          <p className="text-sm text-muted-foreground text-center">
-            {isPaused ? 'En pausa' : 'Hablando...'}
-          </p>
         </div>
       </DialogContent>
     </Dialog>
