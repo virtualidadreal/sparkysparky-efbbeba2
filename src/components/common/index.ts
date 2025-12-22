@@ -29,3 +29,6 @@ export type { VoiceRecordButtonProps } from './VoiceRecordButton';
 export { ErrorBoundary } from './ErrorBoundary';
 
 export { InstallPWAPrompt } from './InstallPWAPrompt';
+
+export { GlassToast, glassToast, showGlassToast } from './GlassToast';
+export type { GlassToastProps } from './GlassToast';
