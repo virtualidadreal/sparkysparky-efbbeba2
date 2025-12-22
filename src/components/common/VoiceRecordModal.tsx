@@ -366,16 +366,6 @@ export const VoiceRecordModal = ({
               >
                 <PaperAirplaneIcon className="h-6 w-6" />
               </Button>
-
-              {/* Botón Cancelar */}
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={handleCancel}
-                className="w-10 h-10 rounded-full p-0 text-destructive hover:bg-destructive/10"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </Button>
             </div>
           </div>
 
