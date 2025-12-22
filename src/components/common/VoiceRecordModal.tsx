@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { PaperAirplaneIcon, XMarkIcon, StopIcon } from '@heroicons/react/24/solid';
+import { PaperAirplaneIcon, XMarkIcon, PauseIcon, PlayIcon } from '@heroicons/react/24/solid';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useRecordVoice } from '@/hooks/useRecordVoice';
@@ -43,8 +43,11 @@ export const VoiceRecordModal = ({
   const lastSampleAtRef = useRef<number>(0);
   const startedAtRef = useRef<number>(0);
   const ampsRef = useRef<number[]>([]);
+  const pausedAtRef = useRef<number>(0);
+  const totalPausedRef = useRef<number>(0);
 
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const ui = useMemo(() => ({
     bg: 'hsl(var(--background))',
@@ -64,6 +67,9 @@ export const VoiceRecordModal = ({
       stopVisualization(true);
       ampsRef.current = [];
       setElapsedMs(0);
+      setIsPaused(false);
+      pausedAtRef.current = 0;
+      totalPausedRef.current = 0;
     }
   }, [isOpen]);
 
@@ -91,6 +97,9 @@ export const VoiceRecordModal = ({
     ampsRef.current = [];
     setElapsedMs(0);
     lastSampleAtRef.current = 0;
+    pausedAtRef.current = 0;
+    totalPausedRef.current = 0;
+    setIsPaused(false);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -138,7 +147,7 @@ export const VoiceRecordModal = ({
     }
 
     const now = performance.now();
-    const elapsed = now - startedAtRef.current;
+    const elapsed = now - startedAtRef.current - totalPausedRef.current;
     setElapsedMs(elapsed);
 
     // Time-domain data para RMS
@@ -272,6 +281,25 @@ export const VoiceRecordModal = ({
     onClose();
   };
 
+  // Pausar/Reanudar
+  const handlePauseResume = () => {
+    if (isPaused) {
+      // Reanudar
+      const pausedDuration = performance.now() - pausedAtRef.current;
+      totalPausedRef.current += pausedDuration;
+      setIsPaused(false);
+      loopDraw();
+    } else {
+      // Pausar
+      pausedAtRef.current = performance.now();
+      setIsPaused(true);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
       <DialogContent className="sm:max-w-md border-border/50 bg-background" hideCloseButton>
@@ -315,14 +343,18 @@ export const VoiceRecordModal = ({
             </span>
 
             <div className="flex items-center gap-3">
-              {/* Botón Stop/Cancelar */}
+              {/* Botón Pausar/Reanudar */}
               <Button
                 variant="outline"
                 size="lg"
-                onClick={handleCancel}
-                className="w-12 h-12 rounded-full p-0 border-destructive/50 text-destructive hover:bg-destructive/10"
+                onClick={handlePauseResume}
+                className="w-12 h-12 rounded-full p-0 border-border"
               >
-                <StopIcon className="h-5 w-5" />
+                {isPaused ? (
+                  <PlayIcon className="h-5 w-5" />
+                ) : (
+                  <PauseIcon className="h-5 w-5" />
+                )}
               </Button>
 
               {/* Botón Enviar */}
@@ -334,13 +366,25 @@ export const VoiceRecordModal = ({
               >
                 <PaperAirplaneIcon className="h-6 w-6" />
               </Button>
+
+              {/* Botón Cancelar */}
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={handleCancel}
+                className="w-10 h-10 rounded-full p-0 text-destructive hover:bg-destructive/10"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </Button>
             </div>
           </div>
 
           {/* Indicador de grabación */}
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-sm text-muted-foreground">Grabando...</span>
+            <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-500' : 'bg-red-500 animate-pulse'}`} />
+            <span className="text-sm text-muted-foreground">
+              {isPaused ? 'En pausa' : 'Grabando...'}
+            </span>
           </div>
         </div>
       </DialogContent>
