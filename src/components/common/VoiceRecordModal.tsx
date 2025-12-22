@@ -306,17 +306,7 @@ export const VoiceRecordModal = ({
         <div className="flex flex-col items-center gap-6 py-4">
           {/* Header */}
           <div className="flex items-center justify-between w-full">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Nueva grabación</h3>
-              <p className="text-sm text-muted-foreground">
-                {new Date().toLocaleDateString('es-ES', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold text-foreground">Nueva grabación</h3>
             <Button
               variant="ghost"
               size="icon"
