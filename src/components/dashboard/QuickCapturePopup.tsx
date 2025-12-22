@@ -14,6 +14,7 @@ import { ProjectSuggestionModal } from '@/components/projects/ProjectSuggestionM
 import { useRecordVoice } from '@/hooks/useRecordVoice';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { VoiceRecordButton } from '@/components/common';
+import { glassToast } from '@/components/common/GlassToast';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
@@ -250,7 +251,7 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
         throw new Error('Usuario no autenticado');
       }
 
-      toast.success('Procesando...');
+      glassToast.audio('🎯 Procesando...');
 
       const { data, error } = await supabase.functions.invoke('process-text-capture', {
         body: {
@@ -262,15 +263,25 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
         throw error;
       }
 
-      const typeMessages: Record<string, string> = {
-        idea: '💡 ¡Idea guardada!',
-        task: '✅ ¡Tarea creada!',
-        diary: '📔 ¡Entrada de diario guardada!',
-        person: '👤 ¡Contacto añadido!',
-      };
+      const contentType = data?.type || 'idea';
+      const entityId = data?.id;
       
-      const message = typeMessages[data?.type] || '¡Guardado!';
-      toast.success(message);
+      switch (contentType) {
+        case 'idea':
+          glassToast.idea('💡 ¡Idea guardada!', entityId);
+          break;
+        case 'diary':
+          glassToast.diary('📔 ¡Entrada de diario guardada!', entityId);
+          break;
+        case 'task':
+          glassToast.task('✅ ¡Tarea creada!', entityId);
+          break;
+        case 'person':
+          glassToast.person('👤 ¡Contacto añadido!', entityId);
+          break;
+        default:
+          glassToast.success('¡Guardado!');
+      }
       
       setContent('');
       setIsOpen(false);
@@ -336,7 +347,7 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
 
       if (createError) throw createError;
 
-      toast.success('Procesando audio...');
+      glassToast.audio('🎧 Procesando audio...');
 
       const arrayBuffer = await audioBlob.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
@@ -362,15 +373,25 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
             console.error('Error processing audio:', error);
             toast.error('Error al procesar el audio');
           } else {
-            const typeMessages: Record<string, string> = {
-              idea: '💡 ¡Idea transcrita y guardada!',
-              diary: '📔 ¡Entrada de diario guardada!',
-              task: '✅ ¡Tarea creada!',
-              person: '👤 ¡Contacto añadido!',
-            };
             const contentType = data?.type || 'idea';
-            const message = typeMessages[contentType] || '¡Guardado!';
-            toast.success(message);
+            const entityId = data?.id || newIdea.id;
+            
+            switch (contentType) {
+              case 'idea':
+                glassToast.idea('💡 ¡Idea transcrita y guardada!', entityId);
+                break;
+              case 'diary':
+                glassToast.diary('📔 ¡Entrada de diario guardada!', entityId);
+                break;
+              case 'task':
+                glassToast.task('✅ ¡Tarea creada!', entityId);
+                break;
+              case 'person':
+                glassToast.person('👤 ¡Contacto añadido!', entityId);
+                break;
+              default:
+                glassToast.success('¡Guardado!');
+            }
             
             if (contentType === 'diary') {
               queryClient.invalidateQueries({ queryKey: ['diary'] });
