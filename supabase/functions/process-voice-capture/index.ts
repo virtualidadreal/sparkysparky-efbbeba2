@@ -311,6 +311,36 @@ serve(async (req) => {
     const isDiaryByHeuristic = diaryPatterns.some(pattern => transcriptionLower.includes(pattern));
     console.log('Heuristic diary detection:', isDiaryByHeuristic, 'for:', transcription.substring(0, 50));
 
+    // Heuristic detection for tasks - check BEFORE AI call
+    const taskPatterns = [
+      'apunta en mi lista de tareas', 'añade a mi lista de tareas', 'agrega a mi lista de tareas',
+      'apunta esta tarea', 'añade esta tarea', 'agrega esta tarea', 'crea una tarea',
+      'apúntame que', 'apúntame esto', 'recuérdame que', 'recordarme que',
+      'tengo que', 'tengo pendiente', 'necesito hacer', 'debo hacer',
+      'apunta en mis tareas', 'añade a mis tareas', 'agrega a mis tareas',
+      'nueva tarea', 'crear tarea', 'añadir tarea'
+    ];
+    
+    const isTaskByHeuristic = taskPatterns.some(pattern => transcriptionLower.includes(pattern));
+    console.log('Heuristic task detection:', isTaskByHeuristic, 'for:', transcription.substring(0, 50));
+
+    // Extract task list name if mentioned
+    let mentionedListName: string | null = null;
+    const listNamePatterns = [
+      /(?:en la lista|en mi lista|lista)\s+(?:de\s+)?["']?([^"'.,]+)["']?/i,
+      /(?:en|a)\s+(?:la lista|mi lista)\s+["']?([^"'.,]+)["']?/i,
+      /lista\s+["']?([^"'.,]+)["']?/i
+    ];
+    
+    for (const pattern of listNamePatterns) {
+      const match = transcription.match(pattern);
+      if (match && match[1]) {
+        mentionedListName = match[1].trim();
+        console.log('Detected task list name:', mentionedListName);
+        break;
+      }
+    }
+
     // Get user's projects and recent ideas for context
     const { data: userProjects } = await supabase
       .from('projects')
@@ -325,9 +355,17 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(10);
 
+    // Get user's task lists for context
+    const { data: userTaskLists } = await supabase
+      .from('task_lists')
+      .select('id, name')
+      .eq('user_id', authenticatedUserId)
+      .order('sort_order', { ascending: true });
+
     // Build context for AI
     const projectsList = userProjects?.map(p => `- ${p.title} (tags: ${(p.tags || []).join(', ')})`).join('\n') || 'Ninguno';
     const recentIdeasList = recentIdeas?.map(i => `- ${i.title}`).join('\n') || 'Ninguna';
+    const taskListsList = userTaskLists?.map(l => `- "${l.name}" (id: ${l.id})`).join('\n') || 'Ninguna';
 
     // New Sparky prompt for voice capture
     const systemPrompt = `Eres Sparky, un asistente personal de ideas. El usuario acaba de capturar una idea por voz.
@@ -339,9 +377,20 @@ ${projectsList}
 Ideas recientes:
 ${recentIdeasList}
 
+Listas de tareas disponibles:
+${taskListsList}
+
 INSTRUCCIONES:
-Clasifica el contenido. Si habla de su día, experiencias personales o emociones, es "diary".
-Para ideas, genera un título específico, un resumen con INTENCIÓN (qué quiere hacer Y por qué), y un comentario de Sparky.`;
+1. Clasifica el contenido:
+   - Si habla de su día, experiencias personales o emociones → "diary"
+   - Si menciona "apunta en mi lista de tareas", "añade esta tarea", "recuérdame que", "tengo que hacer" o similar → "task"
+   - Para ideas creativas, proyectos, negocios → "idea"
+   
+2. Para TAREAS:
+   - Si el usuario menciona una lista específica (ej: "en la lista de trabajo", "en mi lista personal"), identifica el task_list_id correspondiente
+   - Si NO menciona lista específica, deja task_list_id como null (irá a inbox)
+
+3. Genera un título específico, un resumen con INTENCIÓN, y un comentario de Sparky.`;
 
     const classificationTool = {
       type: "function",
@@ -354,11 +403,13 @@ Para ideas, genera un título específico, un resumen con INTENCIÓN (qué quier
             content_type: { 
               type: "string", 
               enum: ["diary", "idea", "task", "person"],
-              description: "diary: reflexiones personales, cómo ha sido el día, emociones, experiencias vividas. idea: conceptos creativos, proyectos, negocios. task: acciones pendientes, recordatorios. person: información sobre alguien."
+              description: "diary: reflexiones personales, cómo ha sido el día, emociones. idea: conceptos creativos, proyectos. task: acciones pendientes, recordatorios, cosas que hay que hacer (detectar frases como 'apunta en mi lista de tareas', 'recuérdame que', 'tengo que'). person: información sobre alguien."
             },
-            title: { type: "string", description: "Título de 5-8 palabras, específico y descriptivo. No genérico." },
+            title: { type: "string", description: "Título de 5-8 palabras, específico y descriptivo. Para tareas: la acción a realizar. No genérico." },
             summary: { type: "string", description: "2-3 frases en prosa que capturen QUÉ quiere hacer el usuario y POR QUÉ/PARA QUÉ. No uses bullets. Sintetiza la intención." },
             project_id: { type: "string", description: "ID del proyecto si hay match claro (>80%), o null si no" },
+            task_list_id: { type: "string", description: "ID de la lista de tareas si el usuario la menciona explícitamente, o null si no menciona ninguna (irá a inbox)" },
+            task_list_name: { type: "string", description: "Nombre de la lista de tareas mencionada por el usuario (para debug), o null" },
             sparky_take: { type: "string", description: "1-2 frases con tu comentario. Elige: conexión con ideas anteriores, pregunta que rete la idea, patrón detectado, o siguiente paso concreto. Nunca halagos vacíos. Sé específico." },
             category: { type: "string", enum: ["personal", "trabajo", "proyecto", "aprendizaje", "salud", "finanzas", "relaciones", "creatividad", "general"] },
             priority: { type: "string", enum: ["low", "medium", "high"] },
@@ -457,7 +508,16 @@ Para ideas, genera un título específico, un resumen con INTENCIÓN (qué quier
       parsedData.content_type = 'diary';
     }
 
-    const contentType = parsedData.content_type || (isDiaryByHeuristic ? 'diary' : 'idea');
+    // OVERRIDE: If heuristic detected task but AI said otherwise, trust heuristic
+    if (isTaskByHeuristic && parsedData.content_type !== 'task') {
+      console.log('Overriding AI classification to task based on heuristic');
+      parsedData.content_type = 'task';
+    }
+
+    // Determine content type with priority: diary heuristic > task heuristic > AI
+    let contentType = parsedData.content_type || 'idea';
+    if (isDiaryByHeuristic) contentType = 'diary';
+    else if (isTaskByHeuristic) contentType = 'task';
     console.log('Final classification:', contentType);
 
     // Handle based on content type
@@ -492,12 +552,31 @@ Para ideas, genera un título específico, un resumen con INTENCIÓN (qué quier
       console.log('Voice diary entry created:', diaryEntry.id);
 
       return new Response(
-        JSON.stringify({ success: true, type: 'diary', entry: diaryEntry, transcription }),
+        JSON.stringify({ success: true, type: 'diary', entry: diaryEntry, id: diaryEntry.id, transcription }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (contentType === 'task') {
+      // Determine task list ID
+      // Priority: AI detected list > heuristic detected list name > null (inbox)
+      let taskListId: string | null = parsedData.task_list_id || null;
+      
+      // If AI didn't detect a list but we have a mentioned list name from heuristic, try to match it
+      if (!taskListId && mentionedListName && userTaskLists && userTaskLists.length > 0) {
+        const mentionedLower = mentionedListName.toLowerCase();
+        const matchedList = userTaskLists.find(l => 
+          l.name.toLowerCase().includes(mentionedLower) || 
+          mentionedLower.includes(l.name.toLowerCase())
+        );
+        if (matchedList) {
+          taskListId = matchedList.id;
+          console.log('Matched task list from heuristic:', matchedList.name);
+        }
+      }
+      
+      console.log('Creating task with list_id:', taskListId || 'inbox (null)');
+      
       // Create task instead of idea
       const { data: task, error: taskError } = await supabase
         .from('tasks')
@@ -506,7 +585,8 @@ Para ideas, genera un título específico, un resumen con INTENCIÓN (qué quier
           title: parsedData.title || transcription.substring(0, 100),
           description: transcription,
           priority: parsedData.priority || 'medium',
-          status: 'pending',
+          status: 'todo',
+          list_id: taskListId, // null = inbox
         })
         .select()
         .single();
@@ -525,7 +605,7 @@ Para ideas, genera un título específico, un resumen con INTENCIÓN (qué quier
       console.log('Voice task created:', task.id);
 
       return new Response(
-        JSON.stringify({ success: true, type: 'task', task, transcription }),
+        JSON.stringify({ success: true, type: 'task', task, id: task.id, list_id: taskListId, transcription }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -591,7 +671,7 @@ Para ideas, genera un título específico, un resumen con INTENCIÓN (qué quier
     console.log('Voice idea processed successfully:', updatedIdea.id);
 
     return new Response(
-      JSON.stringify({ success: true, type: 'idea', idea: updatedIdea, transcription }),
+      JSON.stringify({ success: true, type: 'idea', idea: updatedIdea, id: updatedIdea.id, transcription }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
