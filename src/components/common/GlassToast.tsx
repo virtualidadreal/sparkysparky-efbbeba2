@@ -73,27 +73,27 @@ export const GlassToast = ({
   };
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 min-w-[280px] max-w-[400px] rounded-2xl border border-white/30 dark:border-white/10 bg-white/70 dark:bg-card/70 backdrop-blur-2xl shadow-xl">
-      <span className="flex-1 text-sm font-medium text-foreground">{message}</span>
+    <div className="flex flex-col items-center gap-3 px-6 py-5 min-w-[320px] max-w-[420px] rounded-3xl border border-white/30 dark:border-white/10 bg-white/80 dark:bg-card/80 backdrop-blur-2xl shadow-2xl">
+      <span className="text-base font-semibold text-foreground text-center">{message}</span>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {showViewButton && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={handleView}
-            className="h-7 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 gap-1"
+            className="h-9 px-4 text-sm font-medium text-primary border-primary/30 hover:text-primary hover:bg-primary/10 gap-2"
           >
-            <EyeIcon className="h-3.5 w-3.5" />
+            <EyeIcon className="h-4 w-4" />
             {getViewLabel()}
           </Button>
         )}
         
         <button
           onClick={handleDismiss}
-          className="p-1 rounded-full hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+          className="p-1.5 rounded-full hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <XMarkIcon className="h-4 w-4" />
+          <XMarkIcon className="h-5 w-5" />
         </button>
       </div>
     </div>
@@ -106,7 +106,10 @@ export const GlassToast = ({
 export const showGlassToast = (props: Omit<GlassToastProps, 'toastId'>) => {
   return toast.custom(
     (t) => <GlassToast {...props} toastId={t.id} />,
-    { duration: 5000 }
+    { 
+      duration: 5000,
+      position: 'top-center',
+    }
   );
 };
 
