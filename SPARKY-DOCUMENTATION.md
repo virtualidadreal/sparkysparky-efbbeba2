@@ -1,292 +1,227 @@
-# Sparky - Asistente de IA Personal
+# ✨ Sparky - Tu Asistente Personal Inteligente
 
 ## ¿Qué es Sparky?
 
-Sparky es un asistente de inteligencia artificial integrado en la aplicación que actúa como un compañero inteligente para ayudar a los usuarios a organizar sus ideas, tareas, proyectos y vida personal. No es un simple chatbot genérico, sino un asistente contextual que conoce toda la información del usuario y puede proporcionar respuestas personalizadas y relevantes.
+Sparky es tu compañero de IA integrado en la aplicación. A diferencia de un chatbot genérico, **Sparky conoce toda tu información** — tus ideas, tareas, proyectos, diario, contactos y patrones de comportamiento — para darte respuestas personalizadas y útiles.
 
 ---
 
-## Características Principales
+## 🚀 Cómo Usar Sparky
 
-### 1. **Múltiples "Cerebros" Especializados**
+### Acceder a Sparky
 
-Sparky cuenta con diferentes personalidades o modos de operación que se activan automáticamente según el tipo de conversación:
+1. **Desde el Dashboard**: Haz clic en el botón **"Hablar con Sparky"** en la sección principal
+2. **Desde cualquier página**: Usa el botón flotante con el ícono de ✨ (chispas)
+3. Se abrirá un modal de chat donde puedes escribir tu mensaje
 
-| Cerebro | Clave | Descripción |
-|---------|-------|-------------|
-| 🧠 **Organizador** | `brain_organizer` | Ayuda con la gestión de tareas, proyectos y productividad |
-| 🎯 **Mentor** | `brain_mentor` | Ofrece orientación, consejos y apoyo para el desarrollo personal |
-| 💡 **Creativo** | `brain_creative` | Estimula la creatividad y ayuda con brainstorming de ideas |
-| 💼 **Negocios** | `brain_business` | Asesora en temas de emprendimiento y estrategia empresarial |
-| 😊 **Casual** | `brain_casual` | Conversación amigable y relajada |
+### Escribir un Mensaje
 
-### 2. **Contexto RAG (Retrieval-Augmented Generation)**
+1. Escribe tu pregunta o solicitud en el campo de texto
+2. Presiona **Enter** o el botón de enviar (➤)
+3. Sparky procesará tu mensaje y responderá en tiempo real con streaming
 
-Sparky utiliza tecnología RAG para acceder y utilizar toda la información del usuario:
+### Sugerencias Rápidas
 
-- **Tareas**: Pendientes, vencidas, completadas recientemente
-- **Ideas**: Todas las ideas capturadas con sus metadatos
-- **Proyectos**: Proyectos activos y su progreso
-- **Diario**: Entradas recientes del diario personal
-- **Personas**: Contactos y relaciones del usuario
-- **Patrones**: Patrones de comportamiento detectados
-- **Memorias**: Información persistente sobre el usuario
+Cuando abres el chat vacío, verás sugerencias como:
+- *"¿Qué tengo pendiente?"*
+- *"Resume mis ideas"*
+- *"Ayúdame a priorizar"*
 
-### 3. **Sugerencias de Mejora para Ideas**
+Haz clic en cualquiera para usarla como punto de partida.
 
-Sparky puede analizar ideas individuales y sugerir mejoras basándose en:
+### Limpiar Conversación
 
-- El contenido de la idea
-- Otras ideas relacionadas del usuario
-- Proyectos activos
-- Contexto adicional proporcionado por el usuario
+Usa el botón de papelera (🗑️) en la cabecera del chat para borrar todo el historial y empezar de nuevo.
 
 ---
 
-## Arquitectura Técnica
+## 🧠 Los 5 Cerebros de Sparky
 
-### Edge Functions
+Sparky cambia automáticamente su modo según lo que le preguntes:
 
-#### `sparky-chat` (Chat Principal)
+| Cerebro | Cuándo se Activa | Qué Hace |
+|---------|------------------|----------|
+| 🗂️ **Organizador** | Preguntas sobre tareas, pendientes, planificación | Te ayuda a gestionar tu productividad y organización |
+| 🎯 **Mentor** | Dudas personales, consejos, desarrollo | Ofrece orientación y apoyo para crecer como persona |
+| 💡 **Creativo** | Brainstorming, nuevas ideas, inspiración | Estimula tu creatividad con perspectivas frescas |
+| 💼 **Empresarial** | Negocios, estrategia, emprendimiento | Asesora en temas profesionales y de negocio |
+| 😊 **Charleta** | Conversación casual, saludos | Charla amigable y relajada |
 
-```
-Ubicación: supabase/functions/sparky-chat/index.ts
-```
-
-**Flujo de funcionamiento:**
-
-1. **Autenticación**: Verifica el token JWT del usuario
-2. **Recolección de datos**: Obtiene todos los datos del usuario desde Supabase
-3. **Clasificación de intención**: Usa IA para determinar qué "cerebro" usar
-4. **Carga de prompts**: Recupera los prompts del sistema desde la tabla `system_prompts`
-5. **Construcción de contexto RAG**: Formatea todos los datos del usuario en un resumen
-6. **Generación de respuesta**: Llama a la API de IA con streaming habilitado
-7. **Respuesta en tiempo real**: Transmite la respuesta token por token
-
-**Modelo de IA utilizado**: `google/gemini-2.5-flash` (vía Lovable AI Gateway)
-
-#### `improve-idea` (Mejora de Ideas)
-
-```
-Ubicación: supabase/functions/improve-idea/index.ts
-```
-
-**Flujo de funcionamiento:**
-
-1. **Autenticación**: Verifica el token JWT del usuario
-2. **Recuperación de datos**: Obtiene la idea específica, otras ideas y proyectos activos
-3. **Construcción del prompt**: Crea un prompt detallado con el contexto de la idea
-4. **Generación de mejoras**: Solicita mejoras en formato JSON estructurado
-5. **Actualización de base de datos**: Guarda las sugerencias en la tabla `ideas`
-
-**Formato de respuesta:**
-
-```json
-{
-  "improvements": [
-    {
-      "version": "Versión 1.0",
-      "content": "Contenido mejorado...",
-      "reasoning": "Explicación de por qué..."
-    }
-  ],
-  "connections": ["Conexiones con otras ideas o proyectos"],
-  "nextSteps": ["Pasos siguientes sugeridos"]
-}
-```
+> 💡 **Tip**: No necesitas seleccionar el cerebro manualmente — Sparky detecta el tema automáticamente.
 
 ---
 
-### Frontend
+## 📋 Qué Puede Hacer Sparky
 
-#### Hook: `useSparkyChat`
+### ✅ Gestión de Tareas
+- *"¿Qué tareas tengo pendientes?"*
+- *"¿Cuáles son mis tareas vencidas?"*
+- *"¿Qué completé esta semana?"*
+- *"Ayúdame a priorizar mis tareas de hoy"*
 
-```
-Ubicación: src/hooks/useSparkyChat.ts
-```
+### 💡 Análisis de Ideas
+- *"Resume mis últimas ideas"*
+- *"¿Qué ideas tengo sobre marketing?"*
+- *"Busca conexiones entre mis ideas"*
+- *"¿Qué ideas podrían convertirse en proyectos?"*
 
-**Funcionalidades:**
+### 📁 Seguimiento de Proyectos
+- *"¿Cómo van mis proyectos?"*
+- *"¿Qué proyecto necesita más atención?"*
+- *"Dame un resumen del proyecto X"*
 
-- `sendMessage(message)`: Envía un mensaje y recibe respuesta con streaming
-- `clearChat()`: Limpia el historial de conversación
-- `messages`: Lista de mensajes de la conversación
-- `isLoading`: Estado de carga
-- `streamingMessage`: Mensaje en proceso de streaming
+### 📔 Reflexión Personal (Diario)
+- *"¿Cómo me he sentido esta semana?"*
+- *"Resume mis últimas entradas del diario"*
+- *"¿Sobre qué he escrito recientemente?"*
 
-**Características técnicas:**
+### 👥 Red de Contactos
+- *"¿A quién debería contactar?"*
+- *"Dame información sobre [nombre]"*
+- *"¿Cuándo fue mi último contacto con...?"*
 
-- Persistencia de mensajes en tabla `sparky_messages`
-- Soporte para Server-Sent Events (SSE)
-- Manejo de cancelación de requests
-- Gestión del historial de conversación
+### 🔍 Patrones y Insights
+- *"¿Qué patrones has detectado en mi comportamiento?"*
+- *"Dame insights sobre mi productividad"*
+- *"¿En qué debería enfocarme?"*
 
-#### Componente: `SparkyChat`
+### 🎨 Creatividad y Brainstorming
+- *"Dame ideas para mejorar mi proyecto"*
+- *"Ayúdame a pensar en soluciones para..."*
+- *"¿Cómo podría abordar este problema?"*
 
-```
-Ubicación: src/components/chat/SparkyChat.tsx
-```
-
-**Características de UI:**
-
-- Modal de chat con diseño moderno
-- Indicadores visuales del cerebro activo (colores y etiquetas)
-- Renderizado de Markdown en respuestas
-- Separadores de fecha para mensajes
-- Sugerencias iniciales para nuevas conversaciones
-- Animación de streaming en tiempo real
-- Botón para limpiar conversación
-
----
-
-## Base de Datos
-
-### Tablas Principales
-
-#### `sparky_messages`
-
-Almacena el historial de conversaciones:
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | UUID | Identificador único |
-| `user_id` | UUID | Usuario propietario |
-| `role` | string | "user" o "assistant" |
-| `content` | string | Contenido del mensaje |
-| `brain` | string | Cerebro utilizado (solo para assistant) |
-| `created_at` | timestamp | Fecha de creación |
-
-#### `system_prompts`
-
-Almacena los prompts configurables:
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | UUID | Identificador único |
-| `key` | string | Clave del prompt (ej: "brain_organizer") |
-| `name` | string | Nombre descriptivo |
-| `prompt` | string | Contenido del prompt |
-| `model` | string | Modelo de IA a usar |
-| `temperature` | number | Temperatura para generación |
-| `is_active` | boolean | Si está activo |
-
-#### `ideas` (campos relevantes para Sparky)
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `suggested_improvements` | JSON | Mejoras sugeridas por Sparky |
-| `next_steps` | JSON | Pasos siguientes sugeridos |
+### 💼 Consejos de Negocio
+- *"¿Cómo puedo monetizar esta idea?"*
+- *"Dame feedback sobre mi estrategia"*
+- *"¿Qué debería considerar para emprender?"*
 
 ---
 
-## Flujo de Usuario
+## 🎨 Diseño y Usabilidad
 
-### Chat con Sparky
+### Interfaz del Chat
 
-```mermaid
-sequenceDiagram
-    participant U as Usuario
-    participant C as SparkyChat
-    participant H as useSparkyChat
-    participant E as Edge Function
-    participant AI as Lovable AI
+- **Modal centrado**: Se abre como una ventana flotante que no interrumpe tu trabajo
+- **Diseño limpio**: Fondo con blur suave, bordes redondeados, tipografía legible
+- **Altura adaptable**: Ocupa 80% de la altura de pantalla para máxima comodidad
+- **Responsive**: Funciona perfectamente en móvil y desktop
 
-    U->>C: Escribe mensaje
-    C->>H: sendMessage()
-    H->>E: POST /sparky-chat
-    E->>E: Autenticar usuario
-    E->>E: Cargar datos del usuario
-    E->>E: Clasificar intención
-    E->>AI: Generar respuesta (streaming)
-    AI-->>E: Tokens de respuesta
-    E-->>H: SSE stream
-    H-->>C: Actualizar UI
-    C-->>U: Ver respuesta en tiempo real
-```
+### Mensajes
 
-### Mejora de Ideas
+- **Tus mensajes**: Aparecen a la derecha con fondo oscuro
+- **Respuestas de Sparky**: Aparecen a la izquierda con fondo sutil
+- **Etiqueta de cerebro**: Cada respuesta muestra qué cerebro la generó (ej: "ORGANIZADOR")
+- **Timestamps**: Cada mensaje muestra la hora (Hoy, Ayer, o fecha)
+- **Separadores de fecha**: Los mensajes se agrupan por día para mejor navegación
 
-```mermaid
-sequenceDiagram
-    participant U as Usuario
-    participant M as IdeaPreviewModal
-    participant E as Edge Function
-    participant AI as Lovable AI
-    participant DB as Supabase
+### Streaming en Tiempo Real
 
-    U->>M: Click "Pedir sugerencias"
-    U->>M: Añade contexto (opcional)
-    U->>M: Click "Generar mejoras"
-    M->>E: POST /improve-idea
-    E->>DB: Obtener idea y contexto
-    E->>AI: Generar mejoras
-    AI-->>E: Respuesta JSON
-    E->>DB: Actualizar idea
-    E-->>M: Respuesta exitosa
-    M-->>U: Mostrar mejoras
-```
+Las respuestas aparecen **palabra por palabra** mientras Sparky "piensa", con un cursor parpadeante que indica que sigue escribiendo.
+
+### Formato de Respuestas
+
+Sparky puede usar:
+- **Negrita** y *cursiva* para énfasis
+- Listas con viñetas y numeradas
+- Bloques de código para contenido técnico
+- Citas para destacar información importante
 
 ---
 
-## Configuración de Prompts
+## 💡 Tips para Mejores Resultados
 
-Los prompts de Sparky se almacenan en la tabla `system_prompts` y pueden ser editados desde el panel de administración. Cada prompt debe incluir:
+### Sé Específico
+❌ *"Ayúdame"*  
+✅ *"Ayúdame a priorizar mis 5 tareas pendientes para hoy"*
 
-1. **Personalidad base**: Cómo debe comportarse Sparky
-2. **Instrucciones específicas**: Para cada tipo de cerebro
-3. **Formato de respuesta**: Cómo estructurar las respuestas
-4. **Uso del contexto**: Cómo aprovechar los datos del usuario
+### Usa Contexto
+❌ *"¿Qué opinas?"*  
+✅ *"¿Qué opinas de mi idea sobre el podcast de productividad?"*
 
-### Prompt Selector
+### Pide Comparaciones
+✅ *"Compara mis proyectos activos y dime cuál necesita más atención"*
 
-Un prompt especial (`brain_selector`) se encarga de clasificar la intención del usuario:
+### Solicita Formato
+✅ *"Dame un resumen en 3 puntos de mis ideas de esta semana"*
 
-```
-Clasifica el mensaje del usuario en una de estas categorías:
-- organizer: tareas, proyectos, productividad
-- mentor: consejos, desarrollo personal
-- creative: ideas, brainstorming
-- business: emprendimiento, estrategia
-- casual: conversación general
-```
+### Combina Temas
+✅ *"¿Hay alguna conexión entre mis tareas pendientes y mis ideas recientes?"*
 
 ---
 
-## Seguridad
+## ⚡ Mejora de Ideas con Sparky
 
-- **Autenticación JWT**: Todas las requests requieren token válido
-- **RLS (Row Level Security)**: Los usuarios solo acceden a sus propios datos
-- **Datos en tránsito**: HTTPS obligatorio
-- **Sin exposición de API keys**: Las claves se manejan en edge functions
+Además del chat, Sparky puede analizar ideas individuales:
 
----
-
-## Limitaciones Actuales
-
-1. No puede ejecutar acciones directas (crear tareas, etc.) - solo conversa
-2. El historial de contexto se limita a los últimos 20 mensajes
-3. Las mejoras de ideas requieren regeneración manual
-4. No hay memoria a largo plazo entre sesiones de chat
+1. Abre cualquier idea desde la lista de Ideas
+2. Haz clic en **"Pedir sugerencias a Sparky"**
+3. Opcionalmente, añade contexto adicional
+4. Recibe mejoras estructuradas con:
+   - Versiones mejoradas del contenido
+   - Conexiones con otras ideas/proyectos
+   - Próximos pasos sugeridos
 
 ---
 
-## Futuras Mejoras Posibles
+## 🔒 Privacidad
 
-- [ ] Tool calling para acciones directas (crear tareas, ideas, etc.)
-- [ ] Selección manual del cerebro
-- [ ] Entrada de voz
-- [ ] Memoria persistente entre sesiones
-- [ ] Proactividad (sugerencias sin solicitar)
-- [ ] Integración con calendario
-- [ ] Resúmenes automáticos diarios/semanales
+- **Tus datos son tuyos**: Sparky solo accede a TU información personal
+- **Sin almacenamiento externo**: Las conversaciones se guardan en tu cuenta
+- **Autenticación requerida**: Debes estar logueado para usar Sparky
+- **Historial controlado**: Puedes borrar tu historial en cualquier momento
 
 ---
 
-## Referencias de Código
+## ⚠️ Limitaciones Actuales
 
-| Archivo | Descripción |
-|---------|-------------|
-| `supabase/functions/sparky-chat/index.ts` | Edge function principal del chat |
-| `supabase/functions/improve-idea/index.ts` | Edge function para mejoras de ideas |
-| `src/hooks/useSparkyChat.ts` | Hook React para gestión del chat |
-| `src/components/chat/SparkyChat.tsx` | Componente UI del chat |
-| `src/components/ideas/IdeaPreviewModal.tsx` | Modal con integración de mejoras |
+| Limitación | Descripción |
+|------------|-------------|
+| **Solo conversación** | Sparky no puede crear tareas, ideas o proyectos directamente (aún) |
+| **Contexto limitado** | Usa los últimos 15 mensajes de la conversación |
+| **Sin acciones automáticas** | No puede enviar emails, programar recordatorios, etc. |
+| **Sin memoria entre sesiones** | Al limpiar el chat, se pierde el contexto |
+
+---
+
+## 🔮 Próximamente
+
+- [ ] **Acciones directas**: Crear tareas e ideas desde el chat
+- [ ] **Entrada de voz**: Hablar con Sparky sin escribir
+- [ ] **Selección manual de cerebro**: Elegir qué modo usar
+- [ ] **Proactividad**: Sugerencias automáticas sin preguntar
+- [ ] **Memoria persistente**: Recordar preferencias entre sesiones
+
+---
+
+## ❓ Preguntas Frecuentes
+
+### ¿Sparky tiene acceso a toda mi información?
+Sí, cuando chateas con Sparky, él puede ver tus tareas, ideas, proyectos, diario, contactos y patrones detectados para darte respuestas personalizadas.
+
+### ¿Las conversaciones se guardan?
+Sí, el historial se guarda en tu cuenta. Puedes borrarlo cuando quieras con el botón de papelera.
+
+### ¿Por qué a veces Sparky cambia de "cerebro"?
+Sparky analiza tu mensaje y elige automáticamente el modo más apropiado. Por ejemplo, si preguntas sobre tareas usa el Organizador, si pides consejo usa el Mentor.
+
+### ¿Puedo usar Sparky sin conexión?
+No, Sparky requiere conexión a internet para funcionar ya que procesa tus mensajes en la nube.
+
+### ¿Hay límite de mensajes?
+El servicio tiene límites de uso basados en tu plan. Si alcanzas el límite, verás un mensaje indicándolo.
+
+---
+
+## 📚 Resumen Rápido
+
+| Acción | Cómo |
+|--------|------|
+| Abrir Sparky | Clic en "Hablar con Sparky" o botón ✨ |
+| Enviar mensaje | Escribe + Enter o botón ➤ |
+| Limpiar chat | Botón 🗑️ en cabecera |
+| Cerrar | Botón ✕ o clic fuera del modal |
+| Usar sugerencia | Clic en chips de sugerencia |
+
+---
+
+*Última actualización: Enero 2026*
