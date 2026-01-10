@@ -126,47 +126,39 @@ const People = () => {
         </div>
 
         {/* Main Content - scrollable */}
-        <div className="flex flex-col gap-4 h-full overflow-y-auto">
-          {/* Header */}
-          <div className="px-2">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+        <div className="flex flex-col gap-4 h-full overflow-y-auto pt-4">
+          {/* Header compacto con título y buscador */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-1">
+            <h1 className="text-2xl font-bold text-foreground whitespace-nowrap">
               CRM Personal
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Gestiona tus relaciones importantes
-            </p>
-          </div>
-
-          {/* Filtros */}
-          <div className="bg-card rounded-[24px] p-5 shadow-sm">
-            {/* Tabs */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Buscador */}
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar por nombre, apodo o email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-muted/50 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground"
+                className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-foreground placeholder:text-muted-foreground"
               />
             </div>
+          </div>
+
+          {/* Filtros por categoría */}
+          <div className="flex flex-wrap items-center gap-2 px-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           {/* Lista de personas */}

@@ -264,18 +264,10 @@ const Diary = () => {
         </div>
 
         {/* Main Content - scrollable */}
-        <div className="flex flex-col gap-4 h-full overflow-y-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between px-2">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-                Mi Diario
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Captura momentos importantes y reflexiona
-              </p>
-            </div>
-            
+        <div className="flex flex-col gap-4 h-full overflow-y-auto pt-4">
+          {/* Header compacto */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+            <h1 className="text-2xl font-bold text-foreground">Mi Diario</h1>
             <div className="flex gap-2">
               <VoiceRecordButton
                 onRecordingComplete={handleRecordingComplete}

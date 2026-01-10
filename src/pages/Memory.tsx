@@ -180,17 +180,10 @@ const Memory = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-col gap-4">
-          {/* Header */}
-          <div className="flex items-center justify-between px-2">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-                Memoria & Patrones
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Tu asistente aprende de ti para ayudarte mejor
-              </p>
-            </div>
+        <div className="flex flex-col gap-4 pt-4">
+          {/* Header compacto */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+            <h1 className="text-2xl font-bold text-foreground">Memoria & Patrones</h1>
             <div className="flex gap-2">
               <Button
                 variant="outline"
