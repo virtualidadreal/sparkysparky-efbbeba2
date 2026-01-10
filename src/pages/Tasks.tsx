@@ -194,33 +194,31 @@ const Tasks = () => {
         </div>
 
         {/* Main Content - scrollable */}
-        <div className="flex flex-col gap-3 h-full overflow-y-auto">
-          {/* Header */}
-          <div className="bg-card rounded-[24px] p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-foreground">{getViewTitle()}</h1>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setDragMode(!dragMode)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
-                    dragMode ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
-                  )}
-                >
-                  <GripVertical className="h-4 w-4" />
-                  Reordenar
-                </button>
-                <button
-                  onClick={() => setShowCompleted(!showCompleted)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
-                    showCompleted ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
-                  )}
-                >
-                  {showCompleted ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  {completedCount} completadas
-                </button>
-              </div>
+        <div className="flex flex-col gap-3 h-full overflow-y-auto pt-4">
+          {/* Header compacto */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+            <h1 className="text-2xl font-bold text-foreground">{getViewTitle()}</h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setDragMode(!dragMode)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
+                  dragMode ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
+                )}
+              >
+                <GripVertical className="h-4 w-4" />
+                Reordenar
+              </button>
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
+                  showCompleted ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'
+                )}
+              >
+                {showCompleted ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                {completedCount} completadas
+              </button>
             </div>
           </div>
 

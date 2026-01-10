@@ -203,15 +203,10 @@ const Estadisticas = () => {
         </div>
 
         {/* Main Content - scrollable */}
-        <div className="flex flex-col gap-4 h-full overflow-y-auto">
-          {/* Header */}
-          <div className="px-2">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-              Estadísticas
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Visualiza tu productividad y tendencias
-            </p>
+        <div className="flex flex-col gap-4 h-full overflow-y-auto pt-4">
+          {/* Header compacto */}
+          <div className="px-1">
+            <h1 className="text-2xl font-bold text-foreground">Estadísticas</h1>
           </div>
 
           {/* Content */}
