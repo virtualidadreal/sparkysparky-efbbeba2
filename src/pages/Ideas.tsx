@@ -101,26 +101,19 @@ const Ideas = () => {
 
         {/* Main Content - scrollable */}
         <div className="flex flex-col gap-4 h-full overflow-y-auto">
-          {/* Header */}
-          <div className="px-2">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+          {/* Header compacto con título y buscador */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-2">
+            <h1 className="text-2xl font-bold text-foreground whitespace-nowrap">
               Mis Ideas
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Todas tus ideas capturadas y organizadas
-            </p>
-          </div>
-
-          {/* Buscador */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar ideas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-muted/50 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground"
+                className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
