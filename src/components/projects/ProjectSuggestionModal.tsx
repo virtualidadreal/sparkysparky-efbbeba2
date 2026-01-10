@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -28,6 +29,7 @@ export const ProjectSuggestionModal = ({ suggestion, onClose }: ProjectSuggestio
   const [isCreating, setIsCreating] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   if (!suggestion) return null;
 
@@ -78,6 +80,8 @@ export const ProjectSuggestionModal = ({ suggestion, onClose }: ProjectSuggestio
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
       onClose();
+      // Navegar a la lista de proyectos
+      navigate('/projects');
     } catch (error: any) {
       console.error('Error creating project:', error);
       toast.error(error.message || 'Error al crear el proyecto');
