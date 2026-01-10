@@ -100,9 +100,9 @@ const Ideas = () => {
         </div>
 
         {/* Main Content - scrollable */}
-        <div className="flex flex-col gap-4 h-full overflow-y-auto">
+        <div className="flex flex-col gap-4 h-full overflow-y-auto pt-4">
           {/* Header compacto con título y buscador */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-1">
             <h1 className="text-2xl font-bold text-foreground whitespace-nowrap">
               Mis Ideas
             </h1>
