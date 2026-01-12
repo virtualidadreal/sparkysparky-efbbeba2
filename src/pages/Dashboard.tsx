@@ -117,6 +117,11 @@ const Dashboard = () => {
         {/* Left Sidebar - fixed height */}
         <div className="hidden lg:flex flex-col h-full">
           <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border-2 border-border/50">
+            {/* Logo */}
+            <div className="px-4 mb-4">
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Sparky</h1>
+            </div>
+            
             {/* Nav Items */}
             <nav className="space-y-0.5 flex-1 overflow-y-auto">
               {[
