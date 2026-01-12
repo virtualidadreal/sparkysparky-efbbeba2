@@ -283,7 +283,7 @@ const Dashboard = () => {
                       {entry.title || entry.content.substring(0, 50)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Hace {getRelativeTime(entry.created_at)}
+                      Hace {getRelativeTime(entry.entry_date)}
                     </p>
                   </Link>
                 ))
