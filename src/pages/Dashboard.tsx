@@ -230,13 +230,18 @@ const Dashboard = () => {
                     onClick={() => setSelectedIdea(idea)}
                     className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 text-left hover:bg-muted/30 transition-all group border-2 border-border/50"
                   >
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <span className="text-xl">💡</span>
                     </div>
-                    <p className="text-foreground font-medium leading-relaxed line-clamp-2 text-sm mb-3">
+                    <p className="text-foreground font-medium leading-relaxed line-clamp-1 text-sm mb-1">
                       {idea.title}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    {idea.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                        {idea.description.length > 80 ? idea.description.substring(0, 80) + '...' : idea.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground/70">
                       Hace {getRelativeTime(idea.created_at)}
                     </p>
                   </button>
