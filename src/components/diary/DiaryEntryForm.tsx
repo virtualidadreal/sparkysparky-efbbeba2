@@ -19,6 +19,7 @@ interface DiaryEntryFormProps {
 export const DiaryEntryForm = ({ isOpen, onClose, entry }: DiaryEntryFormProps) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [entryDate, setEntryDate] = useState('');
 
   const updateEntry = useUpdateDiaryEntry();
   const isLoading = updateEntry.isPending;
@@ -28,9 +29,11 @@ export const DiaryEntryForm = ({ isOpen, onClose, entry }: DiaryEntryFormProps) 
     if (entry) {
       setTitle(entry.title || '');
       setContent(entry.content || '');
+      setEntryDate(entry.entry_date || new Date().toISOString().split('T')[0]);
     } else {
       setTitle('');
       setContent('');
+      setEntryDate(new Date().toISOString().split('T')[0]);
     }
   }, [entry]);
 
@@ -45,6 +48,7 @@ export const DiaryEntryForm = ({ isOpen, onClose, entry }: DiaryEntryFormProps) 
         updates: {
           title: title.trim() || undefined,
           content: content.trim(),
+          entry_date: entryDate,
         },
       });
       handleClose();
@@ -57,6 +61,7 @@ export const DiaryEntryForm = ({ isOpen, onClose, entry }: DiaryEntryFormProps) 
     if (!isLoading) {
       setTitle('');
       setContent('');
+      setEntryDate(new Date().toISOString().split('T')[0]);
       onClose();
     }
   };
@@ -87,6 +92,21 @@ export const DiaryEntryForm = ({ isOpen, onClose, entry }: DiaryEntryFormProps) 
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {/* Fecha */}
+            <div>
+              <label htmlFor="entry_date" className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha
+              </label>
+              <input
+                id="entry_date"
+                type="date"
+                value={entryDate}
+                onChange={(e) => setEntryDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                disabled={isLoading}
+              />
+            </div>
+
             {/* Título (opcional) */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">

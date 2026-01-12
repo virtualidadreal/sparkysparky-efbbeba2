@@ -48,6 +48,7 @@ export interface UpdateDiaryEntryInput {
   content?: string;
   title?: string;
   mood?: string;
+  entry_date?: string;
 }
 
 /**
