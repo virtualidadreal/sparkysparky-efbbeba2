@@ -65,10 +65,14 @@ const Dashboard = () => {
   };
 
   const getUserName = () => {
+    // Prioridad: display_name del perfil > full_name de metadata > first_name de metadata
     if (profile?.display_name) return profile.display_name;
     const fullName = user?.user_metadata?.full_name;
     if (fullName) return fullName.split(' ')[0];
-    return user?.email?.split('@')[0] || 'Usuario';
+    const firstName = user?.user_metadata?.first_name;
+    if (firstName) return firstName;
+    // No usar email, mostrar nombre genérico
+    return 'Usuario';
   };
 
   const getCurrentDate = () => {
@@ -159,9 +163,9 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content - scrollable */}
-        <div className="flex flex-col gap-4 h-full overflow-y-auto">
+        <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col gap-4 h-full overflow-y-auto border-2 border-border/50">
           {/* Greeting */}
-          <div className="px-2">
+          <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
               {getGreeting()}, {getUserName()}
             </h1>
