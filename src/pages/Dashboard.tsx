@@ -97,7 +97,16 @@ const Dashboard = () => {
     "¿Tienes alguna idea nueva que quieras explorar conmigo?";
 
   const getRelativeTime = (dateStr: string) => {
-    return formatDistanceToNow(new Date(dateStr), { addSuffix: false, locale: es });
+    // Si es solo una fecha (YYYY-MM-DD), parsearla como fecha local (no UTC)
+    let date: Date;
+    if (dateStr.length === 10 && dateStr.includes('-')) {
+      // Es solo fecha, parsear como local añadiendo T12:00:00 para evitar problemas de timezone
+      const [year, month, day] = dateStr.split('-').map(Number);
+      date = new Date(year, month - 1, day, 12, 0, 0);
+    } else {
+      date = new Date(dateStr);
+    }
+    return formatDistanceToNow(date, { addSuffix: false, locale: es });
   };
 
   return (
