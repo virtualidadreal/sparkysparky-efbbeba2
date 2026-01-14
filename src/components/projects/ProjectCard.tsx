@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+
 import { Card, Badge } from '@/components/common';
 import type { Project } from '@/types/Project.types';
 import { 
@@ -57,11 +57,11 @@ export const ProjectCard = ({ project, onEdit, onArchive }: ProjectCardProps) =>
   const progress = project.progress || 0;
 
   return (
-    <Link 
-      to={`/projects/${project.id}`}
+    <div 
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
-      className="block group"
+      className="block group cursor-pointer"
+      onClick={() => onEdit?.()}
     >
       <Card 
         variant="hoverable" 
@@ -143,6 +143,6 @@ export const ProjectCard = ({ project, onEdit, onArchive }: ProjectCardProps) =>
           )}
         </div>
       </Card>
-    </Link>
+    </div>
   );
 };
