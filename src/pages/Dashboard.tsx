@@ -30,6 +30,7 @@ import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton
 import { Idea } from '@/types/Idea.types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { OnboardingTour, useOnboarding } from '@/components/onboarding';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ const Dashboard = () => {
   const { data: diaryEntries } = useDiaryEntries();
   const { data: isAdmin } = useIsAdmin();
   const location = useLocation();
+  const { showOnboarding, completeOnboarding } = useOnboarding();
 
   const {
     alerts,
@@ -423,6 +425,14 @@ const Dashboard = () => {
 
       {/* Floating Capture Button - Desktop */}
       <FloatingCaptureButton />
+
+      {/* Onboarding Tour - First time users */}
+      {showOnboarding && (
+        <OnboardingTour 
+          onComplete={completeOnboarding}
+          userName={profile?.display_name?.split(' ')[0]}
+        />
+      )}
     </div>
   );
 };

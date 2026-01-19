@@ -477,23 +477,48 @@ const Settings = () => {
 
               {/* Appearance Tab */}
               {activeTab === 'appearance' && (
-                <SettingsSection
-                  title="Tema"
-                  description="Personaliza la apariencia de la aplicación"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">Modo oscuro</p>
-                      <p className="text-sm text-muted-foreground">
-                        Activa el tema oscuro para reducir la fatiga visual
-                      </p>
+                <>
+                  <SettingsSection
+                    title="Tema"
+                    description="Personaliza la apariencia de la aplicación"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">Modo oscuro</p>
+                        <p className="text-sm text-muted-foreground">
+                          Activa el tema oscuro para reducir la fatiga visual
+                        </p>
+                      </div>
+                      <Switch
+                        checked={isDarkMode}
+                        onCheckedChange={handleToggleDarkMode}
+                      />
                     </div>
-                    <Switch
-                      checked={isDarkMode}
-                      onCheckedChange={handleToggleDarkMode}
-                    />
-                  </div>
-                </SettingsSection>
+                  </SettingsSection>
+
+                  <SettingsSection
+                    title="Tour de bienvenida"
+                    description="Vuelve a ver el tour introductorio"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">Reiniciar tour</p>
+                        <p className="text-sm text-muted-foreground">
+                          Vuelve a ver el tour de introducción a Sparky
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          localStorage.removeItem('sparky_onboarding_completed');
+                          toast.success('Tour reiniciado. Lo verás al entrar al Dashboard.');
+                        }}
+                      >
+                        Ver tour
+                      </Button>
+                    </div>
+                  </SettingsSection>
+                </>
               )}
 
               {/* Notifications Tab */}
