@@ -29,9 +29,9 @@ const steps: OnboardingStep[] = [
   {
     id: 'capture',
     icon: MicrophoneIcon,
-    title: 'Captura tus Ideas',
-    description: 'Usa el botón "Captura rápida" para guardar ideas por texto o voz. Sparky las analiza automáticamente y extrae lo importante.',
-    tip: 'Prueba diciendo: "Tengo una idea para un podcast sobre tecnología"',
+    title: 'Captura Rápida Inteligente',
+    description: 'Sparky clasifica automáticamente lo que capturas según cómo lo expreses: di "tengo una idea..." para ideas, "apunta en mi lista de tareas..." para tareas, o "guarda en mi diario..." para el diario.',
+    tip: 'Ejemplo: "Tengo una idea para un podcast" → Idea | "Apunta comprar leche" → Tarea',
   },
   {
     id: 'sparky',
