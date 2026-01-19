@@ -1,4 +1,5 @@
 export { default as Hero } from './Hero';
+export { default as VoiceSection } from './VoiceSection';
 export { default as Problem } from './Problem';
 export { default as Agitate } from './Agitate';
 export { default as Credibility } from './Credibility';

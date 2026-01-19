@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Hero,
+  VoiceSection,
   Problem,
   Agitate,
   Credibility,
@@ -20,8 +21,8 @@ import {
  * Landing Page - Página pública de marketing
  * 
  * Estructura basada en framework de Vibe Marketing Skills:
- * Hero → Problem → Agitate → Credibility → Solution → Comparison → 
- * Proof → HowItWorks → Pricing → FAQ → FinalCTA → Footer
+ * Hero → VoiceSection → Problem → Agitate → Credibility → Solution → 
+ * Comparison → HowItWorks → Proof → Pricing → FAQ → FinalCTA → Footer
  */
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -47,6 +48,7 @@ const Landing = () => {
   return (
     <main className="min-h-screen bg-background">
       <Hero />
+      <VoiceSection />
       <Problem />
       <Agitate />
       <Credibility />
