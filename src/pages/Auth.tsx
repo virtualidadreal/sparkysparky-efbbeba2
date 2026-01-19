@@ -1,25 +1,33 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
+import { ArrowLeftIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 
 // Validación con Zod
 const emailSchema = z.string().email('Email no válido');
 const passwordSchema = z.string().min(6, 'Mínimo 6 caracteres');
 const nameSchema = z.string().min(2, 'Mínimo 2 caracteres').optional();
 
+type AuthMode = 'login' | 'signup' | 'forgot';
+
 const Auth = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, user, loading: authLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { signIn, signUp, resetPassword, user, loading: authLoading } = useAuth();
 
-  const [isLogin, setIsLogin] = useState(true);
+  // Check URL param for initial mode
+  const initialMode = searchParams.get('mode') as AuthMode | null;
+  
+  const [mode, setMode] = useState<AuthMode>(initialMode === 'forgot' ? 'forgot' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -35,12 +43,15 @@ const Auth = () => {
       newErrors.email = emailResult.error.errors[0].message;
     }
 
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
+    // Password validation only for login/signup
+    if (mode !== 'forgot') {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
     }
 
-    if (!isLogin && fullName) {
+    if (mode === 'signup' && fullName) {
       const nameResult = nameSchema.safeParse(fullName);
       if (!nameResult.success) {
         newErrors.fullName = nameResult.error.errors[0].message;
@@ -48,7 +59,7 @@ const Auth = () => {
     }
 
     // Validar aceptación de términos en registro
-    if (!isLogin && !acceptedTerms) {
+    if (mode === 'signup' && !acceptedTerms) {
       newErrors.terms = 'Debes aceptar los términos y condiciones';
     }
 
@@ -63,7 +74,15 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === 'forgot') {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          setResetEmailSent(true);
+          toast.success('¡Email enviado! Revisa tu bandeja de entrada.');
+        }
+      } else if (mode === 'login') {
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
@@ -93,10 +112,51 @@ const Auth = () => {
     }
   };
 
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    setErrors({});
+    setResetEmailSent(false);
+  };
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+      </div>
+    );
+  }
+
+  // Forgot password - email sent success view
+  if (mode === 'forgot' && resetEmailSent) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold text-foreground">Sparky</h1>
+            <p className="mt-2 text-muted-foreground">Tu asistente IA personal</p>
+          </div>
+
+          <div className="rounded-lg border bg-card p-8 shadow-sm text-center">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <EnvelopeIcon className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground mb-2">¡Revisa tu email!</h2>
+            <p className="text-muted-foreground mb-6">
+              Hemos enviado un enlace de recuperación a <strong className="text-foreground">{email}</strong>. 
+              Haz clic en el enlace del email para establecer tu nueva contraseña.
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              ¿No lo encuentras? Revisa tu carpeta de spam.
+            </p>
+            <button
+              onClick={() => switchMode('login')}
+              className="inline-flex items-center gap-2 text-primary hover:underline"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Volver al inicio de sesión
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -110,136 +170,195 @@ const Auth = () => {
         </div>
 
         <div className="rounded-lg border bg-card p-8 shadow-sm">
-          {/* Tabs */}
-          <div className="mb-6 flex rounded-lg bg-muted p-1">
-            <button
-              type="button"
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
-                isLogin
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Iniciar Sesión
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
-                !isLogin
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Crear Cuenta
-            </button>
-          </div>
+          {/* Forgot Password Mode */}
+          {mode === 'forgot' ? (
+            <>
+              <button
+                onClick={() => switchMode('login')}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
+              >
+                <ArrowLeftIcon className="h-4 w-4" />
+                Volver
+              </button>
+              
+              <h2 className="text-lg font-semibold text-foreground mb-2">Recuperar Contraseña</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.
+              </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">
-                  Nombre completo
-                </label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  disabled={loading}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-                  placeholder="Tu nombre"
-                />
-                {errors.fullName && (
-                  <p className="mt-1 text-sm text-destructive">{errors.fullName}</p>
-                )}
-              </div>
-            )}
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-                placeholder="tu@email.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-destructive">{errors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-                placeholder="••••••••"
-              />
-              {errors.password && (
-                  <p className="mt-1 text-sm text-destructive">{errors.password}</p>
-                )}
-              </div>
-
-              {/* Términos y condiciones - solo en registro */}
-              {!isLogin && (
-                <div className="space-y-2">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={acceptedTerms}
-                      onChange={(e) => setAcceptedTerms(e.target.checked)}
-                      disabled={loading}
-                      className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary disabled:opacity-50"
-                    />
-                    <span className="text-sm text-muted-foreground leading-relaxed">
-                      He leído y acepto los{' '}
-                      <Link 
-                        to="/terms" 
-                        className="text-primary hover:underline"
-                        target="_blank"
-                      >
-                        Términos de Servicio
-                      </Link>
-                      {' '}y la{' '}
-                      <Link 
-                        to="/privacy" 
-                        className="text-primary hover:underline"
-                        target="_blank"
-                      >
-                        Política de Privacidad
-                      </Link>
-                    </span>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">
+                    Email
                   </label>
-                  {errors.terms && (
-                    <p className="text-sm text-destructive">{errors.terms}</p>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                    placeholder="tu@email.com"
+                    autoFocus
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-destructive">{errors.email}</p>
                   )}
                 </div>
-              )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {loading
-                ? isLogin
-                  ? 'Iniciando sesión...'
-                  : 'Creando cuenta...'
-                : isLogin
-                ? 'Iniciar Sesión'
-                : 'Crear Cuenta'}
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {loading ? 'Enviando...' : 'Enviar Enlace de Recuperación'}
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              {/* Tabs for Login/Signup */}
+              <div className="mb-6 flex rounded-lg bg-muted p-1">
+                <button
+                  type="button"
+                  onClick={() => switchMode('login')}
+                  className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+                    mode === 'login'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Iniciar Sesión
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode('signup')}
+                  className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+                    mode === 'signup'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Crear Cuenta
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {mode === 'signup' && (
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-foreground">
+                      Nombre completo
+                    </label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      disabled={loading}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                      placeholder="Tu nombre"
+                    />
+                    {errors.fullName && (
+                      <p className="mt-1 text-sm text-destructive">{errors.fullName}</p>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                    placeholder="tu@email.com"
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-destructive">{errors.email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-foreground">
+                      Contraseña
+                    </label>
+                    {mode === 'login' && (
+                      <button
+                        type="button"
+                        onClick={() => switchMode('forgot')}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                    placeholder="••••••••"
+                  />
+                  {errors.password && (
+                    <p className="mt-1 text-sm text-destructive">{errors.password}</p>
+                  )}
+                </div>
+
+                {/* Términos y condiciones - solo en registro */}
+                {mode === 'signup' && (
+                  <div className="space-y-2">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={acceptedTerms}
+                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        disabled={loading}
+                        className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary disabled:opacity-50"
+                      />
+                      <span className="text-sm text-muted-foreground leading-relaxed">
+                        He leído y acepto los{' '}
+                        <Link 
+                          to="/terms" 
+                          className="text-primary hover:underline"
+                          target="_blank"
+                        >
+                          Términos de Servicio
+                        </Link>
+                        {' '}y la{' '}
+                        <Link 
+                          to="/privacy" 
+                          className="text-primary hover:underline"
+                          target="_blank"
+                        >
+                          Política de Privacidad
+                        </Link>
+                      </span>
+                    </label>
+                    {errors.terms && (
+                      <p className="text-sm text-destructive">{errors.terms}</p>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {loading
+                    ? mode === 'login'
+                      ? 'Iniciando sesión...'
+                      : 'Creando cuenta...'
+                    : mode === 'login'
+                    ? 'Iniciar Sesión'
+                    : 'Crear Cuenta'}
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
         {/* Footer con enlaces legales */}

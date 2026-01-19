@@ -19,6 +19,7 @@ const Admin = lazy(() => import('@/pages/Admin'));
 const Memory = lazy(() => import('@/pages/Memory'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading fallback component
@@ -42,6 +43,7 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Rutas protegidas */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
