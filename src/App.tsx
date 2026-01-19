@@ -17,6 +17,8 @@ const Estadisticas = lazy(() => import('@/pages/Estadisticas'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const Admin = lazy(() => import('@/pages/Admin'));
 const Memory = lazy(() => import('@/pages/Memory'));
+const Privacy = lazy(() => import('@/pages/Privacy'));
+const Terms = lazy(() => import('@/pages/Terms'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading fallback component
@@ -36,8 +38,10 @@ const App = () => {
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Ruta pública */}
+              {/* Rutas públicas */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
 
               {/* Rutas protegidas */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -44,6 +45,11 @@ const Auth = () => {
       if (!nameResult.success) {
         newErrors.fullName = nameResult.error.errors[0].message;
       }
+    }
+
+    // Validar aceptación de términos en registro
+    if (!isLogin && !acceptedTerms) {
+      newErrors.terms = 'Debes aceptar los términos y condiciones';
     }
 
     setErrors(newErrors);
@@ -180,9 +186,45 @@ const Auth = () => {
                 placeholder="••••••••"
               />
               {errors.password && (
-                <p className="mt-1 text-sm text-destructive">{errors.password}</p>
+                  <p className="mt-1 text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+
+              {/* Términos y condiciones - solo en registro */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      disabled={loading}
+                      className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary disabled:opacity-50"
+                    />
+                    <span className="text-sm text-muted-foreground leading-relaxed">
+                      He leído y acepto los{' '}
+                      <Link 
+                        to="/terms" 
+                        className="text-primary hover:underline"
+                        target="_blank"
+                      >
+                        Términos de Servicio
+                      </Link>
+                      {' '}y la{' '}
+                      <Link 
+                        to="/privacy" 
+                        className="text-primary hover:underline"
+                        target="_blank"
+                      >
+                        Política de Privacidad
+                      </Link>
+                    </span>
+                  </label>
+                  {errors.terms && (
+                    <p className="text-sm text-destructive">{errors.terms}</p>
+                  )}
+                </div>
               )}
-            </div>
 
             <button
               type="submit"
@@ -198,6 +240,20 @@ const Auth = () => {
                 : 'Crear Cuenta'}
             </button>
           </form>
+        </div>
+
+        {/* Footer con enlaces legales */}
+        <div className="mt-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            Al usar Sparky, aceptas nuestros{' '}
+            <Link to="/terms" className="text-primary hover:underline">
+              Términos
+            </Link>
+            {' '}y{' '}
+            <Link to="/privacy" className="text-primary hover:underline">
+              Privacidad
+            </Link>
+          </p>
         </div>
       </div>
     </div>
