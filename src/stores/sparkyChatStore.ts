@@ -17,6 +17,11 @@ export interface ChatMessage {
 
 type Listener = () => void;
 
+interface StoreSnapshot {
+  messages: ChatMessage[];
+  isLoading: boolean;
+}
+
 const brainNames: Record<string, string> = {
   'sparky_brain_organizer': 'Organizador',
   'sparky_brain_mentor': 'Mentor',
@@ -38,6 +43,9 @@ class SparkyChatStore {
   private listeners: Set<Listener> = new Set();
   private abortController: AbortController | null = null;
   private initialized = false;
+  
+  // Cached snapshot to prevent infinite re-renders
+  private cachedSnapshot: StoreSnapshot = { messages: [], isLoading: false };
 
   // Subscribe to changes
   subscribe(listener: Listener): () => void {
@@ -46,18 +54,19 @@ class SparkyChatStore {
   }
 
   private notify(): void {
+    // Update cached snapshot
+    this.cachedSnapshot = {
+      messages: this.streamingMessage 
+        ? [...this.messages, this.streamingMessage]
+        : [...this.messages],
+      isLoading: this.isLoading,
+    };
     this.listeners.forEach(listener => listener());
   }
 
-  // Getters
-  getMessages(): ChatMessage[] {
-    return this.streamingMessage 
-      ? [...this.messages, this.streamingMessage]
-      : [...this.messages];
-  }
-
-  getIsLoading(): boolean {
-    return this.isLoading;
+  // Getters - return cached values for stable references
+  getSnapshot(): StoreSnapshot {
+    return this.cachedSnapshot;
   }
 
   // Load messages from DB
