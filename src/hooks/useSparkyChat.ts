@@ -35,9 +35,8 @@ const brainNames: Record<string, string> = {
   'casual': 'Charleta',
 };
 
-// Global singleton to prevent double sends across all instances
-let globalSendLock = false;
-let globalLastMessageId = '';
+// SINGLETON: Active send promise - only one can exist at a time
+let activeSendPromise: Promise<void> | null = null;
 
 export const useSparkyChat = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -62,7 +61,7 @@ export const useSparkyChat = () => {
 
       return (data || []) as DbMessage[];
     },
-    staleTime: 1000, // Reduce refetching
+    staleTime: 1000,
   });
 
   // Memoize: Convert DB messages to ChatMessage format
@@ -90,25 +89,18 @@ export const useSparkyChat = () => {
     const trimmedMessage = userMessage.trim();
     if (!trimmedMessage) return;
     
-    // Generate unique ID for this message
-    const messageId = `${trimmedMessage}-${Date.now()}`;
-    
-    // Check global lock - this is synchronous and immediate
-    if (globalSendLock) {
-      console.log('[Sparky] Send blocked: global lock active');
+    // If there's already a send in progress, wait for it and return
+    if (activeSendPromise) {
+      console.log('[Sparky] Blocked: another send in progress');
       return;
     }
-    
-    // Check if same message was just sent
-    if (globalLastMessageId === messageId.substring(0, trimmedMessage.length + 5)) {
-      console.log('[Sparky] Send blocked: duplicate message');
-      return;
-    }
-    
-    // Set lock immediately (synchronous)
-    globalSendLock = true;
-    globalLastMessageId = messageId.substring(0, trimmedMessage.length + 5);
-    
+
+    // Create a new promise for this send
+    let resolvePromise: () => void;
+    activeSendPromise = new Promise<void>((resolve) => {
+      resolvePromise = resolve;
+    });
+
     console.log('[Sparky] Starting send:', trimmedMessage);
 
     // Cancel any existing stream
@@ -266,11 +258,10 @@ export const useSparkyChat = () => {
       setStreamingMessage(null);
     } finally {
       setIsLoading(false);
-      // Release lock after a short delay
-      setTimeout(() => {
-        globalSendLock = false;
-        console.log('[Sparky] Lock released');
-      }, 1000);
+      // Release the lock
+      activeSendPromise = null;
+      resolvePromise!();
+      console.log('[Sparky] Lock released');
     }
   }, [queryClient]);
 
@@ -287,7 +278,6 @@ export const useSparkyChat = () => {
       if (error) throw error;
 
       setStreamingMessage(null);
-      globalLastMessageId = '';
       queryClient.invalidateQueries({ queryKey: ['sparky-messages'] });
       toast.success('Conversación limpiada');
     } catch (error) {
