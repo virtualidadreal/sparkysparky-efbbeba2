@@ -149,25 +149,26 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   const [isOpen, setIsOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isSubmittingRef = useRef(false);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
       const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollElement) {
         scrollElement.scrollTop = scrollElement.scrollHeight;
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(scrollToBottom, 100);
     }
-  }, [isOpen]);
+  }, [isOpen, scrollToBottom]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -177,10 +178,29 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() && !isLoading) {
-      sendMessage(input);
-      setInput('');
+    e.stopPropagation();
+    
+    // Prevent double submit with local ref
+    if (isSubmittingRef.current) {
+      console.log('[SparkyChat] Submit blocked: already submitting');
+      return;
     }
+    
+    if (!input.trim() || isLoading) {
+      return;
+    }
+    
+    isSubmittingRef.current = true;
+    const messageToSend = input;
+    setInput('');
+    
+    // Send message
+    sendMessage(messageToSend);
+    
+    // Reset submit lock after delay
+    setTimeout(() => {
+      isSubmittingRef.current = false;
+    }, 500);
   }, [input, isLoading, sendMessage]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
