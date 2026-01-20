@@ -99,7 +99,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'openai/gpt-5-nano',
         messages: [
           { role: 'system', content: selectorPrompt },
           { role: 'user', content: message }
@@ -260,7 +260,7 @@ INSTRUCCIONES CRÍTICAS:
       { role: 'user', content: message }
     ];
 
-    // Call AI WITH STREAMING
+    // Call AI WITH STREAMING - Using GPT-5-mini for better token streaming
     const chatResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -268,7 +268,7 @@ INSTRUCCIONES CRÍTICAS:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: selectedBrain?.model || 'google/gemini-2.5-flash',
+        model: 'openai/gpt-5-mini',
         messages,
         temperature: selectedBrain?.temperature || 0.7,
         stream: true,
