@@ -105,7 +105,7 @@ export const useSparkyChat = () => {
   };
 
   const sendMessage = useCallback(async (userMessage: string) => {
-    if (!userMessage.trim()) return;
+    if (!userMessage.trim() || isLoading) return;
 
     // Cancel any existing stream
     if (abortControllerRef.current) {
@@ -125,12 +125,17 @@ export const useSparkyChat = () => {
       // Refresh to show user message
       await queryClient.invalidateQueries({ queryKey: ['sparky-messages'] });
 
-      // Build conversation history from persisted messages
-      const historyMessages = persistedMessages.slice(-20).map(m => ({
+      // Fetch fresh messages for history
+      const { data: freshMessages } = await supabase
+        .from('sparky_messages')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(500);
+
+      const historyMessages = (freshMessages || []).slice(-20).map((m: DbMessage) => ({
         role: m.role,
         content: m.content,
       }));
-      historyMessages.push({ role: 'user', content: userMessage.trim() });
 
       // Get auth token
       const { data: { session } } = await supabase.auth.getSession();
@@ -247,7 +252,7 @@ export const useSparkyChat = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [persistedMessages, queryClient]);
+  }, [isLoading, queryClient]);
 
   const clearChat = useCallback(async () => {
     try {
