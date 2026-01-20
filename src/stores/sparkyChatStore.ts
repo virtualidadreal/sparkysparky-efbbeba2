@@ -156,39 +156,36 @@ class SparkyChatStore {
 
       const decoder = new TextDecoder();
       let content = '';
-      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
 
-        let idx;
-        while ((idx = buffer.indexOf('\n')) !== -1) {
-          let line = buffer.slice(0, idx);
-          buffer = buffer.slice(idx + 1);
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
 
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (!line.startsWith('data: ')) continue;
-
-          const json = line.slice(6).trim();
-          if (json === '[DONE]') continue;
+          const jsonStr = trimmedLine.slice(6);
+          if (jsonStr === '[DONE]') continue;
 
           try {
-            const delta = JSON.parse(json).choices?.[0]?.delta?.content;
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
               content += delta;
+              // Update streaming message immediately
               const msgs = [...this.state.messages];
-              const last = msgs[msgs.length - 1];
-              if (last?.isStreaming) {
-                msgs[msgs.length - 1] = { ...last, content };
+              const lastIdx = msgs.length - 1;
+              if (lastIdx >= 0 && msgs[lastIdx]?.isStreaming) {
+                msgs[lastIdx] = { ...msgs[lastIdx], content };
                 this.setState({ messages: msgs });
               }
             }
           } catch {
-            buffer = line + '\n' + buffer;
-            break;
+            // Skip malformed JSON chunks
           }
         }
       }
