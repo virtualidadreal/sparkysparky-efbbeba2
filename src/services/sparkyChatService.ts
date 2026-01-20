@@ -1,6 +1,5 @@
 /**
- * Sparky Chat Service - Singleton service that handles message sending
- * Completely isolated from React to prevent double-send issues from StrictMode
+ * Sparky Chat Service - Singleton service with synchronous locking
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -12,9 +11,37 @@ export interface StreamCallbacks {
   onError: (error: string) => void;
 }
 
+// CRITICAL: This lock must be checked and set SYNCHRONOUSLY before ANY async operation
+let sendLock = false;
+let lastSendTimestamp = 0;
+
 class SparkyChatService {
-  private isSending = false;
   private abortController: AbortController | null = null;
+
+  /**
+   * Attempts to acquire the send lock. Returns true if acquired, false if already locked.
+   * This MUST be called synchronously at the very start, before any await.
+   */
+  private tryAcquireLock(): boolean {
+    const now = Date.now();
+    
+    // If locked and less than 30 seconds ago, reject
+    if (sendLock && (now - lastSendTimestamp) < 30000) {
+      console.log('[SparkyChatService] Lock check FAILED - already locked');
+      return false;
+    }
+    
+    // Acquire lock
+    sendLock = true;
+    lastSendTimestamp = now;
+    console.log('[SparkyChatService] Lock ACQUIRED at', now);
+    return true;
+  }
+
+  private releaseLock(): void {
+    sendLock = false;
+    console.log('[SparkyChatService] Lock RELEASED');
+  }
 
   async sendMessage(
     message: string,
@@ -23,14 +50,11 @@ class SparkyChatService {
     const trimmedMessage = message.trim();
     if (!trimmedMessage) return false;
 
-    // Strict lock check
-    if (this.isSending) {
-      console.log('[SparkyChatService] Blocked: already sending');
+    // SYNCHRONOUS lock check - this happens BEFORE any async operation
+    if (!this.tryAcquireLock()) {
       return false;
     }
 
-    // Set lock IMMEDIATELY
-    this.isSending = true;
     console.log('[SparkyChatService] Starting send:', trimmedMessage);
 
     // Cancel any previous request
@@ -166,8 +190,7 @@ class SparkyChatService {
       return false;
 
     } finally {
-      this.isSending = false;
-      console.log('[SparkyChatService] Lock released');
+      this.releaseLock();
     }
   }
 
@@ -176,11 +199,11 @@ class SparkyChatService {
       this.abortController.abort();
       this.abortController = null;
     }
-    this.isSending = false;
+    this.releaseLock();
   }
 
-  get isCurrentlySending(): boolean {
-    return this.isSending;
+  get isLocked(): boolean {
+    return sendLock;
   }
 }
 

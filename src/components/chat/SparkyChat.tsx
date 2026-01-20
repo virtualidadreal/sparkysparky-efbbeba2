@@ -143,13 +143,15 @@ interface SparkyChatProps {
   trigger?: React.ReactNode;
 }
 
+// Global submit lock - completely outside React
+let globalSubmitLock = false;
+
 export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   const { messages, isLoading, sendMessage, clearChat } = useSparkyChat();
   const [input, setInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const isSubmittingRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -176,32 +178,50 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
     }
   }, [isOpen]);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Prevent double submit with local ref
-    if (isSubmittingRef.current) {
-      console.log('[SparkyChat] Submit blocked: already submitting');
+  // Single send function - checks global lock synchronously
+  const doSend = useCallback(() => {
+    // SYNC check before anything else
+    if (globalSubmitLock) {
+      console.log('[SparkyChat] BLOCKED by global lock');
       return;
     }
     
-    if (!input.trim() || isLoading) {
+    const trimmed = input.trim();
+    if (!trimmed || isLoading) {
       return;
     }
     
-    isSubmittingRef.current = true;
-    const messageToSend = input;
+    // Set lock IMMEDIATELY - sync
+    globalSubmitLock = true;
+    console.log('[SparkyChat] Lock acquired, sending:', trimmed);
+    
+    // Clear input
     setInput('');
     
     // Send message
-    sendMessage(messageToSend);
+    sendMessage(trimmed);
     
-    // Reset submit lock after delay
+    // Release lock after delay
     setTimeout(() => {
-      isSubmittingRef.current = false;
-    }, 500);
+      globalSubmitLock = false;
+      console.log('[SparkyChat] Lock released');
+    }, 2000);
   }, [input, isLoading, sendMessage]);
+
+  // Handle Enter key
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      doSend();
+    }
+  }, [doSend]);
+
+  // Handle button click
+  const handleButtonClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    doSend();
+  }, [doSend]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -352,27 +372,29 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
                     </div>
                   </ScrollArea>
 
-                  {/* Input */}
-                  <form onSubmit={handleSubmit} className="px-6 py-4 border-t border-border">
+                  {/* Input - NO FORM, just div with input and button */}
+                  <div className="px-6 py-4 border-t border-border">
                     <div className="flex gap-3">
                       <Input
                         ref={inputRef}
                         value={input}
                         onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
                         placeholder="Escribe tu mensaje..."
                         disabled={isLoading}
                         className="flex-1 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl"
                       />
                       <Button 
-                        type="submit" 
+                        type="button"
                         size="icon"
+                        onClick={handleButtonClick}
                         disabled={isLoading || !input.trim()}
                         className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
                       >
                         <PaperAirplaneIcon className="h-4 w-4" />
                       </Button>
                     </div>
-                  </form>
+                  </div>
                 </Dialog.Panel>
               </Transition.Child>
             </div>
