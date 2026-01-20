@@ -41,7 +41,8 @@ export const useSparkyChat = () => {
   const queryClient = useQueryClient();
   const messageIdCounter = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const isSendingRef = useRef(false); // Prevent double sends
+  const lastSentMessageRef = useRef<string>(''); // Track last sent message
+  const lastSentTimeRef = useRef<number>(0); // Track last sent time
 
   // Fetch persistent messages from database
   const { data: dbMessages, isLoading: isLoadingMessages } = useQuery({
@@ -112,10 +113,28 @@ export const useSparkyChat = () => {
   };
 
   const sendMessage = useCallback(async (userMessage: string) => {
-    // Use ref to prevent double sends (state updates are async)
-    if (!userMessage.trim() || isSendingRef.current) return;
+    const trimmedMessage = userMessage.trim();
+    if (!trimmedMessage) return;
     
-    isSendingRef.current = true;
+    // Prevent duplicate sends: same message within 2 seconds
+    const now = Date.now();
+    if (
+      trimmedMessage === lastSentMessageRef.current && 
+      now - lastSentTimeRef.current < 2000
+    ) {
+      console.log('Duplicate message blocked:', trimmedMessage);
+      return;
+    }
+    
+    // Also block if already loading
+    if (isLoading) {
+      console.log('Already loading, blocking send');
+      return;
+    }
+    
+    // Update refs immediately (synchronous)
+    lastSentMessageRef.current = trimmedMessage;
+    lastSentTimeRef.current = now;
 
     // Cancel any existing stream
     if (abortControllerRef.current) {
@@ -129,7 +148,7 @@ export const useSparkyChat = () => {
       // Save user message to DB first
       await saveMessage({
         role: 'user',
-        content: userMessage.trim(),
+        content: trimmedMessage,
       });
 
       // Refresh to show user message
@@ -161,7 +180,7 @@ export const useSparkyChat = () => {
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            message: userMessage.trim(),
+            message: trimmedMessage,
             conversationHistory: historyMessages,
           }),
           signal: abortControllerRef.current.signal,
@@ -253,7 +272,6 @@ export const useSparkyChat = () => {
     } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log('Request aborted');
-        isSendingRef.current = false;
         return;
       }
       
@@ -262,9 +280,12 @@ export const useSparkyChat = () => {
       setStreamingMessage(null);
     } finally {
       setIsLoading(false);
-      isSendingRef.current = false;
+      // Clear the last sent message after a delay to allow new sends
+      setTimeout(() => {
+        lastSentMessageRef.current = '';
+      }, 500);
     }
-  }, [queryClient]);
+  }, [isLoading, queryClient]);
 
   const clearChat = useCallback(async () => {
     try {
