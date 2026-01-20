@@ -58,7 +58,7 @@ interface MessageBubbleProps {
   dateSeparatorLabel?: string;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ 
+const MessageBubble = React.memo<MessageBubbleProps>(({ 
   message, 
   showDateSeparator, 
   dateSeparatorLabel 
@@ -137,14 +137,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       </div>
     </>
   );
-};
+});
+
+MessageBubble.displayName = 'MessageBubble';
 
 interface SparkyChatProps {
   trigger?: React.ReactNode;
 }
-
-// Global submit lock - completely outside React
-let globalSubmitLock = false;
 
 export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   const { messages, isLoading, sendMessage, clearChat } = useSparkyChat();
@@ -178,54 +177,20 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
     }
   }, [isOpen]);
 
-  // Single send function - checks global lock synchronously
-  const doSend = useCallback(() => {
-    // SYNC check before anything else
-    if (globalSubmitLock) {
-      console.log('[SparkyChat] BLOCKED by global lock');
-      return;
-    }
-    
+  const handleSend = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed || isLoading) {
-      return;
-    }
+    if (!trimmed || isLoading) return;
     
-    // Set lock IMMEDIATELY - sync
-    globalSubmitLock = true;
-    console.log('[SparkyChat] Lock acquired, sending:', trimmed);
-    
-    // Clear input
     setInput('');
-    
-    // Send message
     sendMessage(trimmed);
-    
-    // Release lock after delay
-    setTimeout(() => {
-      globalSubmitLock = false;
-      console.log('[SparkyChat] Lock released');
-    }, 2000);
   }, [input, isLoading, sendMessage]);
 
-  // Handle Enter key
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      doSend();
+      handleSend();
     }
-  }, [doSend]);
-
-  // Handle button click
-  const handleButtonClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    doSend();
-  }, [doSend]);
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  }, []);
+  }, [handleSend]);
 
   const messagesWithSeparators = useMemo(() => 
     messages.map((message, index) => {
@@ -372,13 +337,13 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
                     </div>
                   </ScrollArea>
 
-                  {/* Input - NO FORM, just div with input and button */}
+                  {/* Input */}
                   <div className="px-6 py-4 border-t border-border">
                     <div className="flex gap-3">
                       <Input
                         ref={inputRef}
                         value={input}
-                        onChange={handleInputChange}
+                        onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Escribe tu mensaje..."
                         disabled={isLoading}
@@ -387,7 +352,7 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
                       <Button 
                         type="button"
                         size="icon"
-                        onClick={handleButtonClick}
+                        onClick={handleSend}
                         disabled={isLoading || !input.trim()}
                         className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
                       >
