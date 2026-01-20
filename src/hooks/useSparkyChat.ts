@@ -41,6 +41,7 @@ export const useSparkyChat = () => {
   const queryClient = useQueryClient();
   const messageIdCounter = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isSendingRef = useRef(false); // Prevent double sends
 
   // Fetch persistent messages from database
   const { data: dbMessages, isLoading: isLoadingMessages } = useQuery({
@@ -105,7 +106,10 @@ export const useSparkyChat = () => {
   };
 
   const sendMessage = useCallback(async (userMessage: string) => {
-    if (!userMessage.trim() || isLoading) return;
+    // Use ref to prevent double sends (state updates are async)
+    if (!userMessage.trim() || isSendingRef.current) return;
+    
+    isSendingRef.current = true;
 
     // Cancel any existing stream
     if (abortControllerRef.current) {
@@ -243,6 +247,7 @@ export const useSparkyChat = () => {
     } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log('Request aborted');
+        isSendingRef.current = false;
         return;
       }
       
@@ -251,8 +256,9 @@ export const useSparkyChat = () => {
       setStreamingMessage(null);
     } finally {
       setIsLoading(false);
+      isSendingRef.current = false;
     }
-  }, [isLoading, queryClient]);
+  }, [queryClient]);
 
   const clearChat = useCallback(async () => {
     try {
