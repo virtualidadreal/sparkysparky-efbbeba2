@@ -189,10 +189,15 @@ export const useSparkyChat = () => {
         buffer += decoder.decode(value, { stream: true });
 
         // Process complete lines
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
 
-        for (const line of lines) {
+          // Handle CRLF
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          
+          // Skip empty lines and SSE comments
           if (!line.trim() || line.startsWith(':')) continue;
           if (!line.startsWith('data: ')) continue;
 
@@ -210,7 +215,9 @@ export const useSparkyChat = () => {
               } : null);
             }
           } catch {
-            // Incomplete JSON, will be handled with next chunk
+            // Incomplete JSON - put line back and wait for more data
+            buffer = line + '\n' + buffer;
+            break;
           }
         }
       }
