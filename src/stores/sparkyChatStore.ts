@@ -150,25 +150,41 @@ class SparkyChatStore {
       };
       this.setState({ messages: [...this.state.messages, streamingMsg] });
 
-      // Read stream
+      // Read stream using ReadableStream for proper async iteration
       const reader = response.body?.getReader();
       if (!reader) throw new Error('No body');
 
       const decoder = new TextDecoder();
       let content = '';
+      let buffer = '';
+      let lastUpdateTime = 0;
+      const MIN_UPDATE_INTERVAL = 16; // ~60fps
+
+      const updateContent = (newContent: string) => {
+        content = newContent;
+        const msgs = [...this.state.messages];
+        const lastIdx = msgs.length - 1;
+        if (lastIdx >= 0 && msgs[lastIdx]?.isStreaming) {
+          msgs[lastIdx] = { ...msgs[lastIdx], content };
+          this.setState({ messages: msgs });
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Process complete lines from buffer
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
         for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+          const trimmed = line.replace(/\r$/, '').trim();
+          if (!trimmed.startsWith('data: ')) continue;
 
-          const jsonStr = trimmedLine.slice(6);
+          const jsonStr = trimmed.slice(6);
           if (jsonStr === '[DONE]') continue;
 
           try {
@@ -176,19 +192,24 @@ class SparkyChatStore {
             const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
               content += delta;
-              // Update streaming message immediately
-              const msgs = [...this.state.messages];
-              const lastIdx = msgs.length - 1;
-              if (lastIdx >= 0 && msgs[lastIdx]?.isStreaming) {
-                msgs[lastIdx] = { ...msgs[lastIdx], content };
-                this.setState({ messages: msgs });
+              
+              // Throttle UI updates to avoid batching issues
+              const now = Date.now();
+              if (now - lastUpdateTime >= MIN_UPDATE_INTERVAL) {
+                lastUpdateTime = now;
+                updateContent(content);
+                // Yield to allow React to paint
+                await new Promise(r => setTimeout(r, 0));
               }
             }
           } catch {
-            // Skip malformed JSON chunks
+            // Incomplete JSON, will be completed in next chunk
           }
         }
       }
+
+      // Final update with complete content
+      updateContent(content);
 
       // Save assistant message to DB
       if (content) {
