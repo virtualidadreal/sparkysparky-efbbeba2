@@ -1,5 +1,5 @@
 /**
- * Sparky Chat Store - Simplified singleton
+ * Sparky Chat Store - Fixed version
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +32,7 @@ const brainNames: Record<string, string> = {
 class SparkyChatStore {
   private state: StoreState = { messages: [], isLoading: false };
   private listeners: Set<Listener> = new Set();
-  private sendingMessageId: string | null = null;
+  private isSending = false;
 
   subscribe = (listener: Listener): (() => void) => {
     this.listeners.add(listener);
@@ -75,43 +75,48 @@ class SparkyChatStore {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    // Generate unique ID for this send attempt
-    const sendId = `${Date.now()}-${Math.random()}`;
-    
-    // Check if already sending
-    if (this.sendingMessageId) {
-      console.log('[Store] BLOCKED - already sending:', this.sendingMessageId);
+    // Prevent double sends
+    if (this.isSending) {
+      console.log('[Store] BLOCKED - already sending');
       return;
     }
 
-    this.sendingMessageId = sendId;
+    this.isSending = true;
     this.setState({ isLoading: true });
-    console.log('[Store] Send started:', sendId, trimmed);
+    console.log('[Store] Sending:', trimmed);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user');
 
-      // Insert user message
+      // IMPORTANT: Build history BEFORE inserting the new message
+      // This prevents the message from appearing twice
+      const historyBeforeInsert = this.state.messages.slice(-19).map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      // Insert user message to DB
       await supabase.from('sparky_messages').insert({
         user_id: user.id,
         role: 'user',
         content: trimmed,
       });
 
-      // Reload to get the new message with its DB-generated ID
-      await this.loadMessages();
-
-      // Build history from current messages (already loaded, no duplicates)
-      const history = this.state.messages.slice(-20).map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
+      // Update UI to show user message immediately
+      const userMsg: ChatMessage = {
+        id: `temp-${Date.now()}`,
+        role: 'user',
+        content: trimmed,
+        timestamp: new Date(),
+      };
+      this.setState({ messages: [...this.state.messages, userMsg] });
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
-      // Call edge function
+      // Call edge function with history that does NOT include current message
+      // The edge function will add the current message at the end
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sparky-chat`,
         {
@@ -122,7 +127,7 @@ class SparkyChatStore {
           },
           body: JSON.stringify({
             message: trimmed,
-            conversationHistory: history,
+            conversationHistory: historyBeforeInsert,
           }),
         }
       );
@@ -133,7 +138,7 @@ class SparkyChatStore {
 
       const brain = response.headers.get('X-Sparky-Brain') || undefined;
 
-      // Add streaming message
+      // Add streaming message placeholder
       const streamingMsg: ChatMessage = {
         id: 'streaming',
         role: 'assistant',
@@ -143,7 +148,6 @@ class SparkyChatStore {
         timestamp: new Date(),
         isStreaming: true,
       };
-
       this.setState({ messages: [...this.state.messages, streamingMsg] });
 
       // Read stream
@@ -175,7 +179,6 @@ class SparkyChatStore {
             const delta = JSON.parse(json).choices?.[0]?.delta?.content;
             if (delta) {
               content += delta;
-              // Update streaming message
               const msgs = [...this.state.messages];
               const last = msgs[msgs.length - 1];
               if (last?.isStreaming) {
@@ -190,7 +193,7 @@ class SparkyChatStore {
         }
       }
 
-      // Save assistant message
+      // Save assistant message to DB
       if (content) {
         await supabase.from('sparky_messages').insert({
           user_id: user.id,
@@ -200,15 +203,15 @@ class SparkyChatStore {
         });
       }
 
-      // Reload final state
+      // Reload from DB to get correct IDs
       await this.loadMessages();
-      console.log('[Store] Send complete:', sendId);
+      console.log('[Store] Send complete');
 
     } catch (error) {
       console.error('[Store] Error:', error);
-      await this.loadMessages(); // Reset to DB state
+      await this.loadMessages();
     } finally {
-      this.sendingMessageId = null;
+      this.isSending = false;
       this.setState({ isLoading: false });
     }
   }
