@@ -35,14 +35,15 @@ const brainNames: Record<string, string> = {
   'casual': 'Charleta',
 };
 
+// Global singleton to prevent double sends across all instances
+let globalSendLock = false;
+let globalLastMessageId = '';
+
 export const useSparkyChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<ChatMessage | null>(null);
   const queryClient = useQueryClient();
-  const messageIdCounter = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const lastSentMessageRef = useRef<string>(''); // Track last sent message
-  const lastSentTimeRef = useRef<number>(0); // Track last sent time
 
   // Fetch persistent messages from database
   const { data: dbMessages, isLoading: isLoadingMessages } = useQuery({
@@ -61,6 +62,7 @@ export const useSparkyChat = () => {
 
       return (data || []) as DbMessage[];
     },
+    staleTime: 1000, // Reduce refetching
   });
 
   // Memoize: Convert DB messages to ChatMessage format
@@ -84,57 +86,30 @@ export const useSparkyChat = () => {
     [persistedMessages, streamingMessage]
   );
 
-  const generateId = () => {
-    messageIdCounter.current += 1;
-    return `msg-${Date.now()}-${messageIdCounter.current}`;
-  };
-
-  const saveMessage = async (msg: Omit<ChatMessage, 'id' | 'timestamp' | 'isStreaming'> & { id?: string }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data, error } = await supabase
-      .from('sparky_messages')
-      .insert({
-        user_id: user.id,
-        role: msg.role,
-        content: msg.content,
-        brain: msg.brain || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error saving message:', error);
-      return null;
-    }
-
-    return data;
-  };
-
   const sendMessage = useCallback(async (userMessage: string) => {
     const trimmedMessage = userMessage.trim();
     if (!trimmedMessage) return;
     
-    // Prevent duplicate sends: same message within 2 seconds
-    const now = Date.now();
-    if (
-      trimmedMessage === lastSentMessageRef.current && 
-      now - lastSentTimeRef.current < 2000
-    ) {
-      console.log('Duplicate message blocked:', trimmedMessage);
+    // Generate unique ID for this message
+    const messageId = `${trimmedMessage}-${Date.now()}`;
+    
+    // Check global lock - this is synchronous and immediate
+    if (globalSendLock) {
+      console.log('[Sparky] Send blocked: global lock active');
       return;
     }
     
-    // Also block if already loading
-    if (isLoading) {
-      console.log('Already loading, blocking send');
+    // Check if same message was just sent
+    if (globalLastMessageId === messageId.substring(0, trimmedMessage.length + 5)) {
+      console.log('[Sparky] Send blocked: duplicate message');
       return;
     }
     
-    // Update refs immediately (synchronous)
-    lastSentMessageRef.current = trimmedMessage;
-    lastSentTimeRef.current = now;
+    // Set lock immediately (synchronous)
+    globalSendLock = true;
+    globalLastMessageId = messageId.substring(0, trimmedMessage.length + 5);
+    
+    console.log('[Sparky] Starting send:', trimmedMessage);
 
     // Cancel any existing stream
     if (abortControllerRef.current) {
@@ -145,11 +120,23 @@ export const useSparkyChat = () => {
     setIsLoading(true);
 
     try {
-      // Save user message to DB first
-      await saveMessage({
-        role: 'user',
-        content: trimmedMessage,
-      });
+      // Get user first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user');
+
+      // Save user message to DB
+      const { error: insertError } = await supabase
+        .from('sparky_messages')
+        .insert({
+          user_id: user.id,
+          role: 'user',
+          content: trimmedMessage,
+        });
+
+      if (insertError) {
+        console.error('Error saving user message:', insertError);
+        throw insertError;
+      }
 
       // Refresh to show user message
       await queryClient.invalidateQueries({ queryKey: ['sparky-messages'] });
@@ -197,9 +184,8 @@ export const useSparkyChat = () => {
       const brainName = response.headers.get('X-Sparky-Brain-Name') || undefined;
 
       // Initialize streaming message
-      const streamingId = generateId();
       setStreamingMessage({
-        id: streamingId,
+        id: `streaming-${Date.now()}`,
         role: 'assistant',
         content: '',
         brain,
@@ -228,10 +214,7 @@ export const useSparkyChat = () => {
           let line = buffer.slice(0, newlineIndex);
           buffer = buffer.slice(newlineIndex + 1);
 
-          // Handle CRLF
           if (line.endsWith('\r')) line = line.slice(0, -1);
-          
-          // Skip empty lines and SSE comments
           if (!line.trim() || line.startsWith(':')) continue;
           if (!line.startsWith('data: ')) continue;
 
@@ -249,7 +232,6 @@ export const useSparkyChat = () => {
               } : null);
             }
           } catch {
-            // Incomplete JSON - put line back and wait for more data
             buffer = line + '\n' + buffer;
             break;
           }
@@ -258,34 +240,39 @@ export const useSparkyChat = () => {
 
       // Save assistant message to DB
       if (fullContent) {
-        await saveMessage({
-          role: 'assistant',
-          content: fullContent,
-          brain,
-        });
+        await supabase
+          .from('sparky_messages')
+          .insert({
+            user_id: user.id,
+            role: 'assistant',
+            content: fullContent,
+            brain: brain || null,
+          });
       }
 
       // Clear streaming message and refresh
       setStreamingMessage(null);
       queryClient.invalidateQueries({ queryKey: ['sparky-messages'] });
+      console.log('[Sparky] Send complete');
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('Request aborted');
+        console.log('[Sparky] Request aborted');
         return;
       }
       
-      console.error('Sparky chat error:', error);
+      console.error('[Sparky] Error:', error);
       toast.error(error.message || 'Error al comunicarse con Sparky');
       setStreamingMessage(null);
     } finally {
       setIsLoading(false);
-      // Clear the last sent message after a delay to allow new sends
+      // Release lock after a short delay
       setTimeout(() => {
-        lastSentMessageRef.current = '';
-      }, 500);
+        globalSendLock = false;
+        console.log('[Sparky] Lock released');
+      }, 1000);
     }
-  }, [isLoading, queryClient]);
+  }, [queryClient]);
 
   const clearChat = useCallback(async () => {
     try {
@@ -300,6 +287,7 @@ export const useSparkyChat = () => {
       if (error) throw error;
 
       setStreamingMessage(null);
+      globalLastMessageId = '';
       queryClient.invalidateQueries({ queryKey: ['sparky-messages'] });
       toast.success('Conversación limpiada');
     } catch (error) {
