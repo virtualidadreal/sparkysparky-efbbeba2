@@ -345,8 +345,7 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Escribe tu mensaje..."
-                        disabled={isLoading}
+                        placeholder={isLoading ? "Sparky está pensando..." : "Escribe tu mensaje..."}
                         className="flex-1 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl"
                       />
                       <Button 
@@ -354,9 +353,13 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
                         size="icon"
                         onClick={handleSend}
                         disabled={isLoading || !input.trim()}
-                        className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
+                        className="rounded-xl bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50"
                       >
-                        <PaperAirplaneIcon className="h-4 w-4" />
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <PaperAirplaneIcon className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>

@@ -138,78 +138,40 @@ class SparkyChatStore {
 
       const brain = response.headers.get('X-Sparky-Brain') || undefined;
 
-      // Add streaming message placeholder
-      const streamingMsg: ChatMessage = {
-        id: 'streaming',
-        role: 'assistant',
-        content: '',
-        brain,
-        brainName: brain ? brainNames[brain] : undefined,
-        timestamp: new Date(),
-        isStreaming: true,
-      };
-      this.setState({ messages: [...this.state.messages, streamingMsg] });
-
-      // Read stream using ReadableStream for proper async iteration
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No body');
-
-      const decoder = new TextDecoder();
+      // Read complete response (no streaming)
+      const responseText = await response.text();
+      
+      // Parse SSE to extract content
       let content = '';
-      let buffer = '';
-      let lastUpdateTime = 0;
-      const MIN_UPDATE_INTERVAL = 16; // ~60fps
-
-      const updateContent = (newContent: string) => {
-        content = newContent;
-        const msgs = [...this.state.messages];
-        const lastIdx = msgs.length - 1;
-        if (lastIdx >= 0 && msgs[lastIdx]?.isStreaming) {
-          msgs[lastIdx] = { ...msgs[lastIdx], content };
-          this.setState({ messages: msgs });
-        }
-      };
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
+      const lines = responseText.split('\n');
+      for (const line of lines) {
+        const trimmed = line.replace(/\r$/, '').trim();
+        if (!trimmed.startsWith('data: ')) continue;
         
-        // Process complete lines from buffer
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
-
-        for (const line of lines) {
-          const trimmed = line.replace(/\r$/, '').trim();
-          if (!trimmed.startsWith('data: ')) continue;
-
-          const jsonStr = trimmed.slice(6);
-          if (jsonStr === '[DONE]') continue;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              content += delta;
-              
-              // Throttle UI updates to avoid batching issues
-              const now = Date.now();
-              if (now - lastUpdateTime >= MIN_UPDATE_INTERVAL) {
-                lastUpdateTime = now;
-                updateContent(content);
-                // Yield to allow React to paint
-                await new Promise(r => setTimeout(r, 0));
-              }
-            }
-          } catch {
-            // Incomplete JSON, will be completed in next chunk
+        const jsonStr = trimmed.slice(6);
+        if (jsonStr === '[DONE]') continue;
+        
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) {
+            content += delta;
           }
+        } catch {
+          // Skip malformed JSON
         }
       }
 
-      // Final update with complete content
-      updateContent(content);
+      // Add assistant message to UI
+      const assistantMsg: ChatMessage = {
+        id: `temp-assistant-${Date.now()}`,
+        role: 'assistant',
+        content,
+        brain,
+        brainName: brain ? brainNames[brain] : undefined,
+        timestamp: new Date(),
+      };
+      this.setState({ messages: [...this.state.messages, assistantMsg] });
 
       // Save assistant message to DB
       if (content) {
