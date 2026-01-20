@@ -4,15 +4,10 @@ import { sparkyChatStore, ChatMessage } from '@/stores/sparkyChatStore';
 export type { ChatMessage };
 
 export const useSparkyChat = () => {
-  // Subscribe to the external store
-  const messages = useSyncExternalStore(
+  // Subscribe to the external store with stable snapshot
+  const snapshot = useSyncExternalStore(
     (callback) => sparkyChatStore.subscribe(callback),
-    () => sparkyChatStore.getMessages()
-  );
-
-  const isLoading = useSyncExternalStore(
-    (callback) => sparkyChatStore.subscribe(callback),
-    () => sparkyChatStore.getIsLoading()
+    () => sparkyChatStore.getSnapshot()
   );
 
   // Load messages on mount
@@ -30,8 +25,8 @@ export const useSparkyChat = () => {
   }, []);
 
   return {
-    messages,
-    isLoading,
+    messages: snapshot.messages,
+    isLoading: snapshot.isLoading,
     sendMessage,
     clearChat,
   };
