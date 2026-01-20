@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -62,20 +62,26 @@ export const useSparkyChat = () => {
     },
   });
 
-  // Convert DB messages to ChatMessage format
-  const persistedMessages: ChatMessage[] = (dbMessages || []).map(msg => ({
-    id: msg.id,
-    role: msg.role,
-    content: msg.content,
-    brain: msg.brain || undefined,
-    brainName: msg.brain ? brainNames[msg.brain] : undefined,
-    timestamp: new Date(msg.created_at),
-  }));
+  // Memoize: Convert DB messages to ChatMessage format
+  const persistedMessages = useMemo<ChatMessage[]>(() => 
+    (dbMessages || []).map(msg => ({
+      id: msg.id,
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content,
+      brain: msg.brain || undefined,
+      brainName: msg.brain ? brainNames[msg.brain] : undefined,
+      timestamp: new Date(msg.created_at),
+    })),
+    [dbMessages]
+  );
 
-  // Combine persisted messages with streaming message
-  const messages = streamingMessage 
-    ? [...persistedMessages, streamingMessage]
-    : persistedMessages;
+  // Memoize: Combine persisted messages with streaming message
+  const messages = useMemo(() => 
+    streamingMessage 
+      ? [...persistedMessages, streamingMessage]
+      : persistedMessages,
+    [persistedMessages, streamingMessage]
+  );
 
   const generateId = () => {
     messageIdCounter.current += 1;

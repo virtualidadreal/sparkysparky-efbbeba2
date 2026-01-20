@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, Fragment } from 'react';
+import React, { useState, useRef, useEffect, Fragment, useMemo, useCallback } from 'react';
 import { useSparkyChat, ChatMessage } from '@/hooks/useSparkyChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -175,28 +175,35 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
     }
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
       sendMessage(input);
       setInput('');
     }
-  };
+  }, [input, isLoading, sendMessage]);
 
-  const messagesWithSeparators = messages.map((message, index) => {
-    const prevMessage = index > 0 ? messages[index - 1] : null;
-    const currentDate = message.timestamp;
-    const prevDate = prevMessage?.timestamp;
-    
-    const showSeparator = !prevDate || 
-      getDateLabel(currentDate) !== getDateLabel(prevDate);
-    
-    return {
-      message,
-      showDateSeparator: showSeparator,
-      dateSeparatorLabel: showSeparator ? getDateLabel(currentDate) : undefined,
-    };
-  });
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  }, []);
+
+  const messagesWithSeparators = useMemo(() => 
+    messages.map((message, index) => {
+      const prevMessage = index > 0 ? messages[index - 1] : null;
+      const currentDate = message.timestamp;
+      const prevDate = prevMessage?.timestamp;
+      
+      const showSeparator = !prevDate || 
+        getDateLabel(currentDate) !== getDateLabel(prevDate);
+      
+      return {
+        message,
+        showDateSeparator: showSeparator,
+        dateSeparatorLabel: showSeparator ? getDateLabel(currentDate) : undefined,
+      };
+    }),
+    [messages]
+  );
 
   const defaultTrigger = (
     <Button
@@ -331,7 +338,7 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
                       <Input
                         ref={inputRef}
                         value={input}
-                        onChange={(e) => setInput(e.target.value)}
+                        onChange={handleInputChange}
                         placeholder="Escribe tu mensaje..."
                         disabled={isLoading}
                         className="flex-1 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-foreground/20 rounded-xl"
