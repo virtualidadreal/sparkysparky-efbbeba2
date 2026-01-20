@@ -1,6 +1,5 @@
 /**
- * Sparky Chat Store - Global singleton that manages ALL chat state outside React
- * This eliminates any React StrictMode double-mounting issues
+ * Sparky Chat Store - Simplified singleton
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -17,17 +16,12 @@ export interface ChatMessage {
 
 type Listener = () => void;
 
-interface StoreSnapshot {
+interface StoreState {
   messages: ChatMessage[];
   isLoading: boolean;
 }
 
 const brainNames: Record<string, string> = {
-  'sparky_brain_organizer': 'Organizador',
-  'sparky_brain_mentor': 'Mentor',
-  'sparky_brain_creative': 'Creativo',
-  'sparky_brain_business': 'Empresarial',
-  'sparky_brain_casual': 'Charleta',
   'organizer': 'Organizador',
   'mentor': 'Mentor',
   'creative': 'Creativo',
@@ -36,43 +30,23 @@ const brainNames: Record<string, string> = {
 };
 
 class SparkyChatStore {
-  private messages: ChatMessage[] = [];
-  private streamingMessage: ChatMessage | null = null;
-  private isLoading = false;
-  private isSending = false;
+  private state: StoreState = { messages: [], isLoading: false };
   private listeners: Set<Listener> = new Set();
-  private abortController: AbortController | null = null;
-  private initialized = false;
-  
-  // Cached snapshot to prevent infinite re-renders
-  private cachedSnapshot: StoreSnapshot = { messages: [], isLoading: false };
+  private sendingMessageId: string | null = null;
 
-  // Subscribe to changes
-  subscribe(listener: Listener): () => void {
+  subscribe = (listener: Listener): (() => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  };
+
+  getSnapshot = (): StoreState => this.state;
+
+  private setState(partial: Partial<StoreState>): void {
+    this.state = { ...this.state, ...partial };
+    this.listeners.forEach(l => l());
   }
 
-  private notify(): void {
-    // Update cached snapshot
-    this.cachedSnapshot = {
-      messages: this.streamingMessage 
-        ? [...this.messages, this.streamingMessage]
-        : [...this.messages],
-      isLoading: this.isLoading,
-    };
-    this.listeners.forEach(listener => listener());
-  }
-
-  // Getters - return cached values for stable references
-  getSnapshot(): StoreSnapshot {
-    return this.cachedSnapshot;
-  }
-
-  // Load messages from DB
   async loadMessages(): Promise<void> {
-    if (this.initialized) return;
-    
     try {
       const { data, error } = await supabase
         .from('sparky_messages')
@@ -82,7 +56,7 @@ class SparkyChatStore {
 
       if (error) throw error;
 
-      this.messages = (data || []).map(msg => ({
+      const messages = (data || []).map(msg => ({
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
@@ -90,90 +64,50 @@ class SparkyChatStore {
         brainName: msg.brain ? brainNames[msg.brain] : undefined,
         timestamp: new Date(msg.created_at),
       }));
-      
-      this.initialized = true;
-      this.notify();
+
+      this.setState({ messages });
     } catch (error) {
-      console.error('[SparkyChatStore] Error loading messages:', error);
+      console.error('[Store] Error loading:', error);
     }
   }
 
-  // Refresh messages from DB
-  async refreshMessages(): Promise<void> {
-    try {
-      const { data, error } = await supabase
-        .from('sparky_messages')
-        .select('*')
-        .order('created_at', { ascending: true })
-        .limit(500);
-
-      if (error) throw error;
-
-      this.messages = (data || []).map(msg => ({
-        id: msg.id,
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-        brain: msg.brain || undefined,
-        brainName: msg.brain ? brainNames[msg.brain] : undefined,
-        timestamp: new Date(msg.created_at),
-      }));
-      
-      this.notify();
-    } catch (error) {
-      console.error('[SparkyChatStore] Error refreshing messages:', error);
-    }
-  }
-
-  // Send message - THE CRITICAL FUNCTION
-  async sendMessage(userMessage: string): Promise<void> {
-    const trimmed = userMessage.trim();
+  async sendMessage(text: string): Promise<void> {
+    const trimmed = text.trim();
     if (!trimmed) return;
 
-    // CRITICAL: Check if already sending
-    if (this.isSending) {
-      console.log('[SparkyChatStore] BLOCKED - already sending');
+    // Generate unique ID for this send attempt
+    const sendId = `${Date.now()}-${Math.random()}`;
+    
+    // Check if already sending
+    if (this.sendingMessageId) {
+      console.log('[Store] BLOCKED - already sending:', this.sendingMessageId);
       return;
     }
 
-    // Set sending flag IMMEDIATELY
-    this.isSending = true;
-    this.isLoading = true;
-    this.notify();
-
-    console.log('[SparkyChatStore] Starting send:', trimmed);
-
-    // Cancel any existing stream
-    if (this.abortController) {
-      this.abortController.abort();
-    }
-    this.abortController = new AbortController();
+    this.sendingMessageId = sendId;
+    this.setState({ isLoading: true });
+    console.log('[Store] Send started:', sendId, trimmed);
 
     try {
-      // Get user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user');
 
-      // Save user message to DB
-      const { error: insertError } = await supabase
-        .from('sparky_messages')
-        .insert({
-          user_id: user.id,
-          role: 'user',
-          content: trimmed,
-        });
+      // Insert user message
+      await supabase.from('sparky_messages').insert({
+        user_id: user.id,
+        role: 'user',
+        content: trimmed,
+      });
 
-      if (insertError) throw insertError;
+      // Reload to get the new message with its DB-generated ID
+      await this.loadMessages();
 
-      // Refresh to show user message
-      await this.refreshMessages();
-
-      // Get conversation history
-      const historyMessages = this.messages.slice(-20).map(m => ({
+      // Build history from current messages (already loaded, no duplicates)
+      const history = this.state.messages.slice(-20).map(m => ({
         role: m.role,
         content: m.content,
       }));
 
-      // Get session token
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
@@ -188,39 +122,36 @@ class SparkyChatStore {
           },
           body: JSON.stringify({
             message: trimmed,
-            conversationHistory: historyMessages,
+            conversationHistory: history,
           }),
-          signal: this.abortController.signal,
         }
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Error al procesar mensaje');
+        throw new Error('Request failed');
       }
 
-      // Get brain info
       const brain = response.headers.get('X-Sparky-Brain') || undefined;
-      const brainName = response.headers.get('X-Sparky-Brain-Name') || undefined;
 
-      // Create streaming message
-      this.streamingMessage = {
-        id: `streaming-${Date.now()}`,
+      // Add streaming message
+      const streamingMsg: ChatMessage = {
+        id: 'streaming',
         role: 'assistant',
         content: '',
         brain,
-        brainName: brainName || (brain ? brainNames[brain] : undefined),
+        brainName: brain ? brainNames[brain] : undefined,
         timestamp: new Date(),
         isStreaming: true,
       };
-      this.notify();
 
-      // Process SSE stream
+      this.setState({ messages: [...this.state.messages, streamingMsg] });
+
+      // Read stream
       const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
+      if (!reader) throw new Error('No body');
 
       const decoder = new TextDecoder();
-      let fullContent = '';
+      let content = '';
       let buffer = '';
 
       while (true) {
@@ -229,26 +160,27 @@ class SparkyChatStore {
 
         buffer += decoder.decode(value, { stream: true });
 
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-          let line = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
+        let idx;
+        while ((idx = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
 
           if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (!line.trim() || line.startsWith(':')) continue;
           if (!line.startsWith('data: ')) continue;
 
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
+          const json = line.slice(6).trim();
+          if (json === '[DONE]') continue;
 
           try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
+            const delta = JSON.parse(json).choices?.[0]?.delta?.content;
             if (delta) {
-              fullContent += delta;
-              if (this.streamingMessage) {
-                this.streamingMessage = { ...this.streamingMessage, content: fullContent };
-                this.notify();
+              content += delta;
+              // Update streaming message
+              const msgs = [...this.state.messages];
+              const last = msgs[msgs.length - 1];
+              if (last?.isStreaming) {
+                msgs[msgs.length - 1] = { ...last, content };
+                this.setState({ messages: msgs });
               }
             }
           } catch {
@@ -259,66 +191,39 @@ class SparkyChatStore {
       }
 
       // Save assistant message
-      if (fullContent) {
-        await supabase
-          .from('sparky_messages')
-          .insert({
-            user_id: user.id,
-            role: 'assistant',
-            content: fullContent,
-            brain: brain || null,
-          });
+      if (content) {
+        await supabase.from('sparky_messages').insert({
+          user_id: user.id,
+          role: 'assistant',
+          content,
+          brain: brain || null,
+        });
       }
 
-      // Clear streaming and refresh
-      this.streamingMessage = null;
-      await this.refreshMessages();
-      console.log('[SparkyChatStore] Send complete');
+      // Reload final state
+      await this.loadMessages();
+      console.log('[Store] Send complete:', sendId);
 
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('[SparkyChatStore] Request aborted');
-      } else {
-        console.error('[SparkyChatStore] Error:', error);
-      }
-      this.streamingMessage = null;
+    } catch (error) {
+      console.error('[Store] Error:', error);
+      await this.loadMessages(); // Reset to DB state
     } finally {
-      this.isSending = false;
-      this.isLoading = false;
-      this.notify();
-      console.log('[SparkyChatStore] Finished, isSending reset to false');
+      this.sendingMessageId = null;
+      this.setState({ isLoading: false });
     }
   }
 
-  // Clear chat
   async clearChat(): Promise<void> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('sparky_messages')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      this.messages = [];
-      this.streamingMessage = null;
-      this.notify();
+      await supabase.from('sparky_messages').delete().eq('user_id', user.id);
+      this.setState({ messages: [] });
     } catch (error) {
-      console.error('[SparkyChatStore] Error clearing chat:', error);
-    }
-  }
-
-  // Abort current request
-  abort(): void {
-    if (this.abortController) {
-      this.abortController.abort();
-      this.abortController = null;
+      console.error('[Store] Clear error:', error);
     }
   }
 }
 
-// SINGLETON - only one instance ever exists
 export const sparkyChatStore = new SparkyChatStore();
