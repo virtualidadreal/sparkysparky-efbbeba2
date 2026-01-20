@@ -270,7 +270,6 @@ INSTRUCCIONES CRÍTICAS:
       body: JSON.stringify({
         model: 'openai/gpt-5-mini',
         messages,
-        temperature: selectedBrain?.temperature || 0.7,
         stream: true,
       }),
     });
