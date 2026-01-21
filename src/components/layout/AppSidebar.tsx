@@ -56,7 +56,7 @@ export const AppSidebar = () => {
           {/* Logo */}
           <div className="px-4 mb-4">
             <Link to="/dashboard">
-              <img src={sparkyLogo} alt="Sparky" className="h-10 w-auto" />
+              <img src={sparkyLogo} alt="Sparky" className="h-8 w-auto" />
             </Link>
           </div>
           
