@@ -251,6 +251,7 @@ export const useUpdateAdminSetting = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['sidebarVisibility'] });
       toast.success('Configuración actualizada');
     },
     onError: (error: Error) => {
