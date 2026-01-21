@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.analyze-idea-connections]
 verify_jwt = true
+
+[functions.early-access]
+verify_jwt = false

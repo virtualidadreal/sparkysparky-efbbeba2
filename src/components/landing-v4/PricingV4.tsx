@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Sparkles, Zap } from 'lucide-react';
+import { Check, Sparkles, Zap, Loader2 } from 'lucide-react';
+import { useEarlyAccess } from '@/hooks/useEarlyAccess';
 
 const PricingV4 = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const { stats, loading } = useEarlyAccess();
 
-  // Simulated spots taken (would be dynamic in production)
-  const spotsTaken = 12;
-  const totalSpots = 50;
+  // Use real data from hook, fallback to defaults
+  const spotsTaken = stats?.spots_taken ?? 0;
+  const totalSpots = stats?.total_spots ?? 30;
+  const spotsRemaining = stats?.spots_remaining ?? 30;
+  const isAvailable = stats?.is_available ?? true;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -63,7 +67,7 @@ const PricingV4 = () => {
             <span className="text-white font-bold text-lg">OFERTA DE LANZAMIENTO</span>
           </div>
           <p className="text-white text-lg">
-            Los primeros 50 usuarios tienen acceso completo a Sparky Pro{' '}
+            Los primeros {totalSpots} usuarios tienen acceso completo a Sparky Pro{' '}
             <span className="font-bold">GRATIS durante 3 meses.</span>
           </p>
           <p className="text-white/80 text-sm mt-2">Sin compromiso. Sin tarjeta.</p>
@@ -71,16 +75,39 @@ const PricingV4 = () => {
           {/* Progress bar */}
           <div className="mt-4 max-w-xs mx-auto">
             <div className="flex justify-between text-sm text-white mb-1">
-              <span>{spotsTaken}/{totalSpots} plazas ocupadas</span>
-              <span>{totalSpots - spotsTaken} disponibles</span>
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Cargando...
+                </span>
+              ) : (
+                <>
+                  <span>{spotsTaken}/{totalSpots} plazas ocupadas</span>
+                  <span>{spotsRemaining} disponibles</span>
+                </>
+              )}
             </div>
             <div className="h-2 bg-white/20 rounded-full overflow-hidden">
               <div
                 className="h-full bg-white rounded-full transition-all duration-1000"
-                style={{ width: `${(spotsTaken / totalSpots) * 100}%` }}
+                style={{ width: loading ? '0%' : `${(spotsTaken / totalSpots) * 100}%` }}
               />
             </div>
           </div>
+
+          {/* Urgency message when spots are running low */}
+          {!loading && spotsRemaining <= 10 && spotsRemaining > 0 && (
+            <p className="mt-3 text-white font-semibold animate-pulse">
+              ⚡ ¡Solo quedan {spotsRemaining} plazas!
+            </p>
+          )}
+
+          {/* Sold out message */}
+          {!loading && !isAvailable && (
+            <p className="mt-3 text-white font-semibold">
+              ❌ ¡Plazas agotadas! Pero aún puedes empezar gratis.
+            </p>
+          )}
         </div>
 
         {/* Pricing cards */}
@@ -121,7 +148,7 @@ const PricingV4 = () => {
             {/* Popular badge */}
             <div className="absolute -top-3 right-6 bg-gradient-to-r from-[#FF6B35] to-[#FFB800] px-4 py-1 rounded-full text-white text-sm font-bold flex items-center gap-1">
               <Sparkles className="w-3 h-3" />
-              RECOMENDADO
+              {isAvailable ? 'RECOMENDADO' : 'PRÓXIMAMENTE'}
             </div>
 
             <h3 className="text-xl font-bold text-[#FAFAFA] mb-2">Sparky Pro</h3>
@@ -129,9 +156,15 @@ const PricingV4 = () => {
             <div className="text-4xl font-bold text-[#FAFAFA] mb-2">
               €3.99<span className="text-lg font-normal text-[#636E72]">/mes</span>
             </div>
-            <p className="text-sm text-[#FF6B35] mb-6">
-              🔥 3 meses gratis para los primeros 50
-            </p>
+            {isAvailable ? (
+              <p className="text-sm text-[#FF6B35] mb-6">
+                🔥 3 meses gratis para los primeros {totalSpots}
+              </p>
+            ) : (
+              <p className="text-sm text-[#636E72] mb-6">
+                Plazas de lanzamiento agotadas
+              </p>
+            )}
             <ul className="space-y-3 mb-8">
               {proPlanFeatures.map((feature) => (
                 <li key={feature} className="flex items-center gap-3 text-[#FAFAFA]/80">
@@ -142,9 +175,13 @@ const PricingV4 = () => {
             </ul>
             <Link
               to="/signup"
-              className="block w-full text-center py-3 px-6 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FFB800] text-white font-bold shadow-lg shadow-[#FF6B35]/30 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+              className={`block w-full text-center py-3 px-6 rounded-xl font-bold transition-all ${
+                isAvailable
+                  ? 'bg-gradient-to-r from-[#FF6B35] to-[#FFB800] text-white shadow-lg shadow-[#FF6B35]/30 hover:shadow-xl hover:-translate-y-0.5'
+                  : 'bg-[#636E72]/30 text-[#FAFAFA]/50 cursor-not-allowed'
+              }`}
             >
-              Entrar antes de que se llene
+              {isAvailable ? 'Entrar antes de que se llene' : 'Lista de espera'}
             </Link>
           </div>
         </div>

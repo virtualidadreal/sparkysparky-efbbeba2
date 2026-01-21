@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useEarlyAccess } from '@/hooks/useEarlyAccess';
 
 // Spark particle component
 const SparkParticle = ({ delay, left }: { delay: number; left: number }) => (
@@ -16,6 +17,10 @@ const SparkParticle = ({ delay, left }: { delay: number; left: number }) => (
 
 const HeroV4 = () => {
   const [particles, setParticles] = useState<{ id: number; left: number; delay: number }[]>([]);
+  const { stats, loading } = useEarlyAccess();
+  
+  const spotsRemaining = stats?.spots_remaining ?? 30;
+  const isAvailable = stats?.is_available ?? true;
 
   useEffect(() => {
     // Generate random spark particles
@@ -45,9 +50,20 @@ const HeroV4 = () => {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md mb-8 border border-[#FFB800]/30">
           <Sparkles className="w-4 h-4 text-[#FF6B35]" />
-          <span className="text-sm font-medium text-[#2D3436]">
-            50 plazas con 3 meses Premium gratis
-          </span>
+          {loading ? (
+            <span className="text-sm font-medium text-[#2D3436] flex items-center gap-2">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Cargando plazas...
+            </span>
+          ) : isAvailable ? (
+            <span className="text-sm font-medium text-[#2D3436]">
+              🔥 {spotsRemaining} plazas con 3 meses Premium gratis
+            </span>
+          ) : (
+            <span className="text-sm font-medium text-[#636E72]">
+              Plazas agotadas — empieza gratis
+            </span>
+          )}
         </div>
 
         {/* Headline */}

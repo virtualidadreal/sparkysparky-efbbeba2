@@ -65,6 +65,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       detected_patterns: {
         Row: {
           created_at: string
@@ -157,6 +178,30 @@ export type Database = {
           tags?: string[] | null
           title?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      early_access_signups: {
+        Row: {
+          claimed_at: string
+          created_at: string
+          id: string
+          premium_expires_at: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          premium_expires_at?: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          premium_expires_at?: string
           user_id?: string
         }
         Relationships: []
@@ -986,8 +1031,11 @@ export type Database = {
     }
     Functions: {
       check_user_quota: { Args: { p_user_id: string }; Returns: Json }
+      claim_early_access_spot: { Args: { p_user_id: string }; Returns: Json }
       decrypt_text: { Args: { encrypted_text: string }; Returns: string }
       encrypt_text: { Args: { plain_text: string }; Returns: string }
+      get_early_access_stats: { Args: never; Returns: Json }
+      has_active_early_access: { Args: { p_user_id: string }; Returns: boolean }
       increment_user_usage: { Args: { p_user_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       owns_person_record: {
