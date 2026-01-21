@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card, Button } from '@/components/common';
+import { AppSidebar } from '@/components/layout/AppSidebar';
 import { 
   useIsAdmin, 
   useSystemPrompts, 
@@ -32,26 +33,12 @@ import {
   CircleStackIcon,
 } from '@heroicons/react/24/outline';
 import {
-  Home,
-  Users,
-  Settings,
-  Plus,
-  Lightbulb,
-  FolderOpen,
-  CheckSquare,
-  Brain,
-  BarChart3,
-  ShieldCheck,
   LayoutDashboard,
   Eye,
   EyeOff,
-  Mic,
-  BookOpen,
   Key,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { SparkyChat } from '@/components/chat/SparkyChat';
-import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 
 type CategoryKey = keyof typeof PROMPT_CATEGORIES;
 type SettingsCategoryKey = keyof typeof SETTINGS_CATEGORIES;
@@ -69,18 +56,6 @@ const categoryIcons: Record<string, React.ElementType> = {
   CircleStackIcon,
   Cog6ToothIcon,
 };
-
-const navItems = [
-  { to: '/dashboard', icon: Home, label: 'Dashboard' },
-  { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-  { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
-  { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
-  { to: '/people', icon: Users, label: 'Personas' },
-  { to: '/diary', icon: BookOpen, label: 'Diario' },
-  { to: '/memory', icon: Brain, label: 'Memoria' },
-  { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
-  { to: '/settings', icon: Settings, label: 'Configuración' },
-];
 
 /**
  * Panel de Administración con secciones de prompts y configuraciones globales
@@ -107,8 +82,6 @@ const Admin = () => {
   const [newModel, setNewModel] = useState('google/gemini-2.5-flash');
   const [newTemperature, setNewTemperature] = useState(0.7);
   const [newMaxTokens, setNewMaxTokens] = useState(2048);
-
-  const location = useLocation();
 
   // Redirigir si no es admin
   useEffect(() => {
@@ -269,60 +242,8 @@ const Admin = () => {
       {/* 3-column grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
         
-        {/* Left Sidebar - Fixed Navigation */}
-        <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-4 shadow-sm h-full flex flex-col overflow-hidden">
-            <nav className="space-y-0.5 flex-1 overflow-y-auto">
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.to;
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                      isActive
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-
-              {/* Admin link - active */}
-              <div className="border-t border-border my-3" />
-              <Link
-                to="/admin"
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/10 text-primary font-medium"
-              >
-                <ShieldCheck className="h-5 w-5" />
-                Admin
-              </Link>
-            </nav>
-
-            {/* Bottom Actions */}
-            <div className="mt-4 pt-4 border-t border-border space-y-3">
-              <QuickCapturePopup
-                trigger={
-                  <button className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 rounded-xl text-muted-foreground text-sm hover:bg-muted transition-colors">
-                    <Plus className="h-4 w-4" />
-                    Captura rápida
-                  </button>
-                }
-              />
-              <SparkyChat
-                trigger={
-                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
-                    <Mic className="h-4 w-4" />
-                    Hablar con Sparky
-                  </button>
-                }
-              />
-            </div>
-          </div>
-        </div>
+        {/* Left Sidebar */}
+        <AppSidebar />
 
         {/* Main Content - Scrollable */}
         <div className="flex flex-col gap-3 h-full overflow-y-auto">
