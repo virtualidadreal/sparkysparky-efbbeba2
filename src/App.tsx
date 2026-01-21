@@ -7,6 +7,7 @@ import { ErrorBoundary, ProtectedRoute, InstallPWAPrompt } from '@/components/co
 
 // Lazy load de páginas
 const Landing = lazy(() => import('@/pages/Landing'));
+const LandingV2 = lazy(() => import('@/pages/LandingV2'));
 const Auth = lazy(() => import('@/pages/Auth'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Ideas = lazy(() => import('@/pages/Ideas'));
@@ -42,6 +43,7 @@ const App = () => {
             <Routes>
               {/* Rutas públicas */}
               <Route path="/" element={<Landing />} />
+              <Route path="/landing-v2" element={<LandingV2 />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />

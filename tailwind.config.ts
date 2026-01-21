@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        serif: ['Playfair Display', 'Georgia', 'serif'],
+      },
       colors: {
         // Colores de sistema shadcn - usando HSL variables
         border: "hsl(var(--border))",
