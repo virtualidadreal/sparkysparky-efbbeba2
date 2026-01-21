@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
@@ -10,9 +11,11 @@ import {
   BarChart3,
   ShieldCheck,
   BookOpen,
+  Search,
 } from 'lucide-react';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useSidebarVisibility, SidebarVisibility } from '@/hooks/useSidebarVisibility';
+import { GlobalSearchModal } from '@/components/search';
 
 /**
  * Navigation items with visibility keys
@@ -37,6 +40,7 @@ export const AppSidebar = () => {
   const location = useLocation();
   const { data: isAdmin } = useIsAdmin();
   const { data: visibility } = useSidebarVisibility();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Filter navigation items based on visibility settings
   const visibleItems = navigationItems.filter(item => {
@@ -45,53 +49,68 @@ export const AppSidebar = () => {
   });
 
   return (
-    <div className="hidden lg:flex flex-col h-full">
-      <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border-2 border-border/50">
-        {/* Logo */}
-        <div className="px-4 mb-4">
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Sparky</h1>
-        </div>
-        
-        {/* Nav Items */}
-        <nav className="space-y-0.5 flex-1 overflow-y-auto">
-          {visibleItems.map((item) => {
-            const isActive = location.pathname === item.to || 
-              (item.to === '/dashboard' && location.pathname === '/');
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                  isActive
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                }`}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </Link>
-            );
-          })}
+    <>
+      <div className="hidden lg:flex flex-col h-full">
+        <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border-2 border-border/50">
+          {/* Logo */}
+          <div className="px-4 mb-4">
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Sparky</h1>
+          </div>
 
-          {/* Admin link */}
-          {isAdmin && (
-            <>
-              <div className="border-t border-border my-3" />
-              <Link
-                to="/admin"
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                  location.pathname === '/admin'
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                }`}
-              >
-                <ShieldCheck className="h-5 w-5" />
-                Admin
-              </Link>
-            </>
-          )}
-        </nav>
+          {/* Search Button */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="flex items-center gap-3 px-4 py-2.5 mx-2 mb-3 rounded-xl bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors border border-border/50"
+          >
+            <Search className="h-4 w-4" />
+            <span className="text-sm">Buscar...</span>
+            <kbd className="ml-auto text-xs px-1.5 py-0.5 rounded bg-muted/50 font-mono">⌘K</kbd>
+          </button>
+          
+          {/* Nav Items */}
+          <nav className="space-y-0.5 flex-1 overflow-y-auto">
+            {visibleItems.map((item) => {
+              const isActive = location.pathname === item.to || 
+                (item.to === '/dashboard' && location.pathname === '/');
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.label}
+                </Link>
+              );
+            })}
+
+            {/* Admin link */}
+            {isAdmin && (
+              <>
+                <div className="border-t border-border my-3" />
+                <Link
+                  to="/admin"
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                    location.pathname === '/admin'
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  }`}
+                >
+                  <ShieldCheck className="h-5 w-5" />
+                  Admin
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
       </div>
-    </div>
+
+      {/* Global Search Modal */}
+      <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+    </>
   );
 };
