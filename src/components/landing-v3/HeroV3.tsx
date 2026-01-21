@@ -10,7 +10,7 @@ const HeroV3 = () => {
     <section className="min-h-screen flex flex-col items-center justify-center px-6 py-20 relative bg-white">
       {/* Floating elements - Notion style */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[15%] left-[10%] w-16 h-16 bg-amber-100 rounded-2xl rotate-12 animate-float opacity-60" />
+        <div className="absolute top-[15%] left-[10%] w-16 h-16 bg-primary/20 rounded-2xl rotate-12 animate-float opacity-60" />
         <div className="absolute top-[20%] right-[15%] w-12 h-12 bg-rose-100 rounded-full animate-float-delayed opacity-60" />
         <div className="absolute bottom-[25%] left-[15%] w-10 h-10 bg-sky-100 rounded-lg -rotate-6 animate-float opacity-60" />
         <div className="absolute bottom-[20%] right-[10%] w-14 h-14 bg-emerald-100 rounded-2xl rotate-6 animate-float-delayed opacity-60" />
@@ -18,9 +18,9 @@ const HeroV3 = () => {
 
       <div className="max-w-4xl mx-auto text-center relative z-10">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-full mb-8 border border-amber-200/50">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span className="text-sm font-medium text-amber-700">Tu compañero para pensar</span>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-8 border border-primary/30">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium text-primary-foreground">Tu compañero para pensar</span>
         </div>
 
         {/* Headline */}

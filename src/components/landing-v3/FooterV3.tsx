@@ -11,7 +11,7 @@ const FooterV3 = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-500" />
+            <Sparkles className="w-5 h-5 text-primary" />
             <span className="text-lg font-bold text-gray-900">Sparky</span>
           </div>
 

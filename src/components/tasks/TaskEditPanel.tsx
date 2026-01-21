@@ -74,7 +74,7 @@ export const TaskEditPanel = ({ task, taskLists, onClose, onDelete }: TaskEditPa
 
   const priorities = [
     { value: 'low', label: 'Baja', color: 'text-muted-foreground' },
-    { value: 'medium', label: 'Media', color: 'text-yellow-500' },
+    { value: 'medium', label: 'Media', color: 'text-primary' },
     { value: 'high', label: 'Alta', color: 'text-destructive' },
   ];
 

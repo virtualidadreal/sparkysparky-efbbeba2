@@ -53,7 +53,7 @@ const CATEGORY_COLORS = [
   'hsl(var(--secondary))',
   'hsl(142, 76%, 36%)',
   'hsl(280, 65%, 60%)',
-  'hsl(25, 95%, 53%)',
+  'hsl(48, 96%, 54%)',
 ];
 
 /**

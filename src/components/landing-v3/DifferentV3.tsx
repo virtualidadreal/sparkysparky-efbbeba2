@@ -43,8 +43,8 @@ const DifferentV3 = () => {
             <div className="p-6 text-center bg-gray-50">
               <span className="text-sm font-medium text-gray-400">Otras apps</span>
             </div>
-            <div className="p-6 text-center bg-amber-50">
-              <span className="text-sm font-bold text-amber-600">Sparky ✨</span>
+            <div className="p-6 text-center bg-primary/10">
+              <span className="text-sm font-bold text-primary">Sparky ✨</span>
             </div>
           </div>
           
@@ -55,8 +55,8 @@ const DifferentV3 = () => {
                 <X className="w-5 h-5 text-gray-300" />
                 <span>{row.others}</span>
               </div>
-              <div className="p-6 flex items-center gap-3 text-gray-900 bg-amber-50/30">
-                <Check className="w-5 h-5 text-amber-500" />
+              <div className="p-6 flex items-center gap-3 text-gray-900 bg-primary/5">
+                <Check className="w-5 h-5 text-primary" />
                 <span className="font-medium">{row.sparky}</span>
               </div>
             </div>

@@ -513,8 +513,8 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                       style={{
                         height: `${Math.max(16, currentLevel * 80)}px`,
                         opacity: isPaused ? 0.4 : 1,
-                        background: 'linear-gradient(180deg, hsl(45, 95%, 60%) 0%, hsl(35, 90%, 55%) 50%, hsl(25, 85%, 50%) 100%)',
-                        boxShadow: isPaused ? 'none' : '0 0 12px hsl(45, 95%, 60%), 0 0 20px hsl(45, 90%, 55%)',
+                        background: 'linear-gradient(180deg, hsl(48, 96%, 54%) 0%, hsl(48, 96%, 48%) 50%, hsl(48, 96%, 42%) 100%)',
+                        boxShadow: isPaused ? 'none' : '0 0 12px hsl(48, 96%, 54%), 0 0 20px hsl(48, 96%, 50%)',
                       }}
                     />
                     
@@ -525,15 +525,15 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                         <div className="flex items-center gap-[3px]">
                           {Array.from({ length: 40 }).map((_, i) => {
                             const height = 4 + Math.sin(i * 0.3) * 3;
-                            // Gradiente de colores para placeholder
-                            const hue = (i / 40) * 60 + 30; // De naranja a amarillo
+                            // Color primario uniforme
+                            const primaryColor = 'hsl(48, 96%, 54%)';
                             return (
                               <div key={i} className="flex flex-col items-center gap-[2px]">
                                 <div 
                                   className="w-[2.5px] rounded-full" 
                                   style={{ 
                                     height: `${height}px`,
-                                    background: `hsl(${hue}, 80%, 65%)`,
+                                    background: primaryColor,
                                     opacity: 0.3,
                                   }}
                                 />
@@ -541,7 +541,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                                   className="w-[2.5px] rounded-full" 
                                   style={{ 
                                     height: `${height}px`,
-                                    background: `hsl(${hue}, 80%, 65%)`,
+                                    background: primaryColor,
                                     opacity: 0.3,
                                   }}
                                 />
@@ -555,14 +555,10 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                           const opacity = isPaused ? 0.4 : 0.6 + (index / arr.length) * 0.4;
                           const barHeight = Math.max(4, value * 40);
                           
-                          // Crear gradiente de colores vibrantes: coral → naranja → amarillo → dorado
-                          const progress = index / arr.length;
-                          const hue = 35 + progress * 25; // 35 (naranja) → 60 (amarillo)
-                          const saturation = 85 + (isRecent ? 10 : 0);
-                          const lightness = 55 + (value * 15);
-                          
-                          const barColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                          const glowColor = `hsl(${hue}, 90%, 60%)`;
+                          // Usar solo el color primario #FACD1A
+                          const baseLightness = 50 + (value * 10);
+                          const barColor = `hsl(48, 96%, ${baseLightness}%)`;
+                          const glowColor = 'hsl(48, 96%, 54%)';
                           
                           return (
                             <div
@@ -576,7 +572,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                                   height: `${barHeight}px`,
                                   opacity,
                                   background: isRecent && !isPaused
-                                    ? `linear-gradient(180deg, ${barColor} 0%, hsl(${hue + 10}, 95%, 65%) 50%, ${barColor} 100%)`
+                                    ? `linear-gradient(180deg, ${barColor} 0%, hsl(48, 96%, 60%) 50%, ${barColor} 100%)`
                                     : barColor,
                                   boxShadow: isRecent && !isPaused 
                                     ? `0 0 8px ${glowColor}, 0 0 12px ${glowColor}` 
@@ -590,7 +586,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                                   height: `${barHeight}px`,
                                   opacity,
                                   background: isRecent && !isPaused
-                                    ? `linear-gradient(0deg, ${barColor} 0%, hsl(${hue + 10}, 95%, 65%) 50%, ${barColor} 100%)`
+                                    ? `linear-gradient(0deg, ${barColor} 0%, hsl(48, 96%, 60%) 50%, ${barColor} 100%)`
                                     : barColor,
                                   boxShadow: isRecent && !isPaused 
                                     ? `0 0 8px ${glowColor}, 0 0 12px ${glowColor}` 

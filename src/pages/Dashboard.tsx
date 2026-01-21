@@ -223,7 +223,7 @@ const Dashboard = () => {
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">📖</span>
                       {entry.mood && (
-                        <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 rounded-md">
+                        <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary rounded-md">
                           {entry.mood === 'great' ? 'Genial' : entry.mood === 'good' ? 'Bien' : entry.mood === 'neutral' ? 'Normal' : entry.mood === 'bad' ? 'Mal' : entry.mood === 'terrible' ? 'Terrible' : entry.mood}
                         </span>
                       )}
