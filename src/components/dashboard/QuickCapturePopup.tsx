@@ -81,6 +81,9 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
   // Iniciar visualización de audio
   const startVisualization = useCallback(async () => {
     try {
+      // Pequeño delay para asegurar que el stream de grabación ya está activo
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
       
@@ -133,10 +136,23 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
           }
           return newHistory;
         });
-      }, 50);
+      }, 60);
 
     } catch (err) {
       console.error('Error accessing microphone for visualization:', err);
+      // Si falla la visualización, simulamos ondas aleatorias
+      waveformIntervalRef.current = setInterval(() => {
+        if (isPaused) return;
+        const fakeLevel = 0.2 + Math.random() * 0.5;
+        setCurrentLevel(fakeLevel);
+        setWaveformHistory(prev => {
+          const newHistory = [...prev, fakeLevel];
+          if (newHistory.length > MAX_WAVEFORM_BARS) {
+            return newHistory.slice(-MAX_WAVEFORM_BARS);
+          }
+          return newHistory;
+        });
+      }, 60);
     }
   }, [isPaused]);
 
@@ -477,61 +493,72 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
             {!isTextMode ? (
               <div className="p-5 flex flex-col items-center gap-6 relative">
                 {/* Visualizador de ondas */}
-                <div className="w-full h-28 bg-gradient-to-b from-muted/30 to-muted/60 rounded-2xl flex items-center justify-end px-2 overflow-hidden relative">
+                <div className="w-full h-28 bg-gradient-to-b from-muted/30 to-muted/60 rounded-2xl flex items-center justify-center px-4 overflow-hidden relative">
                   {/* Línea central */}
-                  <div className="absolute inset-y-0 left-0 right-0 flex items-center">
+                  <div className="absolute inset-y-0 left-0 right-0 flex items-center pointer-events-none">
                     <div className="w-full h-[1px] bg-primary/20" />
                   </div>
                   
-                  {/* Indicador de nivel actual */}
+                  {/* Indicador de nivel actual (pulso) */}
                   <div 
-                    className="absolute right-3 w-1 bg-primary rounded-full transition-all duration-75"
+                    className="absolute right-4 w-1.5 bg-primary rounded-full transition-all duration-100"
                     style={{
-                      height: `${Math.max(8, currentLevel * 80)}%`,
+                      height: `${Math.max(12, currentLevel * 90)}px`,
                       opacity: isPaused ? 0.3 : 0.9,
                     }}
                   />
                   
-                  {/* Historial de ondas */}
-                  <div className="flex items-center gap-[3px] h-full pr-6 overflow-hidden">
-                    {waveformHistory.map((value, index) => {
-                      const isRecent = index >= waveformHistory.length - 5;
-                      const opacity = isPaused 
-                        ? 0.3 
-                        : 0.4 + (index / waveformHistory.length) * 0.5;
-                      
-                      return (
-                        <div
-                          key={index}
-                          className="flex flex-col items-center justify-center gap-[2px]"
-                        >
+                  {/* Historial de ondas - barras simétricas */}
+                  <div className="flex items-center gap-[2px] h-full">
+                    {waveformHistory.length === 0 ? (
+                      // Placeholder cuando no hay datos
+                      <div className="flex items-center gap-[2px]">
+                        {Array.from({ length: 30 }).map((_, i) => (
+                          <div key={i} className="flex flex-col items-center gap-[1px]">
+                            <div className="w-[3px] h-1 bg-primary/20 rounded-full" />
+                            <div className="w-[3px] h-1 bg-primary/20 rounded-full" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      waveformHistory.slice(-60).map((value, index, arr) => {
+                        const isRecent = index >= arr.length - 5;
+                        const opacity = isPaused ? 0.3 : 0.5 + (index / arr.length) * 0.5;
+                        const barHeight = Math.max(2, value * 40);
+                        
+                        return (
                           <div
-                            className={clsx(
-                              'w-[3px] rounded-full transition-all',
-                              isRecent ? 'bg-primary' : 'bg-primary/70',
-                              isPaused && 'bg-muted-foreground/40'
-                            )}
-                            style={{
-                              height: `${Math.max(2, value * 45)}%`,
-                              opacity,
-                              transition: isRecent ? 'height 50ms ease-out' : 'none',
-                            }}
-                          />
-                          <div
-                            className={clsx(
-                              'w-[3px] rounded-full transition-all',
-                              isRecent ? 'bg-primary' : 'bg-primary/70',
-                              isPaused && 'bg-muted-foreground/40'
-                            )}
-                            style={{
-                              height: `${Math.max(2, value * 45)}%`,
-                              opacity,
-                              transition: isRecent ? 'height 50ms ease-out' : 'none',
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
+                            key={index}
+                            className="flex flex-col items-center gap-[1px]"
+                          >
+                            {/* Barra superior */}
+                            <div
+                              className={clsx(
+                                'w-[3px] rounded-full',
+                                isRecent ? 'bg-primary' : 'bg-primary/70',
+                                isPaused && 'bg-muted-foreground/40'
+                              )}
+                              style={{
+                                height: `${barHeight}px`,
+                                opacity,
+                              }}
+                            />
+                            {/* Barra inferior (espejo) */}
+                            <div
+                              className={clsx(
+                                'w-[3px] rounded-full',
+                                isRecent ? 'bg-primary' : 'bg-primary/70',
+                                isPaused && 'bg-muted-foreground/40'
+                              )}
+                              style={{
+                                height: `${barHeight}px`,
+                                opacity,
+                              }}
+                            />
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
