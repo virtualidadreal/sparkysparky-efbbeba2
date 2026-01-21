@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import sparkyLogo from '@/assets/sparky-logo.png';
 import {
   Home,
   Users,
@@ -54,7 +55,9 @@ export const AppSidebar = () => {
         <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border-2 border-border/50">
           {/* Logo */}
           <div className="px-4 mb-4">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Sparky</h1>
+            <Link to="/dashboard">
+              <img src={sparkyLogo} alt="Sparky" className="h-8 w-auto" />
+            </Link>
           </div>
           
           {/* Nav Items */}
