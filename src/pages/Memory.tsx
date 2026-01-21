@@ -122,7 +122,7 @@ const Memory = () => {
           </div>
 
           {/* Tabs */}
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50 flex-1">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="bg-muted/50 p-1 rounded-xl mb-4">
                 <TabsTrigger value="summaries" className="gap-2 rounded-lg">

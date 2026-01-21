@@ -118,7 +118,7 @@ const Estadisticas = () => {
           </div>
 
           {/* Content */}
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50 flex-1">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -170,7 +170,7 @@ const Estadisticas = () => {
                   </div>
 
                   {/* Quick Stats Banner */}
-                  <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl p-5">
+                  <div className="bg-transparent backdrop-blur-sm border-2 border-primary/30 rounded-xl p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <SparklesIcon className="h-5 w-5 text-primary" />
                       <h3 className="font-semibold text-foreground">Resumen Rápido</h3>

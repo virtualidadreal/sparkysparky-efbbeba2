@@ -158,7 +158,7 @@ const Tasks = () => {
           </div>
 
           {/* Task List Card */}
-          <div className="bg-card rounded-[24px] shadow-sm flex-1 flex flex-col overflow-hidden">
+          <div className="bg-transparent backdrop-blur-sm border-2 border-border/50 rounded-[24px] flex-1 flex flex-col overflow-hidden">
             {/* New Task Input */}
             <div className="px-6 py-4 border-b border-border">
               <form onSubmit={handleCreateTask} className="flex items-center gap-3">
@@ -216,7 +216,7 @@ const Tasks = () => {
 
         {/* Right Sidebar - Task Filters (fixed height) */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col h-full overflow-y-auto">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50 flex flex-col h-full overflow-y-auto">
           {/* User Profile */}
           <div className="mb-6">
             <div className="flex items-center gap-3">

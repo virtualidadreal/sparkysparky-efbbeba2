@@ -20,10 +20,10 @@ import { useSidebarVisibility, SidebarVisibility } from '@/hooks/useSidebarVisib
 const navigationItems = [
   { to: '/dashboard', icon: Home, label: 'Dashboard', key: 'dashboard' as keyof SidebarVisibility },
   { to: '/ideas', icon: Lightbulb, label: 'Ideas', key: 'ideas' as keyof SidebarVisibility },
+  { to: '/diary', icon: BookOpen, label: 'Diario', key: 'diary' as keyof SidebarVisibility },
   { to: '/projects', icon: FolderOpen, label: 'Proyectos', key: 'projects' as keyof SidebarVisibility },
   { to: '/tasks', icon: CheckSquare, label: 'Tareas', key: 'tasks' as keyof SidebarVisibility },
   { to: '/people', icon: Users, label: 'Personas', key: 'people' as keyof SidebarVisibility },
-  { to: '/diary', icon: BookOpen, label: 'Diario', key: 'diary' as keyof SidebarVisibility },
   { to: '/memory', icon: Brain, label: 'Memoria', key: 'memory' as keyof SidebarVisibility },
   { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas', key: 'analytics' as keyof SidebarVisibility },
   { to: '/settings', icon: Settings, label: 'Configuración', key: 'settings' as keyof SidebarVisibility },

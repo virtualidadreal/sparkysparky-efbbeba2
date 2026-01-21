@@ -207,9 +207,9 @@ const Settings = () => {
         <AppSidebar />
 
         {/* Main Content - Scrollable */}
-        <div className="flex flex-col gap-3 h-full overflow-y-auto">
+        <div className="flex flex-col gap-3 h-full overflow-y-auto pt-4">
           {/* Header */}
-          <div className="bg-card rounded-[24px] p-6 shadow-sm">
+          <div className="px-1">
             <h1 className="text-2xl font-bold text-foreground">Configuración</h1>
             <p className="text-muted-foreground mt-1">
               Gestiona tu perfil y preferencias de la aplicación
@@ -217,7 +217,7 @@ const Settings = () => {
           </div>
 
           {/* Content */}
-          <div className="bg-card rounded-[24px] p-6 shadow-sm flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border-2 border-border/50 flex-1">
             <div className="space-y-6 max-w-3xl">
               {/* Profile Tab */}
               {activeTab === 'profile' && (
@@ -487,7 +487,7 @@ const Settings = () => {
 
         {/* Right Sidebar - Settings Sections */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-5 shadow-sm h-full flex flex-col overflow-hidden">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50 h-full flex flex-col overflow-hidden">
             {/* Settings Tabs */}
             <div className="mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">

@@ -246,22 +246,20 @@ const Admin = () => {
         <AppSidebar />
 
         {/* Main Content - Scrollable */}
-        <div className="flex flex-col gap-3 h-full overflow-y-auto">
+        <div className="flex flex-col gap-3 h-full overflow-y-auto pt-4">
           {/* Header */}
-          <div className="bg-card rounded-[24px] p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <ShieldCheckIcon className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Panel de Administración</h1>
-                <p className="text-muted-foreground">Configura los prompts y ajustes globales de Sparky</p>
-              </div>
+          <div className="flex items-center gap-3 px-1">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <ShieldCheckIcon className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Panel de Administración</h1>
+              <p className="text-muted-foreground">Configura los prompts y ajustes globales de Sparky</p>
             </div>
           </div>
 
           {/* Content Card */}
-          <div className="bg-card rounded-[24px] p-6 shadow-sm flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border-2 border-border/50 flex-1">
             <div className="space-y-6">
 
               {/* PROMPTS TAB */}
@@ -861,7 +859,7 @@ const Admin = () => {
 
         {/* Right Sidebar - Admin Sections */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-5 shadow-sm h-full flex flex-col overflow-hidden">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50 h-full flex flex-col overflow-hidden">
             {/* Secciones Admin */}
             <div className="mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
