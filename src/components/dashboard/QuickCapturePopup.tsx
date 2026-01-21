@@ -491,126 +491,164 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
 
             {/* Content - Modo grabación (voice-first) */}
             {!isTextMode ? (
-              <div className="p-5 flex flex-col items-center gap-6 relative">
-                {/* Visualizador de ondas */}
-                <div className="w-full h-28 bg-gradient-to-b from-muted/30 to-muted/60 rounded-2xl flex items-center justify-center px-4 overflow-hidden relative">
-                  {/* Línea central */}
-                  <div className="absolute inset-y-0 left-0 right-0 flex items-center pointer-events-none">
-                    <div className="w-full h-[1px] bg-primary/20" />
+              <div className="p-6 flex flex-col items-center gap-6 relative">
+                {/* Visualizador de ondas - Glassmorphism */}
+                <div className="w-full h-32 relative rounded-2xl overflow-hidden">
+                  {/* Fondo glassmorphism */}
+                  <div className="absolute inset-0 bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-white/50 dark:border-white/20 rounded-2xl" />
+                  
+                  {/* Gradiente decorativo sutil */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 rounded-2xl" />
+                  
+                  {/* Contenido del visualizador */}
+                  <div className="relative h-full flex items-center justify-center px-6">
+                    {/* Línea central elegante */}
+                    <div className="absolute inset-y-0 left-6 right-6 flex items-center pointer-events-none">
+                      <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                    </div>
+                    
+                    {/* Indicador de nivel actual (pulso brillante) */}
+                    <div 
+                      className="absolute right-6 w-1 rounded-full transition-all duration-100 shadow-lg shadow-primary/30"
+                      style={{
+                        height: `${Math.max(16, currentLevel * 80)}px`,
+                        opacity: isPaused ? 0.3 : 1,
+                        background: 'linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.6) 100%)',
+                      }}
+                    />
+                    
+                    {/* Historial de ondas - barras simétricas */}
+                    <div className="flex items-center gap-[3px] h-full py-4">
+                      {waveformHistory.length === 0 ? (
+                        // Placeholder elegante cuando no hay datos
+                        <div className="flex items-center gap-[3px]">
+                          {Array.from({ length: 40 }).map((_, i) => {
+                            const height = 4 + Math.sin(i * 0.3) * 3;
+                            return (
+                              <div key={i} className="flex flex-col items-center gap-[2px]">
+                                <div 
+                                  className="w-[2px] bg-primary/15 rounded-full" 
+                                  style={{ height: `${height}px` }}
+                                />
+                                <div 
+                                  className="w-[2px] bg-primary/15 rounded-full" 
+                                  style={{ height: `${height}px` }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        waveformHistory.slice(-50).map((value, index, arr) => {
+                          const isRecent = index >= arr.length - 8;
+                          const opacity = isPaused ? 0.25 : 0.4 + (index / arr.length) * 0.6;
+                          const barHeight = Math.max(3, value * 36);
+                          
+                          return (
+                            <div
+                              key={index}
+                              className="flex flex-col items-center gap-[2px]"
+                            >
+                              {/* Barra superior */}
+                              <div
+                                className="w-[2px] rounded-full transition-all duration-75"
+                                style={{
+                                  height: `${barHeight}px`,
+                                  opacity,
+                                  background: isRecent && !isPaused
+                                    ? 'linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.5) 100%)'
+                                    : 'hsl(var(--primary) / 0.5)',
+                                  boxShadow: isRecent && !isPaused ? '0 0 4px hsl(var(--primary) / 0.3)' : 'none',
+                                }}
+                              />
+                              {/* Barra inferior (espejo) */}
+                              <div
+                                className="w-[2px] rounded-full transition-all duration-75"
+                                style={{
+                                  height: `${barHeight}px`,
+                                  opacity,
+                                  background: isRecent && !isPaused
+                                    ? 'linear-gradient(0deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.5) 100%)'
+                                    : 'hsl(var(--primary) / 0.5)',
+                                  boxShadow: isRecent && !isPaused ? '0 0 4px hsl(var(--primary) / 0.3)' : 'none',
+                                }}
+                              />
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                   
-                  {/* Indicador de nivel actual (pulso) */}
-                  <div 
-                    className="absolute right-4 w-1.5 bg-primary rounded-full transition-all duration-100"
-                    style={{
-                      height: `${Math.max(12, currentLevel * 90)}px`,
-                      opacity: isPaused ? 0.3 : 0.9,
-                    }}
-                  />
-                  
-                  {/* Historial de ondas - barras simétricas */}
-                  <div className="flex items-center gap-[2px] h-full">
-                    {waveformHistory.length === 0 ? (
-                      // Placeholder cuando no hay datos
-                      <div className="flex items-center gap-[2px]">
-                        {Array.from({ length: 30 }).map((_, i) => (
-                          <div key={i} className="flex flex-col items-center gap-[1px]">
-                            <div className="w-[3px] h-1 bg-primary/20 rounded-full" />
-                            <div className="w-[3px] h-1 bg-primary/20 rounded-full" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      waveformHistory.slice(-60).map((value, index, arr) => {
-                        const isRecent = index >= arr.length - 5;
-                        const opacity = isPaused ? 0.3 : 0.5 + (index / arr.length) * 0.5;
-                        const barHeight = Math.max(2, value * 40);
-                        
-                        return (
-                          <div
-                            key={index}
-                            className="flex flex-col items-center gap-[1px]"
-                          >
-                            {/* Barra superior */}
-                            <div
-                              className={clsx(
-                                'w-[3px] rounded-full',
-                                isRecent ? 'bg-primary' : 'bg-primary/70',
-                                isPaused && 'bg-muted-foreground/40'
-                              )}
-                              style={{
-                                height: `${barHeight}px`,
-                                opacity,
-                              }}
-                            />
-                            {/* Barra inferior (espejo) */}
-                            <div
-                              className={clsx(
-                                'w-[3px] rounded-full',
-                                isRecent ? 'bg-primary' : 'bg-primary/70',
-                                isPaused && 'bg-muted-foreground/40'
-                              )}
-                              style={{
-                                height: `${barHeight}px`,
-                                opacity,
-                              }}
-                            />
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
+                  {/* Brillo superior sutil */}
+                  <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-2xl" />
                 </div>
 
-                {/* Timer */}
-                <div className="flex items-center gap-3">
+                {/* Timer - más elegante */}
+                <div className="flex items-center gap-4 px-5 py-2.5 rounded-full bg-white/50 dark:bg-white/10 backdrop-blur-md border border-white/40 dark:border-white/20">
                   <div className={clsx(
-                    'w-3 h-3 rounded-full',
-                    isPaused ? 'bg-warning' : 'bg-destructive animate-pulse'
+                    'w-2.5 h-2.5 rounded-full shadow-lg',
+                    isPaused 
+                      ? 'bg-warning shadow-warning/30' 
+                      : 'bg-destructive animate-pulse shadow-destructive/30'
                   )} />
-                  <span className="text-2xl font-mono font-semibold text-foreground">
+                  <span className="text-xl font-mono font-semibold text-foreground tracking-wider">
                     {formatTime(recordingTime)}
                   </span>
-                  <span className="text-sm text-muted-foreground">/ 05:00</span>
+                  <span className="text-xs text-muted-foreground font-medium">/ 05:00</span>
                 </div>
 
-                {/* Controles principales */}
-                <div className="flex items-center gap-4">
+                {/* Controles principales - Glassmorphism */}
+                <div className="flex items-center gap-5">
                   {/* Botón Pausa/Reanudar */}
-                  <Button
-                    variant="outline"
-                    size="lg"
+                  <button
                     onClick={handlePauseResume}
-                    className="w-14 h-14 rounded-full p-0"
                     disabled={!isRecording}
+                    className={clsx(
+                      'w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200',
+                      'bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20',
+                      'hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95',
+                      'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100',
+                      'shadow-lg shadow-black/5'
+                    )}
                   >
                     {isPaused ? (
-                      <PlayIcon className="h-6 w-6" />
+                      <PlayIcon className="h-6 w-6 text-foreground" />
                     ) : (
-                      <PauseIcon className="h-6 w-6" />
+                      <PauseIcon className="h-6 w-6 text-foreground" />
                     )}
-                  </Button>
+                  </button>
 
-                  {/* Botón Enviar */}
-                  <Button
-                    size="lg"
+                  {/* Botón Enviar - Principal */}
+                  <button
                     onClick={handleSendRecording}
-                    className="w-16 h-16 rounded-full p-0 bg-primary hover:bg-primary/90"
                     disabled={!isRecording || recordingTime === 0}
+                    className={clsx(
+                      'w-18 h-18 rounded-full flex items-center justify-center transition-all duration-200',
+                      'bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25',
+                      'hover:scale-105 active:scale-95',
+                      'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100'
+                    )}
+                    style={{ width: '72px', height: '72px' }}
                   >
-                    <PaperAirplaneIcon className="h-7 w-7" />
-                  </Button>
+                    <PaperAirplaneIcon className="h-8 w-8 text-primary-foreground" />
+                  </button>
                 </div>
 
                 {/* Estado */}
-                <p className="text-sm text-muted-foreground text-center">
-                  {isPaused ? 'En pausa' : isRecording ? 'Hablando...' : 'Iniciando...'}
+                <p className="text-sm text-muted-foreground text-center font-medium">
+                  {isPaused ? 'En pausa' : isRecording ? 'Escuchando...' : 'Iniciando...'}
                 </p>
 
-                {/* Botón "Escribir" en la esquina inferior */}
+                {/* Botón "Escribir" - Glassmorphism */}
                 <button
                   onClick={switchToTextMode}
-                  className="absolute bottom-5 left-5 flex items-center gap-2 px-4 py-2 rounded-full bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-all text-sm font-medium"
+                  className={clsx(
+                    'absolute bottom-6 left-6 flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-200',
+                    'bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20',
+                    'text-muted-foreground hover:text-foreground hover:bg-white/80 dark:hover:bg-white/20',
+                    'text-sm font-medium shadow-lg shadow-black/5'
+                  )}
                 >
                   <PencilIcon className="h-4 w-4" />
                   Escribir
