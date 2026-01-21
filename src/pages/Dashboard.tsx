@@ -7,26 +7,15 @@ import { useProfile } from '@/hooks/useProfile';
 import { useDiaryEntries } from '@/hooks/useDiaryEntries';
 import { Link } from 'react-router-dom';
 import {
-  Home,
-  Users,
-  Settings,
   Plus,
-  Lightbulb,
-  FolderOpen,
-  CheckSquare,
-  Brain,
-  BarChart3,
   Sparkles,
-  ShieldCheck,
   Mic,
-  BookOpen,
 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
-import { useIsAdmin } from '@/hooks/useAdmin';
 import { IdeaPreviewModal } from '@/components/ideas/IdeaPreviewModal';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { MobileFooter } from '@/components/layout/MobileFooter';
 import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton';
+import { AppSidebar } from '@/components/layout/AppSidebar';
 import { Idea } from '@/types/Idea.types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -38,8 +27,6 @@ const Dashboard = () => {
   const { data: projects } = useProjects();
   const { data: profile } = useProfile();
   const { data: diaryEntries } = useDiaryEntries();
-  const { data: isAdmin } = useIsAdmin();
-  const location = useLocation();
   const { showOnboarding, completeOnboarding } = useOnboarding();
 
   const {
@@ -116,67 +103,8 @@ const Dashboard = () => {
       {/* 3-column grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
         
-        {/* Left Sidebar - fixed height */}
-        <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border-2 border-border/50">
-            {/* Logo */}
-            <div className="px-4 mb-4">
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Sparky</h1>
-            </div>
-            
-            {/* Nav Items */}
-            <nav className="space-y-0.5 flex-1 overflow-y-auto">
-              {[
-                { to: '/dashboard', icon: Home, label: 'Dashboard' },
-                { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-                { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
-                { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
-                { to: '/people', icon: Users, label: 'Personas' },
-                { to: '/diary', icon: BookOpen, label: 'Diario' },
-                { to: '/memory', icon: Brain, label: 'Memoria' },
-                { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
-                { to: '/settings', icon: Settings, label: 'Configuración' },
-              ].map((item) => {
-                const isActive = location.pathname === item.to || 
-                  (item.to === '/dashboard' && location.pathname === '/');
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                      isActive
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-
-              {/* Admin link */}
-              {isAdmin && (
-                <>
-                  <div className="border-t border-border my-3" />
-                  <Link
-                    to="/admin"
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                      location.pathname === '/admin'
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
-                  >
-                    <ShieldCheck className="h-5 w-5" />
-                    Admin
-                  </Link>
-                </>
-              )}
-            </nav>
-
-            {/* Bottom - Solo navegación sin acciones */}
-          </div>
-        </div>
+        {/* Left Sidebar */}
+        <AppSidebar />
 
         {/* Main Content - scrollable */}
         <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col gap-4 h-full overflow-y-auto border-2 border-border/50">
