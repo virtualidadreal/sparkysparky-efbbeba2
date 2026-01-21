@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
-import { MicrophoneIcon, PauseIcon, PlayIcon, PaperAirplaneIcon, LightBulbIcon, XMarkIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
+import { MicrophoneIcon, PauseIcon, PlayIcon, PaperAirplaneIcon, LightBulbIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/solid';
 import { LightBulbIcon as LightBulbOutline } from '@heroicons/react/24/outline';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -12,8 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { ProjectSuggestionModal } from '@/components/projects/ProjectSuggestionModal';
 import { useRecordVoice } from '@/hooks/useRecordVoice';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { VoiceRecordButton } from '@/components/common';
 import { glassToast } from '@/components/common/GlassToast';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
@@ -28,29 +26,30 @@ interface ProjectSuggestion {
 
 interface QuickCapturePopupProps {
   trigger?: React.ReactNode;
+  startInTextMode?: boolean;
 }
 
 /**
- * Componente QuickCapturePopup
+ * QuickCapturePopup - Voice-First Capture
  * 
- * Popup para captura rápida de ideas por texto y voz.
- * En móvil, la grabación de audio se muestra inline en lugar de un nuevo modal.
+ * Al abrirse inicia grabación automáticamente.
+ * Botón "Escribir" cancela audio y muestra input de texto.
  */
-export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
+export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCapturePopupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState('');
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isProcessingText, setIsProcessingText] = useState(false);
   const [projectSuggestion, setProjectSuggestion] = useState<ProjectSuggestion | null>(null);
   
-  // Estado para grabación inline en móvil
-  const [isRecordingMode, setIsRecordingMode] = useState(false);
+  // Voice-first: por defecto NO estamos en modo texto
+  const [isTextMode, setIsTextMode] = useState(startInTextMode);
   const [isPaused, setIsPaused] = useState(false);
   const [waveformHistory, setWaveformHistory] = useState<number[]>([]);
   const [currentLevel, setCurrentLevel] = useState(0);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
   
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
   
   // Hook de grabación
   const {
@@ -68,6 +67,7 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
   const animationRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const waveformIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Formatear tiempo
   const formatTime = (seconds: number): string => {
@@ -76,11 +76,9 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Máximo de barras visibles en la onda
   const MAX_WAVEFORM_BARS = 80;
-  const waveformIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Iniciar visualización de audio estilo iPhone
+  // Iniciar visualización de audio
   const startVisualization = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -96,13 +94,11 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
       const bufferLength = analyserRef.current.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
 
-      // Actualizar nivel actual a 60fps para animación suave
       const updateLevel = () => {
         if (!analyserRef.current) return;
         
         analyserRef.current.getByteFrequencyData(dataArray);
         
-        // Calcular nivel promedio ponderado (enfocado en frecuencias de voz)
         let sum = 0;
         let count = 0;
         for (let i = 2; i < Math.min(bufferLength, 40); i++) {
@@ -117,7 +113,6 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
 
       updateLevel();
 
-      // Agregar muestras al historial cada 50ms para efecto de avance
       waveformIntervalRef.current = setInterval(() => {
         if (!analyserRef.current || isPaused) return;
         
@@ -133,7 +128,6 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
         
         setWaveformHistory(prev => {
           const newHistory = [...prev, avgLevel];
-          // Mantener solo las últimas N barras
           if (newHistory.length > MAX_WAVEFORM_BARS) {
             return newHistory.slice(-MAX_WAVEFORM_BARS);
           }
@@ -169,11 +163,24 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
     setCurrentLevel(0);
   }, []);
 
+  // Auto-iniciar grabación cuando se abre (voice-first)
+  useEffect(() => {
+    const autoStartRecording = async () => {
+      if (isOpen && !isTextMode && !hasAutoStarted && permissionState !== 'denied') {
+        setHasAutoStarted(true);
+        await startRecording();
+        await startVisualization();
+      }
+    };
+    
+    autoStartRecording();
+  }, [isOpen, isTextMode, hasAutoStarted, permissionState, startRecording, startVisualization]);
+
   // Manejar errores de grabación
   useEffect(() => {
     if (recordingError) {
       toast.error(recordingError);
-      setIsRecordingMode(false);
+      setIsTextMode(true); // Fallback a modo texto si hay error
       stopVisualization();
     }
   }, [recordingError, stopVisualization]);
@@ -181,35 +188,26 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
   // Limpiar al cerrar el popup
   useEffect(() => {
     if (!isOpen) {
-      setIsRecordingMode(false);
+      setIsTextMode(startInTextMode);
+      setHasAutoStarted(false);
       stopVisualization();
       if (isRecording) {
         cancelRecording();
       }
+      setContent('');
+      setIsPaused(false);
     }
-  }, [isOpen, isRecording, cancelRecording, stopVisualization]);
+  }, [isOpen, isRecording, cancelRecording, stopVisualization, startInTextMode]);
 
   /**
-   * Iniciar modo grabación (solo móvil)
+   * Cambiar a modo texto (cancela grabación)
    */
-  const handleStartRecordingMode = async () => {
-    if (permissionState === 'denied') {
-      toast.error('El acceso al micrófono está bloqueado. Haz clic en el icono de candado en la barra de direcciones para permitirlo.');
-      return;
-    }
-    
-    setIsRecordingMode(true);
-    await startRecording();
-    await startVisualization();
-  };
-
-  /**
-   * Cancelar grabación y volver al modo texto
-   */
-  const handleCancelRecording = () => {
+  const switchToTextMode = () => {
     stopVisualization();
-    cancelRecording();
-    setIsRecordingMode(false);
+    if (isRecording) {
+      cancelRecording();
+    }
+    setIsTextMode(true);
     setIsPaused(false);
   };
 
@@ -219,7 +217,6 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
   const handleSendRecording = async () => {
     stopVisualization();
     const audioBlob = await stopRecording();
-    setIsRecordingMode(false);
     setIsPaused(false);
     
     if (audioBlob) {
@@ -286,7 +283,6 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
       setContent('');
       setIsOpen(false);
       
-      // Check for project suggestion
       if (data?.projectSuggestion) {
         setProjectSuggestion(data.projectSuggestion);
       }
@@ -448,28 +444,21 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
               <div className="flex items-center gap-3">
-                {isRecordingMode && isMobile ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleCancelRecording}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowLeftIcon className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <LightBulbIcon className="h-4 w-4 text-primary" />
-                  </div>
-                )}
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  {isTextMode ? (
+                    <PencilIcon className="h-4 w-4 text-primary" />
+                  ) : (
+                    <MicrophoneIcon className="h-4 w-4 text-primary" />
+                  )}
+                </div>
                 <div>
                   <h2 className="font-medium text-sm">
-                    {isRecordingMode && isMobile ? 'Grabando audio' : '¿Qué tienes en mente?'}
+                    {isTextMode ? '¿Qué tienes en mente?' : 'Grabando...'}
                   </h2>
                   <p className="text-[10px] text-muted-foreground">
-                    {isRecordingMode && isMobile 
-                      ? 'Habla para capturar tu idea' 
-                      : 'Sparky clasificará automáticamente'
+                    {isTextMode 
+                      ? 'Sparky clasificará automáticamente' 
+                      : 'Habla para capturar tu idea'
                     }
                   </p>
                 </div>
@@ -477,29 +466,24 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
-                  if (isRecordingMode) {
-                    handleCancelRecording();
-                  }
-                  setIsOpen(false);
-                }}
+                onClick={() => setIsOpen(false)}
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
               >
                 <XMarkIcon className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Content - Modo grabación inline (solo móvil) */}
-            {isRecordingMode && isMobile ? (
-              <div className="p-5 flex flex-col items-center gap-6">
-                {/* Visualizador de ondas estilo iPhone */}
+            {/* Content - Modo grabación (voice-first) */}
+            {!isTextMode ? (
+              <div className="p-5 flex flex-col items-center gap-6 relative">
+                {/* Visualizador de ondas */}
                 <div className="w-full h-28 bg-gradient-to-b from-muted/30 to-muted/60 rounded-2xl flex items-center justify-end px-2 overflow-hidden relative">
                   {/* Línea central */}
                   <div className="absolute inset-y-0 left-0 right-0 flex items-center">
                     <div className="w-full h-[1px] bg-primary/20" />
                   </div>
                   
-                  {/* Indicador de nivel actual (lado derecho) */}
+                  {/* Indicador de nivel actual */}
                   <div 
                     className="absolute right-3 w-1 bg-primary rounded-full transition-all duration-75"
                     style={{
@@ -508,7 +492,7 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
                     }}
                   />
                   
-                  {/* Historial de ondas que avanza hacia la izquierda */}
+                  {/* Historial de ondas */}
                   <div className="flex items-center gap-[3px] h-full pr-6 overflow-hidden">
                     {waveformHistory.map((value, index) => {
                       const isRecent = index >= waveformHistory.length - 5;
@@ -521,7 +505,6 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
                           key={index}
                           className="flex flex-col items-center justify-center gap-[2px]"
                         >
-                          {/* Barra superior */}
                           <div
                             className={clsx(
                               'w-[3px] rounded-full transition-all',
@@ -534,7 +517,6 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
                               transition: isRecent ? 'height 50ms ease-out' : 'none',
                             }}
                           />
-                          {/* Barra inferior (espejo) */}
                           <div
                             className={clsx(
                               'w-[3px] rounded-full transition-all',
@@ -557,7 +539,7 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
                 <div className="flex items-center gap-3">
                   <div className={clsx(
                     'w-3 h-3 rounded-full',
-                    isPaused ? 'bg-amber-500' : 'bg-red-500 animate-pulse'
+                    isPaused ? 'bg-warning' : 'bg-destructive animate-pulse'
                   )} />
                   <span className="text-2xl font-mono font-semibold text-foreground">
                     {formatTime(recordingTime)}
@@ -565,7 +547,7 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
                   <span className="text-sm text-muted-foreground">/ 05:00</span>
                 </div>
 
-                {/* Controles */}
+                {/* Controles principales */}
                 <div className="flex items-center gap-4">
                   {/* Botón Pausa/Reanudar */}
                   <Button
@@ -593,13 +575,22 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
                   </Button>
                 </div>
 
-                {/* Texto de ayuda */}
+                {/* Estado */}
                 <p className="text-sm text-muted-foreground text-center">
-                  {isPaused ? 'En pausa' : 'Hablando...'}
+                  {isPaused ? 'En pausa' : isRecording ? 'Hablando...' : 'Iniciando...'}
                 </p>
+
+                {/* Botón "Escribir" en la esquina inferior */}
+                <button
+                  onClick={switchToTextMode}
+                  className="absolute bottom-5 left-5 flex items-center gap-2 px-4 py-2 rounded-full bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-all text-sm font-medium"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                  Escribir
+                </button>
               </div>
             ) : (
-              /* Content - Modo texto normal */
+              /* Content - Modo texto */
               <form onSubmit={handleSubmit} className="p-5">
                 <textarea
                   value={content}
@@ -640,60 +631,23 @@ export const QuickCapturePopup = ({ trigger }: QuickCapturePopupProps) => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {/* En móvil: botón que activa modo grabación inline */}
-                    {isMobile ? (
-                      <button
-                        type="button"
-                        onClick={handleStartRecordingMode}
-                        disabled={isLoading || permissionState === 'denied'}
-                        className={clsx(
-                          'relative flex items-center justify-center',
-                          'w-12 h-12 rounded-full',
-                          'transition-all duration-200',
-                          'disabled:opacity-50 disabled:cursor-not-allowed',
-                          permissionState === 'denied'
-                            ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                            : 'bg-primary hover:bg-primary/90 shadow-md'
-                        )}
-                        title={
-                          permissionState === 'denied' 
-                            ? 'Micrófono bloqueado' 
-                            : 'Grabar audio'
-                        }
-                        aria-label="Iniciar grabación de audio"
-                      >
-                        <MicrophoneIcon className={clsx(
-                          'h-6 w-6',
-                          permissionState === 'denied' ? 'text-muted-foreground' : 'text-white'
-                        )} />
-                      </button>
+                  <Button
+                    type="submit"
+                    disabled={isDisabled}
+                    className="gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="animate-spin">⏳</span>
+                        Procesando...
+                      </>
                     ) : (
-                      /* En desktop: usa el componente VoiceRecordButton con modal */
-                      <VoiceRecordButton
-                        onRecordingComplete={handleRecordingComplete}
-                        disabled={isLoading}
-                      />
+                      <>
+                        <PaperAirplaneIcon className="h-4 w-4" />
+                        Guardar
+                      </>
                     )}
-
-                    <Button
-                      type="submit"
-                      disabled={isDisabled}
-                      className="gap-2"
-                    >
-                      {isLoading ? (
-                        <>
-                          <span className="animate-spin">⏳</span>
-                          Procesando...
-                        </>
-                      ) : (
-                        <>
-                          <PaperAirplaneIcon className="h-4 w-4" />
-                          Guardar
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  </Button>
                 </div>
               </form>
             )}
