@@ -48,15 +48,16 @@ class SparkyChatStore {
 
   async loadMessages(): Promise<void> {
     try {
+      // Use decrypted view for reading
       const { data, error } = await supabase
-        .from('sparky_messages')
+        .from('sparky_messages_decrypted' as any)
         .select('*')
         .order('created_at', { ascending: true })
         .limit(500);
 
       if (error) throw error;
 
-      const messages = (data || []).map(msg => ({
+      const messages = ((data as any[]) || []).map((msg: any) => ({
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
