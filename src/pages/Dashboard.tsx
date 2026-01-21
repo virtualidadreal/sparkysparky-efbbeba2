@@ -117,7 +117,7 @@ const Dashboard = () => {
           </div>
 
           {/* Sparky Card */}
-          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-[24px] p-6 border border-primary/20">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border-2 border-primary/30">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                 <Sparkles className="h-6 w-6 text-primary" />

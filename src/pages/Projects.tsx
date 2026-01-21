@@ -70,7 +70,7 @@ const Projects = () => {
           </div>
 
           {/* Lista de proyectos */}
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50 flex-1">
             <ProjectList filters={filters} onEdit={handleEdit} />
           </div>
         </div>
