@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { useSidebarVisibility } from '@/hooks/useSidebarVisibility';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 import { Button } from '@/components/ui/button';
@@ -29,19 +30,19 @@ interface SidebarProps {
 }
 
 /**
- * Items de navegación del sidebar
+ * Items de navegación del sidebar con keys para visibilidad
  */
 const navigationItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Ideas', href: '/ideas', icon: LightBulbIcon },
-  { name: 'Proyectos', href: '/projects', icon: FolderIcon },
-  { name: 'Tareas', href: '/tasks', icon: CheckIcon },
-  { name: 'Personas', href: '/people', icon: UsersIcon },
-  { name: 'Diario', href: '/diary', icon: BookOpenIcon },
-  { name: 'Memoria', href: '/memory', icon: CpuChipIcon },
-  { name: 'Analytics', href: '/analytics', icon: PresentationChartLineIcon },
-  { name: 'Insights', href: '/insights', icon: ChartBarIcon },
-  { name: 'Configuración', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, key: 'dashboard' },
+  { name: 'Ideas', href: '/ideas', icon: LightBulbIcon, key: 'ideas' },
+  { name: 'Proyectos', href: '/projects', icon: FolderIcon, key: 'projects' },
+  { name: 'Tareas', href: '/tasks', icon: CheckIcon, key: 'tasks' },
+  { name: 'Personas', href: '/people', icon: UsersIcon, key: 'people' },
+  { name: 'Diario', href: '/diary', icon: BookOpenIcon, key: 'diary' },
+  { name: 'Memoria', href: '/memory', icon: CpuChipIcon, key: 'memory' },
+  { name: 'Analytics', href: '/analytics', icon: PresentationChartLineIcon, key: 'analytics' },
+  { name: 'Insights', href: '/insights', icon: ChartBarIcon, key: 'insights' },
+  { name: 'Configuración', href: '/settings', icon: Cog6ToothIcon, key: 'settings' },
 ];
 
 /**
@@ -49,6 +50,15 @@ const navigationItems = [
  */
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { data: isAdmin } = useIsAdmin();
+  const { data: visibility } = useSidebarVisibility();
+
+  // Filter navigation items based on visibility settings
+  const visibleItems = navigationItems.filter(item => {
+    // If visibility data is not loaded yet, show all items
+    if (!visibility) return true;
+    // Check if the item should be visible
+    return visibility[item.key as keyof typeof visibility] !== false;
+  });
 
   return (
     <>
@@ -86,7 +96,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
         {/* Navegación */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {navigationItems.map((item) => (
+          {visibleItems.map((item) => (
             <NavLink
               key={item.name}
               to={item.href}
