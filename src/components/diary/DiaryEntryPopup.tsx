@@ -182,8 +182,8 @@ export const DiaryEntryPopup = ({ trigger }: DiaryEntryPopupProps) => {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-amber-500/10 flex items-center justify-center">
-              <BookOpenIcon className="h-4 w-4 text-amber-600" />
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <BookOpenIcon className="h-4 w-4 text-primary" />
             </div>
             <div>
               <h2 className="font-medium text-sm">Nueva entrada de diario</h2>
@@ -215,7 +215,7 @@ export const DiaryEntryPopup = ({ trigger }: DiaryEntryPopupProps) => {
             className={clsx(
               'w-full px-4 py-3 border border-border rounded-xl resize-none bg-muted/30',
               'text-foreground placeholder-muted-foreground',
-              'focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500',
+              'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
               'transition-all duration-200',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
@@ -225,11 +225,11 @@ export const DiaryEntryPopup = ({ trigger }: DiaryEntryPopupProps) => {
           <div className="flex items-center justify-between mt-4">
             <div className="flex items-center gap-2">
               {isProcessingAudio ? (
-                <span className="text-xs text-amber-600 font-medium animate-pulse">
+                <span className="text-xs text-primary font-medium animate-pulse">
                   Procesando audio...
                 </span>
               ) : isProcessingText ? (
-                <span className="text-xs text-amber-600 font-medium animate-pulse">
+                <span className="text-xs text-primary font-medium animate-pulse">
                   Guardando...
                 </span>
               ) : content.length > 0 ? (
@@ -252,7 +252,7 @@ export const DiaryEntryPopup = ({ trigger }: DiaryEntryPopupProps) => {
               <Button
                 type="submit"
                 disabled={isDisabled}
-                className="gap-2 bg-amber-600 hover:bg-amber-700"
+                className="gap-2 bg-primary hover:bg-primary/90"
               >
                 {isLoading ? (
                   <>

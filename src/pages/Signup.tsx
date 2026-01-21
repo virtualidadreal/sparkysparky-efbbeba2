@@ -162,8 +162,8 @@ const Signup = () => {
                 <p className="mt-1 text-sm text-destructive">{errors.password}</p>
               )}
               {passwordWarning && (
-                <div className="mt-2 rounded-md bg-amber-500/10 border border-amber-500/30 p-3">
-                  <p className="text-sm text-amber-600 dark:text-amber-400">{passwordWarning}</p>
+                <div className="mt-2 rounded-md bg-primary/10 border border-primary/30 p-3">
+                  <p className="text-sm text-primary">{passwordWarning}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Puedes continuar, pero te recomendamos elegir una contraseña más segura.
                   </p>
