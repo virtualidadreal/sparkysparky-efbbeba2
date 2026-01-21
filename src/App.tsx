@@ -24,6 +24,7 @@ const Memory = lazy(() => import('@/pages/Memory'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const Signup = lazy(() => import('@/pages/Signup'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading fallback component
@@ -52,6 +53,7 @@ const App = () => {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/signup" element={<Signup />} />
 
               {/* Rutas protegidas */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
