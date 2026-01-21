@@ -20,7 +20,7 @@ All colors MUST be HSL.
 
     /* Primary amarillo #FACD1A = HSL 48 96% 54% */
     --primary: 48 96% 54%;
-    --primary-foreground: 30 15% 12%;
+    --primary-foreground: 30 20% 8%;
 
     --secondary: 43 30% 88%;
     --secondary-foreground: 30 10% 15%;
@@ -29,7 +29,7 @@ All colors MUST be HSL.
     --muted-foreground: 30 10% 45%;
 
     --accent: 48 96% 54%;
-    --accent-foreground: 30 15% 12%;
+    --accent-foreground: 30 20% 8%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -43,7 +43,7 @@ All colors MUST be HSL.
     --sidebar-background: 43 19% 95%;
     --sidebar-foreground: 30 10% 25%;
     --sidebar-primary: 48 96% 54%;
-    --sidebar-primary-foreground: 30 15% 12%;
+    --sidebar-primary-foreground: 30 20% 8%;
     --sidebar-accent: 43 25% 90%;
     --sidebar-accent-foreground: 30 10% 15%;
     --sidebar-border: 40 15% 88%;
@@ -67,7 +67,7 @@ All colors MUST be HSL.
 
     /* Primary amarillo #FACD1A en dark */
     --primary: 48 96% 52%;
-    --primary-foreground: 30 15% 8%;
+    --primary-foreground: 30 25% 5%;
 
     --secondary: 30 15% 20%;
     --secondary-foreground: 43 20% 95%;
@@ -76,7 +76,7 @@ All colors MUST be HSL.
     --muted-foreground: 43 15% 60%;
 
     --accent: 48 96% 52%;
-    --accent-foreground: 30 15% 8%;
+    --accent-foreground: 30 25% 5%;
 
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 100%;
@@ -88,7 +88,7 @@ All colors MUST be HSL.
     --sidebar-background: 30 10% 10%;
     --sidebar-foreground: 43 20% 90%;
     --sidebar-primary: 48 96% 52%;
-    --sidebar-primary-foreground: 30 15% 8%;
+    --sidebar-primary-foreground: 30 25% 5%;
     --sidebar-accent: 30 15% 15%;
     --sidebar-accent-foreground: 43 20% 90%;
     --sidebar-border: 30 15% 18%;
