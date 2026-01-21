@@ -1,28 +1,17 @@
 import { useState, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { useTasks, useTasksWithSubtasks, useCreateTask, useToggleTaskComplete, useDeleteTask, useTaskCounts } from '@/hooks/useTasks';
 import { useTaskListsWithCounts, useCreateTaskList } from '@/hooks/useTaskLists';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
-import { useIsAdmin } from '@/hooks/useAdmin';
 import { TaskEditPanel } from '@/components/tasks/TaskEditPanel';
 import { MobileFooter } from '@/components/layout/MobileFooter';
+import { AppSidebar } from '@/components/layout/AppSidebar';
 import type { Task } from '@/types/Task.types';
 import { format, isToday, isTomorrow, isPast, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
-  Home,
-  Users,
-  Settings,
   Plus,
-  Lightbulb,
-  FolderOpen,
   CheckSquare,
-  Brain,
-  BarChart3,
-  ShieldCheck,
-  Mic,
-  BookOpen,
   Calendar,
   CalendarDays,
   Clock,
@@ -41,10 +30,8 @@ import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton
 type DateView = 'today' | 'tomorrow' | 'upcoming' | 'overdue' | 'all' | null;
 
 const Tasks = () => {
-  const location = useLocation();
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const { data: isAdmin } = useIsAdmin();
   
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [selectedDateView, setSelectedDateView] = useState<DateView>(null);
@@ -134,64 +121,12 @@ const Tasks = () => {
     { id: 'all' as DateView, label: 'Todas', icon: List, count: taskCounts?.all || 0 },
   ];
 
-  const navItems = [
-    { to: '/dashboard', icon: Home, label: 'Dashboard' },
-    { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-    { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
-    { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
-    { to: '/people', icon: Users, label: 'Personas' },
-    { to: '/diary', icon: BookOpen, label: 'Diario' },
-    { to: '/memory', icon: Brain, label: 'Memoria' },
-    { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
-    { to: '/settings', icon: Settings, label: 'Configuración' },
-  ];
-
   return (
     <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 pb-24 lg:pb-3 overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
         
-        {/* Left Sidebar - Navigation (fixed) */}
-        <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col h-full overflow-hidden">
-            <nav className="space-y-0.5 flex-1 overflow-y-auto">
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.to;
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                      isActive
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-
-              {isAdmin && (
-                <>
-                  <div className="border-t border-border my-3" />
-                  <Link
-                    to="/admin"
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                      location.pathname === '/admin'
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
-                  >
-                    <ShieldCheck className="h-5 w-5" />
-                    Admin
-                  </Link>
-                </>
-              )}
-            </nav>
-
-          </div>
-        </div>
+        {/* Left Sidebar */}
+        <AppSidebar />
 
         {/* Main Content - scrollable */}
         <div className="flex flex-col gap-3 h-full overflow-y-auto pt-4">

@@ -1,27 +1,13 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { PersonList, PersonForm } from '@/components/people';
 import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { usePeople } from '@/hooks/usePeople';
 import type { PeopleFilters } from '@/types/Person.types';
-import { useIsAdmin } from '@/hooks/useAdmin';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { MobileFooter } from '@/components/layout/MobileFooter';
 import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton';
-import {
-  Home,
-  Users,
-  Settings,
-  Plus,
-  Lightbulb,
-  FolderOpen,
-  CheckSquare,
-  Brain,
-  BarChart3,
-  ShieldCheck,
-  Mic,
-  BookOpen,
-} from 'lucide-react';
+import { AppSidebar } from '@/components/layout/AppSidebar';
+import { Mic } from 'lucide-react';
 
 /**
  * Página People - CRM Personal con estilo Dashboard
@@ -31,8 +17,6 @@ const People = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
-  const location = useLocation();
-  const { data: isAdmin } = useIsAdmin();
 
   const { data: allPeople } = usePeople();
   
@@ -69,61 +53,8 @@ const People = () => {
       {/* 3-column grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
         
-        {/* Left Sidebar - fixed height */}
-        <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-4 shadow-sm flex flex-col h-full overflow-hidden">
-            {/* Nav Items */}
-            <nav className="space-y-0.5 flex-1 overflow-y-auto">
-              {[
-                { to: '/dashboard', icon: Home, label: 'Dashboard' },
-                { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-                { to: '/projects', icon: FolderOpen, label: 'Proyectos' },
-                { to: '/tasks', icon: CheckSquare, label: 'Tareas' },
-                { to: '/people', icon: Users, label: 'Personas' },
-                { to: '/diary', icon: BookOpen, label: 'Diario' },
-                { to: '/memory', icon: Brain, label: 'Memoria' },
-                { to: '/estadisticas', icon: BarChart3, label: 'Estadísticas' },
-                { to: '/settings', icon: Settings, label: 'Configuración' },
-              ].map((item) => {
-                const isActive = location.pathname === item.to || 
-                  (item.to === '/dashboard' && location.pathname === '/');
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                      isActive
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-
-              {/* Admin link */}
-              {isAdmin && (
-                <>
-                  <div className="border-t border-border my-3" />
-                  <Link
-                    to="/admin"
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
-                      location.pathname === '/admin'
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
-                  >
-                    <ShieldCheck className="h-5 w-5" />
-                    Admin
-                  </Link>
-                </>
-              )}
-            </nav>
-
-          </div>
-        </div>
+        {/* Left Sidebar */}
+        <AppSidebar />
 
         {/* Main Content - scrollable */}
         <div className="flex flex-col gap-4 h-full overflow-y-auto pt-4">
@@ -167,9 +98,9 @@ const People = () => {
           </div>
         </div>
 
-        {/* Right Sidebar - fixed height */}
+        {/* Right Sidebar */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border-2 border-border/50">
           {/* Nuevo Contacto */}
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
