@@ -822,10 +822,172 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      diary_entries_decrypted: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          detected_emotions: string[] | null
+          entry_date: string | null
+          id: string | null
+          mood: string | null
+          related_people: string[] | null
+          sentiment: string | null
+          summary: string | null
+          tags: string[] | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: never
+          created_at?: string | null
+          detected_emotions?: string[] | null
+          entry_date?: string | null
+          id?: string | null
+          mood?: string | null
+          related_people?: string[] | null
+          sentiment?: string | null
+          summary?: never
+          tags?: string[] | null
+          title?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: never
+          created_at?: string | null
+          detected_emotions?: string[] | null
+          entry_date?: string | null
+          id?: string | null
+          mood?: string | null
+          related_people?: string[] | null
+          sentiment?: string | null
+          summary?: never
+          tags?: string[] | null
+          title?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ideas_decrypted: {
+        Row: {
+          audio_url: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          detected_emotions: string[] | null
+          id: string | null
+          improved_content: string | null
+          metadata: Json | null
+          next_steps: Json | null
+          original_content: string | null
+          priority: string | null
+          project_id: string | null
+          related_people: string[] | null
+          sentiment: string | null
+          sparky_take: string | null
+          status: string | null
+          suggested_improvements: Json | null
+          summary: string | null
+          tags: string[] | null
+          title: string | null
+          transcription: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: never
+          detected_emotions?: string[] | null
+          id?: string | null
+          improved_content?: never
+          metadata?: Json | null
+          next_steps?: Json | null
+          original_content?: never
+          priority?: string | null
+          project_id?: string | null
+          related_people?: string[] | null
+          sentiment?: string | null
+          sparky_take?: never
+          status?: string | null
+          suggested_improvements?: Json | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: never
+          transcription?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: never
+          detected_emotions?: string[] | null
+          id?: string | null
+          improved_content?: never
+          metadata?: Json | null
+          next_steps?: Json | null
+          original_content?: never
+          priority?: string | null
+          project_id?: string | null
+          related_people?: string[] | null
+          sentiment?: string | null
+          sparky_take?: never
+          status?: string | null
+          suggested_improvements?: Json | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: never
+          transcription?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ideas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sparky_messages_decrypted: {
+        Row: {
+          brain: string | null
+          content: string | null
+          created_at: string | null
+          id: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          brain?: string | null
+          content?: never
+          created_at?: string | null
+          id?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          brain?: string | null
+          content?: never
+          created_at?: string | null
+          id?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_user_quota: { Args: { p_user_id: string }; Returns: Json }
+      decrypt_text: { Args: { encrypted_text: string }; Returns: string }
+      encrypt_text: { Args: { plain_text: string }; Returns: string }
       increment_user_usage: { Args: { p_user_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       owns_person_record: {

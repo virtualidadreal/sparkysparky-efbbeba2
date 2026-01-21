@@ -32,8 +32,9 @@ export const useIdeas = (filters?: IdeasFilters) => {
   return useQuery({
     queryKey: QUERY_KEYS.ideas(filters),
     queryFn: async () => {
+      // Use decrypted view for reading
       let query = supabase
-        .from('ideas')
+        .from('ideas_decrypted' as any)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -89,8 +90,9 @@ export const useIdea = (id: string) => {
   return useQuery({
     queryKey: QUERY_KEYS.idea(id),
     queryFn: async () => {
+      // Use decrypted view for reading
       const { data, error } = await supabase
-        .from('ideas')
+        .from('ideas_decrypted' as any)
         .select('*')
         .eq('id', id)
         .maybeSingle();

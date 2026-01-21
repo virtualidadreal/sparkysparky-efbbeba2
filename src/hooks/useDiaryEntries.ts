@@ -23,8 +23,9 @@ export const useDiaryEntries = (filters?: DiaryEntriesFilters) => {
   return useQuery({
     queryKey: QUERY_KEYS.diaryEntries(filters),
     queryFn: async () => {
+      // Use decrypted view for reading
       let query = supabase
-        .from('diary_entries')
+        .from('diary_entries_decrypted' as any)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -49,7 +50,7 @@ export const useDiaryEntries = (filters?: DiaryEntriesFilters) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []).map(entry => ({
+      return ((data as any[]) || []).map(entry => ({
         ...entry,
         tags: entry.tags || [],
         related_people: entry.related_people || [],
@@ -66,15 +67,16 @@ export const useDiaryEntry = (id: string) => {
   return useQuery({
     queryKey: QUERY_KEYS.diaryEntry(id),
     queryFn: async () => {
+      // Use decrypted view for reading
       const { data, error } = await supabase
-        .from('diary_entries')
+        .from('diary_entries_decrypted' as any)
         .select('*')
         .eq('id', id)
         .maybeSingle();
 
       if (error) throw error;
       if (!data) throw new Error('Entrada de diario no encontrada');
-      return data as DiaryEntry;
+      return data as unknown as DiaryEntry;
     },
     enabled: !!id,
   });
