@@ -52,7 +52,7 @@ export const AppSidebar = () => {
   return (
     <>
       <div className="hidden lg:flex flex-col h-full">
-        <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border-2 border-border/50">
+        <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col h-full overflow-hidden border border-border/50">
           {/* Logo */}
           <div className="px-4 mb-4">
             <Link to="/dashboard">

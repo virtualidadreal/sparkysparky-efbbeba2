@@ -107,7 +107,7 @@ const Dashboard = () => {
         <AppSidebar />
 
         {/* Main Content - scrollable */}
-        <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col gap-4 h-full overflow-y-auto border-2 border-border/50">
+        <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-4 flex flex-col gap-4 h-full overflow-y-auto border border-border/50">
           {/* Greeting */}
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
@@ -117,7 +117,7 @@ const Dashboard = () => {
           </div>
 
           {/* Sparky Card */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border-2 border-primary/30">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border border-primary/30">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                 <Sparkles className="h-6 w-6 text-primary" />
@@ -158,7 +158,7 @@ const Dashboard = () => {
                   <button
                     key={idea.id}
                     onClick={() => setSelectedIdea(idea)}
-                    className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 text-left hover:bg-muted/30 transition-all group border-2 border-border/50"
+                    className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 text-left hover:bg-muted/30 transition-all group border border-border/50"
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xl">💡</span>
@@ -178,7 +178,7 @@ const Dashboard = () => {
                 ))
               ) : (
                 <>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">💡</span>
                     </div>
@@ -186,7 +186,7 @@ const Dashboard = () => {
                       Captura tu primera idea
                     </p>
                   </div>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">💡</span>
                     </div>
@@ -194,7 +194,7 @@ const Dashboard = () => {
                       Dicta o escribe ideas
                     </p>
                   </div>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">💡</span>
                     </div>
@@ -218,7 +218,7 @@ const Dashboard = () => {
                   <Link
                     key={entry.id}
                     to="/diary"
-                    className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 text-left hover:bg-muted/30 transition-all group border-2 border-border/50"
+                    className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 text-left hover:bg-muted/30 transition-all group border border-border/50"
                   >
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">📖</span>
@@ -238,7 +238,7 @@ const Dashboard = () => {
                 ))
               ) : (
                 <>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">📖</span>
                     </div>
@@ -246,7 +246,7 @@ const Dashboard = () => {
                       Escribe tu primera entrada
                     </p>
                   </div>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">📖</span>
                     </div>
@@ -254,7 +254,7 @@ const Dashboard = () => {
                       Reflexiona sobre tu día
                     </p>
                   </div>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border-2 border-border/50">
+                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">📖</span>
                     </div>
@@ -273,7 +273,7 @@ const Dashboard = () => {
 
         {/* Right Sidebar - fixed height */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border-2 border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border border-border/50">
           {/* En tu cabeza */}
           <div className="mb-8">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
