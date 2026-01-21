@@ -56,16 +56,6 @@ export const AppSidebar = () => {
           <div className="px-4 mb-4">
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Sparky</h1>
           </div>
-
-          {/* Search Button */}
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="flex items-center gap-3 px-4 py-2.5 mx-2 mb-3 rounded-xl bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors border border-border/50"
-          >
-            <Search className="h-4 w-4" />
-            <span className="text-sm">Buscar...</span>
-            <kbd className="ml-auto text-xs px-1.5 py-0.5 rounded bg-muted/50 font-mono">⌘K</kbd>
-          </button>
           
           {/* Nav Items */}
           <nav className="space-y-0.5 flex-1 overflow-y-auto">
@@ -106,6 +96,16 @@ export const AppSidebar = () => {
               </>
             )}
           </nav>
+
+          {/* Search Button - Bottom */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="flex items-center gap-3 px-4 py-2.5 mt-3 rounded-xl bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors border border-border/50"
+          >
+            <Search className="h-4 w-4" />
+            <span className="text-sm">Buscar...</span>
+            <kbd className="ml-auto text-xs px-1.5 py-0.5 rounded bg-muted/50 font-mono">⌘K</kbd>
+          </button>
         </div>
       </div>
 
