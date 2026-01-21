@@ -2,12 +2,15 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePasswordCheck } from '@/hooks/usePasswordCheck';
+import { useEarlyAccess } from '@/hooks/useEarlyAccess';
+import { Sparkles, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Signup = () => {
   const navigate = useNavigate();
   const { signUp, user, loading: authLoading } = useAuth();
   const { checkPassword, isChecking } = usePasswordCheck();
+  const { stats, claimSpot, loading: earlyAccessLoading } = useEarlyAccess();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,6 +19,9 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [passwordWarning, setPasswordWarning] = useState<string | null>(null);
+
+  const spotsRemaining = stats?.spots_remaining ?? 30;
+  const isEarlyAccessAvailable = stats?.is_available ?? true;
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -79,6 +85,19 @@ const Signup = () => {
           toast.error(error.message);
         }
       } else {
+        // After successful signup, try to claim early access spot
+        if (isEarlyAccessAvailable) {
+          try {
+            const claimResult = await claimSpot();
+            if (claimResult.success) {
+              toast.success('🔥 ¡Felicidades! Tienes 3 meses de Sparky Pro gratis');
+            }
+          } catch (claimError) {
+            // Silent fail for claim - user still got registered
+            console.log('Could not claim early access spot:', claimError);
+          }
+        }
+        
         toast.success('¡Cuenta creada! Redirigiendo...');
         setTimeout(() => navigate('/dashboard'), 1500);
       }
@@ -104,6 +123,28 @@ const Signup = () => {
           <h1 className="text-4xl font-bold text-foreground">Sparky</h1>
           <p className="mt-2 text-muted-foreground">Tu asistente IA personal</p>
         </div>
+
+        {/* Early Access Banner */}
+        {isEarlyAccessAvailable && (
+          <div className="mb-4 rounded-xl bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">Oferta de lanzamiento</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {earlyAccessLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Cargando...
+                </span>
+              ) : (
+                <>
+                  🔥 <strong>{spotsRemaining} plazas</strong> disponibles para 3 meses de Pro gratis
+                </>
+              )}
+            </p>
+          </div>
+        )}
 
         <div className="rounded-lg border bg-card p-8 shadow-sm">
           <h2 className="mb-6 text-2xl font-semibold text-card-foreground">Crear Cuenta</h2>
@@ -200,7 +241,9 @@ const Signup = () => {
               disabled={loading || isChecking}
               className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {isChecking ? 'Verificando seguridad...' : loading ? 'Creando cuenta...' : 'Registrarse'}
+              {isChecking ? 'Verificando seguridad...' : loading ? 'Creando cuenta...' : (
+                isEarlyAccessAvailable ? '🔥 Registrarse y obtener Pro gratis' : 'Registrarse'
+              )}
             </button>
           </form>
 
