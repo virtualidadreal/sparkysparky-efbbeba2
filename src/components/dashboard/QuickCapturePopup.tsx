@@ -507,32 +507,43 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                       <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
                     </div>
                     
-                    {/* Indicador de nivel actual (pulso brillante) */}
+                    {/* Indicador de nivel actual (pulso brillante con color vibrante) */}
                     <div 
-                      className="absolute right-6 w-1 rounded-full transition-all duration-100 shadow-lg shadow-primary/30"
+                      className="absolute right-6 w-1.5 rounded-full transition-all duration-100"
                       style={{
                         height: `${Math.max(16, currentLevel * 80)}px`,
-                        opacity: isPaused ? 0.3 : 1,
-                        background: 'linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.6) 100%)',
+                        opacity: isPaused ? 0.4 : 1,
+                        background: 'linear-gradient(180deg, hsl(45, 95%, 60%) 0%, hsl(35, 90%, 55%) 50%, hsl(25, 85%, 50%) 100%)',
+                        boxShadow: isPaused ? 'none' : '0 0 12px hsl(45, 95%, 60%), 0 0 20px hsl(45, 90%, 55%)',
                       }}
                     />
                     
-                    {/* Historial de ondas - barras simétricas */}
+                    {/* Historial de ondas - barras simétricas con colores vibrantes */}
                     <div className="flex items-center gap-[3px] h-full py-4">
                       {waveformHistory.length === 0 ? (
                         // Placeholder elegante cuando no hay datos
                         <div className="flex items-center gap-[3px]">
                           {Array.from({ length: 40 }).map((_, i) => {
                             const height = 4 + Math.sin(i * 0.3) * 3;
+                            // Gradiente de colores para placeholder
+                            const hue = (i / 40) * 60 + 30; // De naranja a amarillo
                             return (
                               <div key={i} className="flex flex-col items-center gap-[2px]">
                                 <div 
-                                  className="w-[2px] bg-primary/15 rounded-full" 
-                                  style={{ height: `${height}px` }}
+                                  className="w-[2.5px] rounded-full" 
+                                  style={{ 
+                                    height: `${height}px`,
+                                    background: `hsl(${hue}, 80%, 65%)`,
+                                    opacity: 0.3,
+                                  }}
                                 />
                                 <div 
-                                  className="w-[2px] bg-primary/15 rounded-full" 
-                                  style={{ height: `${height}px` }}
+                                  className="w-[2.5px] rounded-full" 
+                                  style={{ 
+                                    height: `${height}px`,
+                                    background: `hsl(${hue}, 80%, 65%)`,
+                                    opacity: 0.3,
+                                  }}
                                 />
                               </div>
                             );
@@ -541,8 +552,17 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                       ) : (
                         waveformHistory.slice(-50).map((value, index, arr) => {
                           const isRecent = index >= arr.length - 8;
-                          const opacity = isPaused ? 0.25 : 0.4 + (index / arr.length) * 0.6;
-                          const barHeight = Math.max(3, value * 36);
+                          const opacity = isPaused ? 0.4 : 0.6 + (index / arr.length) * 0.4;
+                          const barHeight = Math.max(4, value * 40);
+                          
+                          // Crear gradiente de colores vibrantes: coral → naranja → amarillo → dorado
+                          const progress = index / arr.length;
+                          const hue = 35 + progress * 25; // 35 (naranja) → 60 (amarillo)
+                          const saturation = 85 + (isRecent ? 10 : 0);
+                          const lightness = 55 + (value * 15);
+                          
+                          const barColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                          const glowColor = `hsl(${hue}, 90%, 60%)`;
                           
                           return (
                             <div
@@ -551,26 +571,30 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                             >
                               {/* Barra superior */}
                               <div
-                                className="w-[2px] rounded-full transition-all duration-75"
+                                className="w-[2.5px] rounded-full transition-all duration-75"
                                 style={{
                                   height: `${barHeight}px`,
                                   opacity,
                                   background: isRecent && !isPaused
-                                    ? 'linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.5) 100%)'
-                                    : 'hsl(var(--primary) / 0.5)',
-                                  boxShadow: isRecent && !isPaused ? '0 0 4px hsl(var(--primary) / 0.3)' : 'none',
+                                    ? `linear-gradient(180deg, ${barColor} 0%, hsl(${hue + 10}, 95%, 65%) 50%, ${barColor} 100%)`
+                                    : barColor,
+                                  boxShadow: isRecent && !isPaused 
+                                    ? `0 0 8px ${glowColor}, 0 0 12px ${glowColor}` 
+                                    : `0 0 3px ${glowColor}40`,
                                 }}
                               />
                               {/* Barra inferior (espejo) */}
                               <div
-                                className="w-[2px] rounded-full transition-all duration-75"
+                                className="w-[2.5px] rounded-full transition-all duration-75"
                                 style={{
                                   height: `${barHeight}px`,
                                   opacity,
                                   background: isRecent && !isPaused
-                                    ? 'linear-gradient(0deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.5) 100%)'
-                                    : 'hsl(var(--primary) / 0.5)',
-                                  boxShadow: isRecent && !isPaused ? '0 0 4px hsl(var(--primary) / 0.3)' : 'none',
+                                    ? `linear-gradient(0deg, ${barColor} 0%, hsl(${hue + 10}, 95%, 65%) 50%, ${barColor} 100%)`
+                                    : barColor,
+                                  boxShadow: isRecent && !isPaused 
+                                    ? `0 0 8px ${glowColor}, 0 0 12px ${glowColor}` 
+                                    : `0 0 3px ${glowColor}40`,
                                 }}
                               />
                             </div>
