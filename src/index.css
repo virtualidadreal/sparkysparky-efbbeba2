@@ -25,8 +25,8 @@ All colors MUST be HSL.
     --secondary: 43 30% 88%;
     --secondary-foreground: 30 10% 15%;
 
-    --muted: 43 20% 90%;
-    --muted-foreground: 30 10% 45%;
+    --muted: 40 25% 88%;
+    --muted-foreground: 30 15% 40%;
 
     --accent: 48 96% 54%;
     --accent-foreground: 30 20% 8%;
@@ -34,8 +34,8 @@ All colors MUST be HSL.
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 15% 70%;
-    --input: 40 15% 75%;
+    --border: 35 20% 65%;
+    --input: 35 20% 70%;
     --ring: 48 96% 54%;
 
     --radius: 0.5rem;
@@ -72,8 +72,8 @@ All colors MUST be HSL.
     --secondary: 30 15% 20%;
     --secondary-foreground: 43 20% 95%;
 
-    --muted: 30 15% 18%;
-    --muted-foreground: 43 15% 60%;
+    --muted: 30 20% 18%;
+    --muted-foreground: 40 15% 55%;
 
     --accent: 48 96% 52%;
     --accent-foreground: 30 25% 5%;
@@ -81,8 +81,8 @@ All colors MUST be HSL.
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 20%;
-    --input: 30 15% 20%;
+    --border: 35 20% 25%;
+    --input: 35 20% 25%;
     --ring: 48 96% 52%;
 
     --sidebar-background: 30 10% 10%;
