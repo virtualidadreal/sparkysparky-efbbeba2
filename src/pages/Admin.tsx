@@ -42,6 +42,9 @@ import {
   Brain,
   BarChart3,
   ShieldCheck,
+  LayoutDashboard,
+  Eye,
+  EyeOff,
   Mic,
   BookOpen,
   Key,
@@ -52,7 +55,7 @@ import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 
 type CategoryKey = keyof typeof PROMPT_CATEGORIES;
 type SettingsCategoryKey = keyof typeof SETTINGS_CATEGORIES;
-type TabType = 'prompts' | 'settings' | 'apis';
+type TabType = 'prompts' | 'settings' | 'apis' | 'navigation';
 
 const categoryIcons: Record<string, React.ElementType> = {
   DocumentTextIcon,
@@ -132,6 +135,26 @@ const Admin = () => {
     });
     return map;
   }, [settings]);
+
+  // Obtener sidebar visibility setting
+  const sidebarVisibilitySetting = useMemo(() => {
+    return settings?.find(s => s.key === 'sidebar_visibility');
+  }, [settings]);
+
+  const sidebarVisibility = useMemo(() => {
+    return sidebarVisibilitySetting?.value || {
+      dashboard: true,
+      ideas: true,
+      projects: true,
+      tasks: true,
+      people: true,
+      diary: true,
+      memory: true,
+      analytics: true,
+      insights: true,
+      settings: true,
+    };
+  }, [sidebarVisibilitySetting]);
 
   // Obtener prompts para la categoría activa
   const categoryConfig = PROMPT_CATEGORIES[activeCategory];
@@ -217,6 +240,21 @@ const Admin = () => {
 
   const handleUpdateSetting = async (id: string, key: string, newValue: any) => {
     await updateSetting.mutateAsync({ id, value: { [key]: newValue } });
+  };
+
+  // Handler para actualizar visibilidad del sidebar
+  const handleToggleSidebarSection = async (sectionKey: string) => {
+    if (!sidebarVisibilitySetting) return;
+    
+    const newVisibility = {
+      ...sidebarVisibility,
+      [sectionKey]: !sidebarVisibility[sectionKey],
+    };
+    
+    await updateSetting.mutateAsync({ 
+      id: sidebarVisibilitySetting.id, 
+      value: newVisibility 
+    });
   };
 
   const CategoryIcon = categoryIcons[categoryConfig.icon] || DocumentTextIcon;
@@ -797,6 +835,86 @@ const Admin = () => {
                 </div>
               )}
 
+              {/* NAVIGATION TAB */}
+              {activeTab === 'navigation' && (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 px-1">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <LayoutDashboard className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-foreground">Visibilidad del Menú</h2>
+                      <p className="text-sm text-muted-foreground">Controla qué secciones ven los usuarios en el sidebar</p>
+                    </div>
+                  </div>
+
+                  {/* Navigation Sections */}
+                  <Card className="p-5">
+                    <h3 className="font-medium text-foreground mb-4">Secciones del menú lateral</h3>
+                    <div className="space-y-3">
+                      {[
+                        { key: 'dashboard', label: 'Dashboard', description: 'Página principal con resumen' },
+                        { key: 'ideas', label: 'Ideas', description: 'Captura y gestión de ideas' },
+                        { key: 'projects', label: 'Proyectos', description: 'Organización de proyectos' },
+                        { key: 'tasks', label: 'Tareas', description: 'Gestión de tareas' },
+                        { key: 'people', label: 'Personas', description: 'Directorio de contactos' },
+                        { key: 'diary', label: 'Diario', description: 'Entradas de diario personal' },
+                        { key: 'memory', label: 'Memoria', description: 'Memoria a largo plazo de Sparky' },
+                        { key: 'analytics', label: 'Analytics', description: 'Métricas y análisis' },
+                        { key: 'insights', label: 'Insights', description: 'Sugerencias e insights' },
+                        { key: 'settings', label: 'Configuración', description: 'Ajustes de usuario' },
+                      ].map((section) => (
+                        <div 
+                          key={section.key} 
+                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            {sidebarVisibility[section.key] ? (
+                              <Eye className="h-5 w-5 text-primary" />
+                            ) : (
+                              <EyeOff className="h-5 w-5 text-muted-foreground" />
+                            )}
+                            <div>
+                              <h4 className="font-medium text-foreground">{section.label}</h4>
+                              <p className="text-xs text-muted-foreground">{section.description}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleToggleSidebarSection(section.key)}
+                            disabled={updateSetting.isPending}
+                            className={clsx(
+                              'relative w-12 h-6 rounded-full transition-colors',
+                              sidebarVisibility[section.key] ? 'bg-primary' : 'bg-muted',
+                              updateSetting.isPending && 'opacity-50 cursor-not-allowed'
+                            )}
+                          >
+                            <span 
+                              className={clsx(
+                                'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                                sidebarVisibility[section.key] ? 'left-7' : 'left-1'
+                              )}
+                            />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+
+                  {/* Warning Card */}
+                  <Card className="p-4 bg-warning/10 border-warning/30">
+                    <div className="flex items-start gap-3">
+                      <EyeOff className="h-5 w-5 text-warning mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-foreground">Nota importante</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Los cambios afectan a todos los usuarios de la aplicación. Las secciones ocultas seguirán siendo accesibles por URL directa.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
               {/* Info Card */}
               <Card className="p-4 bg-primary/5 border-primary/20">
                 <div className="flex items-start gap-3">
@@ -808,7 +926,9 @@ const Admin = () => {
                         ? 'Los prompts y configuraciones de IA se cargan dinámicamente por las edge functions. Cada prompt puede usar un modelo diferente según tus necesidades.'
                         : activeTab === 'apis'
                           ? 'Las claves de API se almacenan de forma segura como secretos en Lovable Cloud y nunca se exponen en el código.'
-                          : 'Las configuraciones globales afectan el comportamiento de Sparky para todos los usuarios. Los cambios se aplican inmediatamente.'
+                          : activeTab === 'navigation'
+                            ? 'Ocultar una sección la eliminará del menú lateral para todos los usuarios. Los administradores siempre pueden acceder desde el panel de admin.'
+                            : 'Las configuraciones globales afectan el comportamiento de Sparky para todos los usuarios. Los cambios se aplican inmediatamente.'
                       }
                     </p>
                   </div>
@@ -862,6 +982,18 @@ const Admin = () => {
                 >
                   <Key className="h-5 w-5" />
                   APIs de IA
+                </button>
+                <button
+                  onClick={() => setActiveTab('navigation')}
+                  className={clsx(
+                    'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left',
+                    activeTab === 'navigation'
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  )}
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                  Navegación
                 </button>
               </div>
             </div>
