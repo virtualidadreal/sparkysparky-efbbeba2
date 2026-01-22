@@ -55,7 +55,22 @@ class SparkyChatStore {
         .order('created_at', { ascending: true })
         .limit(500);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Store] Error loading messages:', error);
+        // Don't clear messages on error - keep existing state
+        return;
+      }
+
+      // Only update if we got valid data
+      // Don't clear existing messages if query returned empty unexpectedly
+      if (!data || data.length === 0) {
+        // If we already have messages in state, don't clear them
+        // This prevents accidental data loss during RLS/session issues
+        if (this.state.messages.length > 0) {
+          console.warn('[Store] Query returned empty but we have existing messages - keeping state');
+          return;
+        }
+      }
 
       const messages = ((data as any[]) || []).map((msg: any) => ({
         id: msg.id,
@@ -68,7 +83,8 @@ class SparkyChatStore {
 
       this.setState({ messages });
     } catch (error) {
-      console.error('[Store] Error loading:', error);
+      console.error('[Store] Exception loading:', error);
+      // Don't clear messages on exception
     }
   }
 
@@ -184,13 +200,18 @@ class SparkyChatStore {
         });
       }
 
-      // Reload from DB to get correct IDs
-      await this.loadMessages();
+      // Reload from DB to get correct IDs - but don't lose messages if it fails
+      try {
+        await this.loadMessages();
+      } catch (reloadError) {
+        console.warn('[Store] Failed to reload after send, keeping current state');
+      }
       console.log('[Store] Send complete');
 
     } catch (error) {
       console.error('[Store] Error:', error);
-      await this.loadMessages();
+      // Don't call loadMessages here to avoid losing the messages we just added
+      // The user's message is already in the UI, just log the error
     } finally {
       this.isSending = false;
       this.setState({ isLoading: false });
