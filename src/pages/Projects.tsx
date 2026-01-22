@@ -71,7 +71,7 @@ const Projects = () => {
 
           {/* Lista de proyectos */}
           <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50 flex-1">
-            <ProjectList filters={filters} onEdit={handleEdit} />
+            <ProjectList filters={filters} onEdit={handleEdit} onCreateNew={() => setIsFormOpen(true)} />
           </div>
         </div>
 
