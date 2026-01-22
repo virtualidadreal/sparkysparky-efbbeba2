@@ -83,7 +83,7 @@ serve(async (req: Request): Promise<Response> => {
                 </p>
                 
                 <div style="text-align: center; margin: 32px 0;">
-                  <a href="https://sparkysparky.lovable.app/dashboard" 
+                  <a href="https://soysparky.com/dashboard" 
                      style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #1a1a1a; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
                     Ir a Sparky →
                   </a>

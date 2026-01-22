@@ -91,14 +91,14 @@ serve(async (req: Request): Promise<Response> => {
                 </div>
                 
                 <div style="text-align: center; margin: 32px 0;">
-                  <a href="https://sparkysparky.lovable.app/dashboard" 
+                  <a href="https://soysparky.com/dashboard" 
                      style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #1a1a1a; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
                     Empezar a usar Sparky Pro →
                   </a>
                 </div>
                 
                 <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 24px 0 0 0;">
-                  Puedes gestionar tu suscripción en cualquier momento desde <a href="https://sparkysparky.lovable.app/settings" style="color: #f59e0b;">Ajustes → Suscripción</a>.
+                  Puedes gestionar tu suscripción en cualquier momento desde <a href="https://soysparky.com/settings" style="color: #f59e0b;">Ajustes → Suscripción</a>.
                 </p>
                 
                 <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 16px 0 0 0; text-align: center;">

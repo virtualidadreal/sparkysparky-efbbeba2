@@ -49,7 +49,7 @@ serve(async (req) => {
     }
 
     // Create checkout session
-    const origin = req.headers.get("origin") || "https://sparkysparky.lovable.app";
+    const origin = req.headers.get("origin") || "https://soysparky.com";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,

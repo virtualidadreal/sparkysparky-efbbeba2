@@ -146,7 +146,7 @@ const SubscriptionSuccess = () => {
           className="mt-6 text-sm text-muted-foreground"
         >
           ¿Tienes alguna pregunta?{' '}
-          <a href="mailto:soporte@sparky.app" className="text-primary hover:underline">
+          <a href="mailto:hola@soysparky.com" className="text-primary hover:underline">
             Contáctanos
           </a>
         </motion.p>
