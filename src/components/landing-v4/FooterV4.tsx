@@ -21,7 +21,7 @@ const FooterV4 = () => {
             <Link to="/privacy" className="text-[#FAFAFA]/60 hover:text-[#FFB800] transition-colors">
               Privacidad
             </Link>
-            <a href="mailto:hola@sparky.app" className="text-[#FAFAFA]/60 hover:text-[#FFB800] transition-colors">
+            <a href="mailto:hola@soysparky.com" className="text-[#FAFAFA]/60 hover:text-[#FFB800] transition-colors">
               Contacto
             </a>
           </div>

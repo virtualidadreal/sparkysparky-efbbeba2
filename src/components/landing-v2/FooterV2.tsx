@@ -28,7 +28,7 @@ const FooterV2 = () => {
               Términos
             </Link>
             <a 
-              href="mailto:hola@sparky.app" 
+              href="mailto:hola@soysparky.com" 
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Contacto

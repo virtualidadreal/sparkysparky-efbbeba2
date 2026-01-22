@@ -23,7 +23,7 @@ const FooterV3 = () => {
             <Link to="/terms" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
               Términos
             </Link>
-            <a href="mailto:hola@sparky.app" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <a href="mailto:hola@soysparky.com" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
               Contacto
             </a>
           </nav>
