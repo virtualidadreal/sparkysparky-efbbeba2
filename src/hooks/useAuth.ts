@@ -36,7 +36,7 @@ export const useAuth = () => {
   useEffect(() => {
     // Configurar listener PRIMERO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -45,6 +45,20 @@ export const useAuth = () => {
         if (event === 'SIGNED_IN' && session?.user) {
           // Use setTimeout to avoid blocking the auth flow
           setTimeout(() => createStripeCustomer(), 0);
+          
+          // Check if this is a new OAuth user (first login) - send welcome email
+          const isOAuthUser = session.user.app_metadata?.provider !== 'email';
+          const createdAt = new Date(session.user.created_at);
+          const now = new Date();
+          const isNewUser = (now.getTime() - createdAt.getTime()) < 60000; // Created less than 1 minute ago
+          
+          if (isOAuthUser && isNewUser) {
+            const email = session.user.email;
+            const name = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
+            if (email) {
+              setTimeout(() => sendWelcomeEmail(email, name), 0);
+            }
+          }
         }
       }
     );
