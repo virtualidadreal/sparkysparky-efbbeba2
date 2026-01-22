@@ -1,23 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStripeSubscription } from '@/hooks/useStripeSubscription';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
   const { checkSubscription } = useStripeSubscription();
+  const { user } = useAuth();
   const [isVerifying, setIsVerifying] = useState(true);
+  const emailSentRef = useRef(false);
 
   useEffect(() => {
-    // Verify subscription status
+    // Verify subscription and send confirmation email
     const verifySubscription = async () => {
       await checkSubscription();
+      
+      // Send confirmation email only once
+      if (user?.email && !emailSentRef.current) {
+        emailSentRef.current = true;
+        try {
+          await supabase.functions.invoke('send-subscription-email', {
+            body: { 
+              email: user.email, 
+              name: user.user_metadata?.full_name 
+            }
+          });
+          console.log('Subscription confirmation email sent');
+        } catch (error) {
+          console.error('Error sending subscription email:', error);
+        }
+      }
+      
       setIsVerifying(false);
     };
     
     verifySubscription();
-  }, [checkSubscription]);
+  }, [checkSubscription, user]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
