@@ -177,32 +177,17 @@ const Dashboard = () => {
                   </button>
                 ))
               ) : (
-                <>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">💡</span>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      Captura tu primera idea
-                    </p>
+                <div className="md:col-span-3 bg-transparent backdrop-blur-sm rounded-[18px] p-8 border border-dashed border-border/70 text-center">
+                  <div className="flex justify-center mb-4">
+                    <span className="text-4xl">💡</span>
                   </div>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">💡</span>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      Dicta o escribe ideas
-                    </p>
-                  </div>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">💡</span>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      Sparky las organiza
-                    </p>
-                  </div>
-                </>
+                  <p className="text-foreground font-medium mb-2">
+                    Aquí aparecerán tus ideas
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    Pulsa el botón <span className="inline-flex items-center justify-center w-6 h-6 bg-primary rounded-full text-primary-foreground text-xs font-bold mx-1">+</span> amarillo para capturar tu primera idea
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -237,32 +222,17 @@ const Dashboard = () => {
                   </Link>
                 ))
               ) : (
-                <>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">📖</span>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      Escribe tu primera entrada
-                    </p>
+                <div className="md:col-span-3 bg-transparent backdrop-blur-sm rounded-[18px] p-8 border border-dashed border-border/70 text-center">
+                  <div className="flex justify-center mb-4">
+                    <span className="text-4xl">📖</span>
                   </div>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">📖</span>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      Reflexiona sobre tu día
-                    </p>
-                  </div>
-                  <div className="bg-transparent backdrop-blur-sm rounded-[18px] p-5 border border-border/50">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">📖</span>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      Captura tus pensamientos
-                    </p>
-                  </div>
-                </>
+                  <p className="text-foreground font-medium mb-2">
+                    Aquí aparecerán tus entradas de diario
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    Pulsa el botón <span className="inline-flex items-center justify-center w-6 h-6 bg-primary rounded-full text-primary-foreground text-xs font-bold mx-1">+</span> amarillo y escribe "diario:" para crear tu primera entrada
+                  </p>
+                </div>
               )}
             </div>
           </div>
