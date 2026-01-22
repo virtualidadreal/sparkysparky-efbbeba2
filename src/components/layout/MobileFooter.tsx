@@ -14,19 +14,24 @@ import {
   BarChart3, 
   Settings,
   X,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare
 } from 'lucide-react';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { useBetaTester } from '@/hooks/useBetaTester';
+import { BetaFeedbackModal } from '@/components/feedback/BetaFeedbackModal';
 
 /**
  * Footer móvil con navegación y acciones rápidas
  */
 export const MobileFooter = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const location = useLocation();
   const { data: isAdmin } = useIsAdmin();
+  const { isBetaTester } = useBetaTester();
 
   const navItems = [
     { to: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -108,6 +113,23 @@ export const MobileFooter = () => {
                 </Link>
               </>
             )}
+
+            {/* Beta Feedback - solo para beta testers */}
+            {isBetaTester && (
+              <>
+                <div className="border-t border-border my-3" />
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsFeedbackOpen(true);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors w-full"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  Feedback Beta
+                </button>
+              </>
+            )}
           </nav>
 
           {/* Versión */}
@@ -149,6 +171,9 @@ export const MobileFooter = () => {
           />
         </div>
       </div>
+
+      {/* Beta Feedback Modal */}
+      <BetaFeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </>
   );
 };
