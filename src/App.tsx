@@ -25,6 +25,7 @@ const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const Signup = lazy(() => import('@/pages/Signup'));
+const BetaSignup = lazy(() => import('@/pages/BetaSignup'));
 const SubscriptionSuccess = lazy(() => import('@/pages/SubscriptionSuccess'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
@@ -55,6 +56,7 @@ const App = () => {
               <Route path="/terms" element={<Terms />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/beta" element={<BetaSignup />} />
               <Route path="/subscription-success" element={<ProtectedRoute><SubscriptionSuccess /></ProtectedRoute>} />
 
               {/* Rutas protegidas */}
