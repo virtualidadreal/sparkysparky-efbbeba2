@@ -197,7 +197,7 @@ const Diary = () => {
 
           {/* Nueva entrada (texto) */}
           {showNewEntry && (
-            <div className="bg-card rounded-[24px] p-5 shadow-sm border-2 border-primary">
+            <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-primary">
               <textarea
                 value={newEntryContent}
                 onChange={(e) => setNewEntryContent(e.target.value)}
@@ -228,7 +228,7 @@ const Diary = () => {
           )}
 
           {/* Filtros */}
-          <div className="bg-card rounded-[24px] p-5 shadow-sm">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex gap-2 flex-wrap">
                 <button
@@ -282,7 +282,7 @@ const Diary = () => {
           </div>
 
           {/* Lista de entradas */}
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50 flex-1">
             <DiaryEntryList 
               filters={filters} 
               onEdit={handleEditEntry}
@@ -293,7 +293,7 @@ const Diary = () => {
 
         {/* Right Sidebar */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border-2 border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border border-border/50">
           {/* Nueva Entrada */}
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
