@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   HomeIcon,
@@ -13,12 +14,15 @@ import {
   PresentationChartLineIcon,
   SparklesIcon,
   PlusIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useSidebarVisibility } from '@/hooks/useSidebarVisibility';
+import { useBetaTester } from '@/hooks/useBetaTester';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
+import { BetaFeedbackModal } from '@/components/feedback/BetaFeedbackModal';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -51,7 +55,8 @@ const navigationItems = [
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { data: isAdmin } = useIsAdmin();
   const { data: visibility } = useSidebarVisibility();
-
+  const { isBetaTester } = useBetaTester();
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   // Filter navigation items based on visibility settings
   const visibleItems = navigationItems.filter(item => {
     // If visibility data is not loaded yet, show all items
@@ -153,6 +158,20 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           )}
         </nav>
 
+        {/* Beta Feedback Button - Only for beta testers */}
+        {isBetaTester && (
+          <div className="px-4 py-2 border-t border-border">
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-amber-500/50 text-amber-600 hover:bg-amber-500/10 hover:text-amber-500"
+              onClick={() => setIsFeedbackOpen(true)}
+            >
+              <ChatBubbleLeftRightIcon className="h-5 w-5" />
+              Feedback Beta
+            </Button>
+          </div>
+        )}
+
         {/* Quick Capture Button */}
         <div className="px-4 py-2 border-t border-border">
           <QuickCapturePopup
@@ -189,6 +208,12 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           </p>
         </div>
       </aside>
+
+      {/* Beta Feedback Modal */}
+      <BetaFeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+      />
     </>
   );
 };

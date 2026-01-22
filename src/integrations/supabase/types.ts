@@ -86,6 +86,30 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_feedback: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       detected_patterns: {
         Row: {
           created_at: string
@@ -1038,13 +1062,15 @@ export type Database = {
       has_active_early_access: { Args: { p_user_id: string }; Returns: boolean }
       increment_user_usage: { Args: { p_user_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
+      is_beta_tester: { Args: { p_user_id: string }; Returns: boolean }
       owns_person_record: {
         Args: { _person_id: string; _user_id: string }
         Returns: boolean
       }
+      register_beta_tester: { Args: { p_user_id: string }; Returns: Json }
     }
     Enums: {
-      subscription_plan: "free" | "pro"
+      subscription_plan: "free" | "pro" | "beta_tester"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1172,7 +1198,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      subscription_plan: ["free", "pro"],
+      subscription_plan: ["free", "pro", "beta_tester"],
     },
   },
 } as const

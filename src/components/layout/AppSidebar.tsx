@@ -13,10 +13,13 @@ import {
   ShieldCheck,
   BookOpen,
   Search,
+  MessageSquare,
 } from 'lucide-react';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useSidebarVisibility, SidebarVisibility } from '@/hooks/useSidebarVisibility';
+import { useBetaTester } from '@/hooks/useBetaTester';
 import { GlobalSearchModal } from '@/components/search';
+import { BetaFeedbackModal } from '@/components/feedback/BetaFeedbackModal';
 
 /**
  * Navigation items with visibility keys
@@ -41,7 +44,9 @@ export const AppSidebar = () => {
   const location = useLocation();
   const { data: isAdmin } = useIsAdmin();
   const { data: visibility, isLoading: isLoadingVisibility } = useSidebarVisibility();
+  const { isBetaTester } = useBetaTester();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Filter navigation items based on visibility settings
   const visibleItems = navigationItems.filter(item => {
@@ -100,6 +105,17 @@ export const AppSidebar = () => {
             )}
           </nav>
 
+          {/* Beta Feedback Button - Only for beta testers */}
+          {isBetaTester && (
+            <button
+              onClick={() => setIsFeedbackOpen(true)}
+              className="flex items-center gap-3 px-4 py-2.5 mt-3 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors border border-amber-500/30"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="text-sm font-medium">Feedback Beta</span>
+            </button>
+          )}
+
           {/* Search Button - Bottom */}
           <button
             onClick={() => setIsSearchOpen(true)}
@@ -114,6 +130,9 @@ export const AppSidebar = () => {
 
       {/* Global Search Modal */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      
+      {/* Beta Feedback Modal */}
+      <BetaFeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </>
   );
 };
