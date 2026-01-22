@@ -49,14 +49,14 @@ const Ideas = () => {
           </div>
 
           {/* Lista de ideas */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex-1 border-2 border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex-1 border border-border/50">
             <IdeaList filters={filters} />
           </div>
         </div>
 
         {/* Right Sidebar */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border-2 border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border border-border/50">
           {/* Tips */}
           <div className="flex-1">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">

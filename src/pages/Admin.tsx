@@ -138,13 +138,13 @@ const Admin = () => {
       <div className="h-screen bg-[hsl(220,14%,96%)] dark:bg-[hsl(222,84%,5%)] p-3 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_300px] gap-3 max-w-[1800px] mx-auto h-[calc(100vh-24px)]">
           <div className="hidden lg:block">
-            <div className="bg-card rounded-[24px] h-full" />
+            <div className="bg-transparent backdrop-blur-sm rounded-[24px] border border-border/50 h-full" />
           </div>
-          <div className="bg-card rounded-[24px] flex items-center justify-center">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] border border-border/50 flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
           </div>
           <div className="hidden lg:block">
-            <div className="bg-card rounded-[24px] h-full" />
+            <div className="bg-transparent backdrop-blur-sm rounded-[24px] border border-border/50 h-full" />
           </div>
         </div>
       </div>
@@ -259,7 +259,7 @@ const Admin = () => {
           </div>
 
           {/* Content Card */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border-2 border-border/50 flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border border-border/50 flex-1">
             <div className="space-y-6">
 
               {/* PROMPTS TAB */}
@@ -859,7 +859,7 @@ const Admin = () => {
 
         {/* Right Sidebar - Admin Sections */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50 h-full flex flex-col overflow-hidden">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50 h-full flex flex-col overflow-hidden">
             {/* Secciones Admin */}
             <div className="mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">

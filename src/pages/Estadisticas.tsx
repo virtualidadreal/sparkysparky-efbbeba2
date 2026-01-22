@@ -118,7 +118,7 @@ const Estadisticas = () => {
           </div>
 
           {/* Content */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border-2 border-border/50 flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50 flex-1">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -170,7 +170,7 @@ const Estadisticas = () => {
                   </div>
 
                   {/* Quick Stats Banner */}
-                  <div className="bg-transparent backdrop-blur-sm border-2 border-primary/30 rounded-xl p-5">
+                  <div className="bg-transparent backdrop-blur-sm border border-primary/30 rounded-xl p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <SparklesIcon className="h-5 w-5 text-primary" />
                       <h3 className="font-semibold text-foreground">Resumen Rápido</h3>
@@ -452,7 +452,7 @@ const Estadisticas = () => {
 
         {/* Right Sidebar - fixed height */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50 flex flex-col h-full overflow-hidden">
           {/* Métricas rápidas */}
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">

@@ -93,14 +93,14 @@ const People = () => {
           </div>
 
           {/* Lista de personas */}
-          <div className="bg-card rounded-[24px] p-5 shadow-sm flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50 flex-1">
             <PersonList filters={filters} onEdit={handleEdit} />
           </div>
         </div>
 
         {/* Right Sidebar */}
         <div className="hidden lg:flex flex-col h-full">
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border-2 border-border/50">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border border-border/50">
           {/* Nuevo Contacto */}
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">

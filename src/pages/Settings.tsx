@@ -233,7 +233,7 @@ const Settings = () => {
           </div>
 
           {/* Content */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border-2 border-border/50 flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-6 border border-border/50 flex-1">
             <div className="space-y-6 max-w-3xl">
               {/* Profile Tab */}
               {activeTab === 'profile' && (
