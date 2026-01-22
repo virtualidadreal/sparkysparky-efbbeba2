@@ -71,11 +71,11 @@ export const AppSidebar = () => {
                   to={item.to}
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
                     isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                      ? 'border border-primary bg-transparent text-muted-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent'
                   }`}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
                   {item.label}
                 </Link>
               );
@@ -89,11 +89,11 @@ export const AppSidebar = () => {
                   to="/admin"
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
                     location.pathname === '/admin'
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                      ? 'border border-primary bg-transparent text-muted-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent'
                   }`}
                 >
-                  <ShieldCheck className="h-5 w-5" />
+                  <ShieldCheck className={`h-5 w-5 ${location.pathname === '/admin' ? 'text-primary' : ''}`} />
                   Admin
                 </Link>
               </>
