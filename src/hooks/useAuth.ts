@@ -83,9 +83,10 @@ export const useAuth = () => {
       },
     });
     
-    // Send welcome email on successful signup
-    if (!error && data.user) {
-      setTimeout(() => sendWelcomeEmail(email, fullName), 0);
+    // Send welcome email on successful signup (check both data.user and data.session for auto-confirm)
+    if (!error && (data.user || data.session)) {
+      console.log('[AUTH] Signup successful, sending welcome email to:', email);
+      setTimeout(() => sendWelcomeEmail(email, fullName), 100);
     }
     
     return { data, error };
