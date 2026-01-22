@@ -40,12 +40,12 @@ const navigationItems = [
 export const AppSidebar = () => {
   const location = useLocation();
   const { data: isAdmin } = useIsAdmin();
-  const { data: visibility } = useSidebarVisibility();
+  const { data: visibility, isLoading: isLoadingVisibility } = useSidebarVisibility();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Filter navigation items based on visibility settings
   const visibleItems = navigationItems.filter(item => {
-    if (!visibility) return true;
+    if (!visibility) return false; // Ocultar todo mientras carga
     return visibility[item.key] !== false;
   });
 
