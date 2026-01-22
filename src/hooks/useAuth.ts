@@ -19,6 +19,20 @@ export const useAuth = () => {
     }
   };
 
+  // Send welcome email to new users
+  const sendWelcomeEmail = async (email: string, name?: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-welcome-email', {
+        body: { email, name }
+      });
+      if (error) {
+        console.error('Error sending welcome email:', error);
+      }
+    } catch (err) {
+      console.error('Failed to send welcome email:', err);
+    }
+  };
+
   useEffect(() => {
     // Configurar listener PRIMERO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -54,6 +68,12 @@ export const useAuth = () => {
         data: fullName ? { full_name: fullName } : undefined,
       },
     });
+    
+    // Send welcome email on successful signup
+    if (!error && data.user) {
+      setTimeout(() => sendWelcomeEmail(email, fullName), 0);
+    }
+    
     return { data, error };
   };
 
