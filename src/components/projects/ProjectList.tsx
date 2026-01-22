@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 interface ProjectListProps {
   filters?: ProjectsFilters;
   onEdit?: (projectId: string) => void;
+  onCreateNew?: () => void;
 }
 
 /**
@@ -25,7 +26,7 @@ interface ProjectListProps {
  * - Error handling
  * - Acciones (editar, archivar)
  */
-export const ProjectList = ({ filters, onEdit }: ProjectListProps) => {
+export const ProjectList = ({ filters, onEdit, onCreateNew }: ProjectListProps) => {
   const { data: projects, isLoading, error } = useProjects(filters);
   const { data: unassignedCount = 0 } = useUnassignedIdeasCount();
   const archiveProject = useArchiveProject();
@@ -52,7 +53,7 @@ export const ProjectList = ({ filters, onEdit }: ProjectListProps) => {
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-lg border border-gray-200 p-4 space-y-3"
+            className="bg-transparent rounded-lg border border-border/50 p-4 space-y-3"
           >
             <Skeleton className="h-5 w-3/4" />
             <Skeleton className="h-4 w-full" />
@@ -79,19 +80,19 @@ export const ProjectList = ({ filters, onEdit }: ProjectListProps) => {
     const handleRetry = () => window.location.reload();
     
     return (
-      <div className="bg-white rounded-lg border-2 border-error/20 p-8 text-center">
-        <div className="mx-auto w-12 h-12 bg-error/10 rounded-full flex items-center justify-center mb-4">
-          <svg className="w-6 h-6 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="bg-transparent rounded-lg border border-dashed border-destructive/30 p-8 text-center">
+        <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+          <svg className="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <p className="text-error font-medium mb-2">No pudimos cargar tus proyectos</p>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-destructive font-medium mb-2">No pudimos cargar tus proyectos</p>
+        <p className="text-sm text-muted-foreground mb-4">
           Verifica tu conexión e intenta nuevamente
         </p>
         <button
           onClick={handleRetry}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
           Reintentar
         </button>
@@ -106,18 +107,21 @@ export const ProjectList = ({ filters, onEdit }: ProjectListProps) => {
         {/* Tarjeta especial de Ideas sueltas - siempre visible */}
         <LooseIdeasCard ideasCount={unassignedCount} />
         
-        {/* Empty state para proyectos */}
-        <div className="bg-card rounded-lg border-2 border-dashed border-border p-8 text-center col-span-1 sm:col-span-1 lg:col-span-2">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+        {/* Empty state para proyectos - clickeable */}
+        <button 
+          onClick={onCreateNew}
+          className="bg-transparent rounded-lg border border-dashed border-border/70 p-8 text-center col-span-1 sm:col-span-1 lg:col-span-2 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer"
+        >
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
             <FolderIcon className="h-6 w-6 text-muted-foreground" />
           </div>
           <h3 className="text-base font-semibold text-foreground mb-2">
             No hay más proyectos
           </h3>
           <p className="text-sm text-muted-foreground">
-            Crea un proyecto para organizar tus ideas
+            Pulsa aquí para crear tu primer proyecto
           </p>
-        </div>
+        </button>
       </div>
     );
   }
