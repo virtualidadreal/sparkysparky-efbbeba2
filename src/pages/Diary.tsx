@@ -1,18 +1,14 @@
 import { useState } from 'react';
-import { Button, VoiceRecordButton } from '@/components/common';
 import { DiaryEntryList, DiaryEntryForm, DiaryEntryDetailModal } from '@/components/diary';
-import { PlusIcon } from '@heroicons/react/24/outline';
-import { useDiaryEntry, useDeleteDiaryEntry, useCreateDiaryEntry } from '@/hooks/useDiaryEntries';
-import { supabase } from '@/integrations/supabase/client';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useDiaryEntry, useDeleteDiaryEntry } from '@/hooks/useDiaryEntries';
 import type { DiaryEntriesFilters, DiaryEntry } from '@/types/DiaryEntry.types';
-import toast from 'react-hot-toast';
 import clsx from 'clsx';
-import { useQueryClient } from '@tanstack/react-query';
 import { SparkyChat } from '@/components/chat/SparkyChat';
-import { QuickCapturePopup } from '@/components/dashboard/QuickCapturePopup';
 import { MobileFooter } from '@/components/layout/MobileFooter';
+import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton';
 import { AppSidebar } from '@/components/layout/AppSidebar';
-import { Mic, Plus } from 'lucide-react';
+import { Mic } from 'lucide-react';
 
 /**
  * Página Diary (Diario Personal) con estilo Dashboard
@@ -20,117 +16,18 @@ import { Mic, Plus } from 'lucide-react';
 const Diary = () => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showNewEntry, setShowNewEntry] = useState(false);
-  const [newEntryContent, setNewEntryContent] = useState('');
-  const [isProcessingText, setIsProcessingText] = useState(false);
-  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [viewingEntry, setViewingEntry] = useState<DiaryEntry | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   
-  const queryClient = useQueryClient();
   const { data: editingEntry } = useDiaryEntry(editingEntryId || '');
   const deleteEntry = useDeleteDiaryEntry();
-  const createEntry = useCreateDiaryEntry();
 
   // Construir filtros
   const filters: DiaryEntriesFilters = {
     ...(activeFilter !== 'all' && { mood: activeFilter }),
     ...(searchTerm && { search: searchTerm }),
-  };
-
-  /**
-   * Manejar creación de entrada de texto
-   */
-  const handleSubmitTextEntry = async () => {
-    if (!newEntryContent.trim()) return;
-
-    setIsProcessingText(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('process-text-capture', {
-        body: { text: `Diario: ${newEntryContent.trim()}` },
-      });
-
-      if (error) throw error;
-
-      toast.success('Entrada guardada y procesada');
-      setNewEntryContent('');
-      setShowNewEntry(false);
-      queryClient.invalidateQueries({ queryKey: ['diary-entries'] });
-    } catch (error: any) {
-      console.error('Error creating diary entry:', error);
-      toast.error(error.message || 'Error al guardar la entrada');
-    } finally {
-      setIsProcessingText(false);
-    }
-  };
-
-  /**
-   * Manejar grabación de voz completada
-   */
-  const handleRecordingComplete = async (audioBlob: Blob) => {
-    setIsProcessingAudio(true);
-    
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('Usuario no autenticado');
-      }
-
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(7);
-      const fileName = `${user.id}/${timestamp}-${random}.webm`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('audio-recordings')
-        .upload(fileName, audioBlob, {
-          contentType: 'audio/webm',
-          upsert: false,
-        });
-
-      if (uploadError) throw uploadError;
-
-      const newEntry = await createEntry.mutateAsync({
-        content: 'Transcribiendo audio...',
-      });
-
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      let binary = '';
-      const chunkSize = 0x8000;
-      
-      for (let i = 0; i < uint8Array.length; i += chunkSize) {
-        const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-        binary += String.fromCharCode.apply(null, Array.from(chunk));
-      }
-      
-      const audioBase64 = btoa(binary);
-
-      toast.success('Procesando audio...');
-      
-      const { data: transcriptionData } = await supabase.functions.invoke('process-voice-capture', {
-        body: {
-          ideaId: newEntry.id,
-          audioBase64,
-        },
-      });
-
-      if (transcriptionData?.transcription) {
-        await supabase
-          .from('diary_entries')
-          .update({ content: transcriptionData.transcription })
-          .eq('id', newEntry.id);
-        toast.success('¡Entrada procesada!');
-      }
-      
-    } catch (error: any) {
-      console.error('Error processing audio:', error);
-      toast.error(error.message || 'Error al procesar el audio');
-    } finally {
-      setIsProcessingAudio(false);
-    }
   };
 
   const handleViewEntry = (entry: DiaryEntry) => {
@@ -176,113 +73,65 @@ const Diary = () => {
 
         {/* Main Content - scrollable */}
         <div className="flex flex-col gap-4 h-full overflow-y-auto pt-4">
-          {/* Header compacto */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
-            <h1 className="text-2xl font-bold text-foreground">Mi Diario</h1>
-            <div className="flex gap-2">
-              <VoiceRecordButton
-                onRecordingComplete={handleRecordingComplete}
-                disabled={isProcessingAudio || isProcessingText}
+          {/* Header compacto con título y buscador */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-1">
+            <h1 className="text-2xl font-bold text-foreground whitespace-nowrap">
+              Mi Diario
+            </h1>
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Buscar en el diario..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-foreground placeholder:text-muted-foreground"
               />
-              <Button
-                variant="primary"
-                icon={<PlusIcon className="h-5 w-5" />}
-                onClick={() => setShowNewEntry(true)}
-                disabled={isProcessingText}
-              >
-                Nueva entrada
-              </Button>
             </div>
           </div>
 
-          {/* Nueva entrada (texto) */}
-          {showNewEntry && (
-            <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-primary">
-              <textarea
-                value={newEntryContent}
-                onChange={(e) => setNewEntryContent(e.target.value)}
-                placeholder="¿Qué sucedió hoy? ¿Cómo te sientes?"
-                rows={6}
-                className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl resize-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-foreground placeholder:text-muted-foreground"
-              />
-              <div className="flex justify-end gap-2 mt-3">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setShowNewEntry(false);
-                    setNewEntryContent('');
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={handleSubmitTextEntry}
-                  disabled={!newEntryContent.trim() || isProcessingText}
-                  loading={isProcessingText}
-                >
-                  Guardar
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Filtros */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setActiveFilter('all')}
-                  className={clsx(
-                    'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
-                    activeFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
-                >
-                  Todas
-                </button>
-                <button
-                  onClick={() => setActiveFilter('positive')}
-                  className={clsx(
-                    'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
-                    activeFilter === 'positive' ? 'bg-green-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
-                >
-                  Positivas
-                </button>
-                <button
-                  onClick={() => setActiveFilter('neutral')}
-                  className={clsx(
-                    'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
-                    activeFilter === 'neutral' ? 'bg-gray-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
-                >
-                  Neutrales
-                </button>
-                <button
-                  onClick={() => setActiveFilter('negative')}
-                  className={clsx(
-                    'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
-                    activeFilter === 'negative' ? 'bg-red-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
-                >
-                  Negativas
-                </button>
-              </div>
-
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Buscar en entradas..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-            </div>
+          <div className="flex gap-2 flex-wrap px-1">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={clsx(
+                'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                activeFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              Todas
+            </button>
+            <button
+              onClick={() => setActiveFilter('positive')}
+              className={clsx(
+                'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                activeFilter === 'positive' ? 'bg-green-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              Positivas
+            </button>
+            <button
+              onClick={() => setActiveFilter('neutral')}
+              className={clsx(
+                'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                activeFilter === 'neutral' ? 'bg-gray-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              Neutrales
+            </button>
+            <button
+              onClick={() => setActiveFilter('negative')}
+              className={clsx(
+                'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                activeFilter === 'negative' ? 'bg-red-500 text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              Negativas
+            </button>
           </div>
 
           {/* Lista de entradas */}
-          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 border border-border/50 flex-1">
+          <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex-1 border border-border/50">
             <DiaryEntryList 
               filters={filters} 
               onEdit={handleEditEntry}
@@ -294,23 +143,6 @@ const Diary = () => {
         {/* Right Sidebar */}
         <div className="hidden lg:flex flex-col h-full">
           <div className="bg-transparent backdrop-blur-sm rounded-[24px] p-5 flex flex-col h-full overflow-hidden border border-border/50">
-          {/* Nueva Entrada */}
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
-              ACCIONES RÁPIDAS
-            </h3>
-            <button 
-              onClick={() => setShowNewEntry(true)}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Nueva Entrada
-            </button>
-          </div>
-
-          {/* Separador */}
-          <div className="border-t border-border mb-6" />
-
           {/* Tips */}
           <div className="flex-1">
             <h3 className="text-xs font-semibold text-muted-foreground tracking-wider mb-4">
@@ -324,7 +156,7 @@ const Diary = () => {
               </div>
               <div className="bg-muted/30 rounded-xl p-4">
                 <p className="text-sm text-foreground leading-relaxed">
-                  🎙️ Usa la grabación de voz cuando escribir no sea práctico.
+                  🎙️ Usa el botón + y escribe "diario:" para crear una entrada.
                 </p>
               </div>
               <div className="bg-muted/30 rounded-xl p-4">
@@ -333,6 +165,18 @@ const Diary = () => {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Botón Hablar con Sparky */}
+          <div className="mt-auto pt-4">
+            <SparkyChat
+              trigger={
+                <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors">
+                  <Mic className="h-4 w-4" />
+                  Hablar con Sparky
+                </button>
+              }
+            />
           </div>
           </div>
         </div>
@@ -357,6 +201,9 @@ const Diary = () => {
 
       {/* Mobile Footer */}
       <MobileFooter />
+
+      {/* Floating Capture Button - Desktop */}
+      <FloatingCaptureButton />
     </div>
   );
 };
