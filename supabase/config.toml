@@ -47,3 +47,15 @@ verify_jwt = false
 
 [functions.create-stripe-customer]
 verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.send-password-changed-email]
+verify_jwt = false
+
+[functions.send-subscription-email]
+verify_jwt = false
+
+[functions.get-sidebar-visibility]
+verify_jwt = true
