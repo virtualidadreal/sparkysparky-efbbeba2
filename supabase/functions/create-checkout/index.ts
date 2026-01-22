@@ -60,6 +60,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
+      locale: "es",
       success_url: `${origin}/subscription-success`,
       cancel_url: `${origin}/settings?tab=subscription&cancelled=true`,
       metadata: {
