@@ -102,11 +102,17 @@ export const VoiceRecordModal = ({
     setIsPaused(false);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        } 
+      });
       mediaStreamRef.current = stream;
 
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx: AudioContext = new AudioCtx();
+      const ctx: AudioContext = new AudioCtx({ sampleRate: 44100 });
       audioCtxRef.current = ctx;
 
       if (ctx.state === 'suspended') await ctx.resume();
@@ -116,22 +122,28 @@ export const VoiceRecordModal = ({
 
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 2048;
-      analyser.smoothingTimeConstant = 0.85;
+      analyser.smoothingTimeConstant = 0.8;
       analyserRef.current = analyser;
 
       source.connect(analyser);
 
       startedAtRef.current = performance.now();
-      loopDraw();
+      requestAnimationFrame(loopDrawStable);
     } catch (err) {
       console.error('Error starting visualization:', err);
     }
   }
 
-  function loopDraw() {
+  // Versión estable del loop que verifica el estado antes de continuar
+  const loopDrawStable = useCallback(() => {
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
-    if (!canvas || !analyser) return;
+    const audioCtx = audioCtxRef.current;
+    
+    // Verificar que todo sigue activo
+    if (!canvas || !analyser || !audioCtx || audioCtx.state === 'closed') {
+      return;
+    }
 
     const ctx2d = canvas.getContext('2d');
     if (!ctx2d) return;
@@ -152,7 +164,11 @@ export const VoiceRecordModal = ({
 
     // Time-domain data para RMS
     const buffer = new Uint8Array(analyser.fftSize);
-    analyser.getByteTimeDomainData(buffer);
+    try {
+      analyser.getByteTimeDomainData(buffer);
+    } catch {
+      return; // Analyser desconectado
+    }
 
     let sumSq = 0;
     for (let i = 0; i < buffer.length; i++) {
@@ -160,18 +176,24 @@ export const VoiceRecordModal = ({
       sumSq += v * v;
     }
     const rms = Math.sqrt(sumSq / buffer.length);
-    const amp = Math.min(1, Math.max(0, rms * 1.8));
+    const amp = Math.min(1, Math.max(0, rms * 2.2));
 
-    const sampleEveryMs = 60;
+    const sampleEveryMs = 50;
     if (elapsed - lastSampleAtRef.current >= sampleEveryMs) {
       lastSampleAtRef.current = elapsed;
       ampsRef.current.push(amp);
+      // Limitar el array para evitar memory leaks
+      if (ampsRef.current.length > 500) {
+        ampsRef.current = ampsRef.current.slice(-400);
+      }
     }
 
     drawWaveform(ctx2d, w, h, ampsRef.current);
 
-    rafRef.current = requestAnimationFrame(loopDraw);
-  }
+    rafRef.current = requestAnimationFrame(loopDrawStable);
+  }, []);
+
+  // loopDraw movido a loopDrawStable como useCallback arriba
 
   function drawWaveform(
     g: CanvasRenderingContext2D,
@@ -288,7 +310,7 @@ export const VoiceRecordModal = ({
       const pausedDuration = performance.now() - pausedAtRef.current;
       totalPausedRef.current += pausedDuration;
       setIsPaused(false);
-      loopDraw();
+      requestAnimationFrame(loopDrawStable);
     } else {
       // Pausar
       pausedAtRef.current = performance.now();
