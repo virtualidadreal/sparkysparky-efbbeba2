@@ -10,6 +10,7 @@ import {
   useUploadAvatar,
   type UserPreferences 
 } from '@/hooks/useProfile';
+import { useStripeSubscription } from '@/hooks/useStripeSubscription';
 import {
   UserCircleIcon,
   KeyIcon,
@@ -21,6 +22,11 @@ import {
   Lock,
   Palette,
   Bell,
+  CreditCard,
+  Sparkles,
+  Crown,
+  Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,10 +34,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import toast from 'react-hot-toast';
 
-type SettingsTab = 'profile' | 'security' | 'appearance' | 'notifications';
+type SettingsTab = 'profile' | 'security' | 'appearance' | 'notifications' | 'subscription';
 
 const settingsTabs = [
   { id: 'profile' as SettingsTab, icon: User, label: 'Perfil' },
+  { id: 'subscription' as SettingsTab, icon: CreditCard, label: 'Suscripción' },
   { id: 'security' as SettingsTab, icon: Lock, label: 'Seguridad' },
   { id: 'appearance' as SettingsTab, icon: Palette, label: 'Apariencia' },
   { id: 'notifications' as SettingsTab, icon: Bell, label: 'Notificaciones' },
@@ -72,6 +79,15 @@ const Settings = () => {
   const updateProfile = useUpdateProfile();
   const updatePassword = useUpdatePassword();
   const uploadAvatar = useUploadAvatar();
+  const { 
+    subscription, 
+    loading: stripeLoading, 
+    checkingStatus,
+    isPro,
+    createCheckout, 
+    openCustomerPortal,
+    checkSubscription 
+  } = useStripeSubscription();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -331,6 +347,127 @@ const Settings = () => {
                 </>
               )}
 
+              {/* Subscription Tab */}
+              {activeTab === 'subscription' && (
+                <>
+                  <SettingsSection
+                    title="Tu Plan"
+                    description="Gestiona tu suscripción a Sparky"
+                  >
+                    <div className="space-y-6">
+                      {/* Current Plan */}
+                      <div className={`rounded-xl p-6 border-2 ${
+                        isPro 
+                          ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/30' 
+                          : 'bg-muted/30 border-border'
+                      }`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            {isPro ? (
+                              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                                <Crown className="h-6 w-6 text-white" />
+                              </div>
+                            ) : (
+                              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                <Sparkles className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div>
+                              <h4 className="text-xl font-bold text-foreground">
+                                {isPro ? 'Sparky Pro' : 'Plan Gratuito'}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {isPro ? 'Acceso completo a todas las funciones' : '10 ideas/mes incluidas'}
+                              </p>
+                            </div>
+                          </div>
+                          {checkingStatus && (
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
+
+                        {isPro && subscription?.subscription_end && (
+                          <p className="text-sm text-muted-foreground">
+                            Renovación: {new Date(subscription.subscription_end).toLocaleDateString('es-ES', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap gap-3">
+                        {isPro ? (
+                          <Button
+                            onClick={openCustomerPortal}
+                            disabled={stripeLoading}
+                            variant="outline"
+                            className="flex items-center gap-2"
+                          >
+                            {stripeLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <ExternalLink className="h-4 w-4" />
+                            )}
+                            Gestionar suscripción
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={createCheckout}
+                            disabled={stripeLoading}
+                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white flex items-center gap-2"
+                          >
+                            {stripeLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Crown className="h-4 w-4" />
+                            )}
+                            Actualizar a Pro - €3.99/mes
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          onClick={() => checkSubscription()}
+                          disabled={checkingStatus}
+                          size="sm"
+                        >
+                          {checkingStatus ? 'Verificando...' : 'Actualizar estado'}
+                        </Button>
+                      </div>
+                    </div>
+                  </SettingsSection>
+
+                  {/* Pro Features */}
+                  <SettingsSection
+                    title={isPro ? "Tus beneficios Pro" : "Beneficios de Sparky Pro"}
+                    description={isPro ? "Tienes acceso a todas estas funciones" : "Desbloquea todo el potencial de Sparky"}
+                  >
+                    <ul className="space-y-3">
+                      {[
+                        'Ideas ilimitadas',
+                        'Conexiones avanzadas entre ideas',
+                        'Sugerencias diarias personalizadas',
+                        'Compañero proactivo',
+                        'Soporte prioritario',
+                      ].map((feature) => (
+                        <li key={feature} className="flex items-center gap-3">
+                          <div className={`h-5 w-5 rounded-full flex items-center justify-center ${
+                            isPro ? 'bg-green-500/20 text-green-600' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            ✓
+                          </div>
+                          <span className={isPro ? 'text-foreground' : 'text-muted-foreground'}>
+                            {feature}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </SettingsSection>
+                </>
+              )}
+
               {/* Security Tab */}
               {activeTab === 'security' && (
                 <>
@@ -545,6 +682,7 @@ const Settings = () => {
                 <div className="bg-muted/30 rounded-xl p-4">
                   <p className="text-sm text-foreground leading-relaxed">
                     {activeTab === 'profile' && 'Actualiza tu nombre y foto de perfil para personalizar tu cuenta.'}
+                    {activeTab === 'subscription' && 'Gestiona tu plan y accede a funciones premium de Sparky.'}
                     {activeTab === 'security' && 'Mantén tu cuenta segura actualizando tu contraseña regularmente.'}
                     {activeTab === 'appearance' && 'Personaliza cómo se ve la aplicación según tus preferencias.'}
                     {activeTab === 'notifications' && 'Controla qué notificaciones quieres recibir de Sparky.'}
