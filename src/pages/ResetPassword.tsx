@@ -86,6 +86,18 @@ const ResetPassword = () => {
           toast.error(error.message);
         }
       } else {
+        // Get current user email to send notification
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          // Send password changed notification email
+          supabase.functions.invoke('send-password-changed-email', {
+            body: { 
+              email: user.email, 
+              name: user.user_metadata?.full_name || user.user_metadata?.display_name 
+            }
+          }).catch(err => console.error('Error sending password change email:', err));
+        }
+        
         setSuccess(true);
         toast.success('¡Contraseña actualizada correctamente!');
         
