@@ -7,13 +7,31 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Create Stripe customer for new users
+  const createStripeCustomer = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('create-stripe-customer');
+      if (error) {
+        console.error('Error creating Stripe customer:', error);
+      }
+    } catch (err) {
+      console.error('Failed to create Stripe customer:', err);
+    }
+  };
+
   useEffect(() => {
     // Configurar listener PRIMERO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Create Stripe customer on sign up or first OAuth login
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Use setTimeout to avoid blocking the auth flow
+          setTimeout(() => createStripeCustomer(), 0);
+        }
       }
     );
 
