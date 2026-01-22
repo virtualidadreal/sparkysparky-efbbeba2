@@ -53,7 +53,7 @@ const SettingsSection = ({
   description?: string;
   children: React.ReactNode;
 }) => (
-  <div className="bg-white/60 dark:bg-card/60 backdrop-blur-lg rounded-[18px] border border-white/50 dark:border-white/10 p-6 shadow-sm">
+  <div className="bg-transparent backdrop-blur-sm rounded-[18px] border border-border/50 p-6">
     <div className="mb-6">
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       {description && (
