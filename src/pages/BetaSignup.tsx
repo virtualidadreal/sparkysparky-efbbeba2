@@ -134,9 +134,8 @@ const BetaSignup = () => {
         <div className="max-w-lg">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
-            <img src={sparkyLogo} alt="Sparky" className="h-12 w-12" />
-            <span className="text-2xl font-bold text-foreground">Sparky</span>
-            <span className="px-2 py-1 bg-primary/20 text-primary text-xs font-semibold rounded-full">BETA</span>
+            <img src={sparkyLogo} alt="Sparky" className="h-14 w-auto" />
+            <span className="px-3 py-1.5 bg-primary/20 text-primary text-sm font-semibold rounded-full">BETA</span>
           </div>
 
           {/* Thank you message */}
@@ -200,9 +199,8 @@ const BetaSignup = () => {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <img src={sparkyLogo} alt="Sparky" className="h-10 w-10" />
-            <span className="text-xl font-bold text-foreground">Sparky</span>
-            <span className="px-2 py-1 bg-primary/20 text-primary text-xs font-semibold rounded-full">BETA</span>
+            <img src={sparkyLogo} alt="Sparky" className="h-12 w-auto" />
+            <span className="px-3 py-1.5 bg-primary/20 text-primary text-sm font-semibold rounded-full">BETA</span>
           </div>
 
           <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 shadow-xl">
