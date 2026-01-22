@@ -91,7 +91,7 @@ serve(async (req: Request): Promise<Response> => {
                 
                 <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 24px 0 0 0; text-align: center;">
                   ¿Tienes preguntas? Responde a este email o escríbenos a 
-                  <a href="mailto:hola@sparky.app" style="color: #f59e0b;">hola@sparky.app</a>
+                  <a href="mailto:hola@soysparky.com" style="color: #f59e0b;">hola@soysparky.com</a>
                 </p>
               </div>
               
