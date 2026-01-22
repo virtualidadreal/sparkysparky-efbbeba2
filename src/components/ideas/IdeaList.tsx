@@ -34,7 +34,7 @@ export const IdeaList = ({ filters }: IdeaListProps) => {
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-lg border border-gray-200 p-4 space-y-3"
+            className="bg-transparent rounded-lg border border-border/50 p-4 space-y-3"
           >
             <Skeleton className="h-5 w-3/4" />
             <Skeleton className="h-4 w-full" />
@@ -55,19 +55,19 @@ export const IdeaList = ({ filters }: IdeaListProps) => {
     const handleRetry = () => window.location.reload();
     
     return (
-      <div className="bg-white rounded-lg border-2 border-error/20 p-8 text-center">
-        <div className="mx-auto w-12 h-12 bg-error/10 rounded-full flex items-center justify-center mb-4">
-          <svg className="w-6 h-6 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="bg-transparent rounded-lg border border-dashed border-destructive/30 p-8 text-center">
+        <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+          <svg className="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <p className="text-error font-medium mb-2">No pudimos cargar tus ideas</p>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-destructive font-medium mb-2">No pudimos cargar tus ideas</p>
+        <p className="text-sm text-muted-foreground mb-4">
           Verifica tu conexión e intenta nuevamente
         </p>
         <button
           onClick={handleRetry}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
           Reintentar
         </button>
@@ -78,15 +78,15 @@ export const IdeaList = ({ filters }: IdeaListProps) => {
   // Empty state
   if (!ideas || ideas.length === 0) {
     return (
-      <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-          <LightBulbIcon className="h-8 w-8 text-gray-400" />
+      <div className="bg-transparent rounded-lg border border-dashed border-border/70 p-12 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
+          <LightBulbIcon className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-lg font-semibold text-foreground mb-2">
           No hay ideas aún
         </h3>
-        <p className="text-gray-600 mb-6">
-          Captura tu primera idea desde el dashboard o usando el botón de arriba
+        <p className="text-muted-foreground mb-2">
+          Pulsa el botón <span className="inline-flex items-center justify-center w-6 h-6 bg-primary rounded-full text-primary-foreground text-xs font-bold mx-1">+</span> amarillo para capturar tu primera idea
         </p>
       </div>
     );
