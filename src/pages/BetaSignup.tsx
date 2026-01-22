@@ -147,8 +147,8 @@ const BetaSignup = () => {
 
           <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
             Tu participación es invaluable para nosotros. Estás ayudando a construir algo increíble. 
-            Como beta tester, tendrás <strong className="text-foreground">6 usos gratuitos</strong> de 
-            todas las funciones Pro de Sparky.
+            Como beta tester, tendrás <strong className="text-foreground">6 meses de acceso Pro gratis</strong> con 
+            todas las funciones premium de Sparky.
           </p>
 
           {/* Info cards */}
@@ -328,8 +328,8 @@ const BetaSignup = () => {
           {/* Mobile info */}
           <div className="lg:hidden mt-8 text-center text-sm text-muted-foreground">
             <p>
-              Como beta tester tendrás <strong className="text-foreground">6 usos gratuitos</strong> de 
-              funciones Pro y acceso al botón de Feedback para compartir tus ideas.
+              Como beta tester tendrás <strong className="text-foreground">6 meses de acceso Pro gratis</strong> con 
+              todas las funciones premium y acceso al botón de Feedback para compartir tus ideas.
             </p>
           </div>
         </div>

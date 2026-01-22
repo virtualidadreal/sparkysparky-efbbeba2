@@ -867,6 +867,7 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          beta_expires_at: string | null
           created_at: string
           id: string
           plan: Database["public"]["Enums"]["subscription_plan"]
@@ -874,6 +875,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          beta_expires_at?: string | null
           created_at?: string
           id?: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -881,6 +883,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          beta_expires_at?: string | null
           created_at?: string
           id?: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
