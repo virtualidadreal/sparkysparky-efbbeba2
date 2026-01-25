@@ -3,10 +3,13 @@ import { lazy, Suspense } from 'react';
 // Lazy load sections for performance
 const HeroV2 = lazy(() => import('@/components/landing-v2/HeroV2'));
 const ProblemV2 = lazy(() => import('@/components/landing-v2/ProblemV2'));
+const OtherAppsFailV2 = lazy(() => import('@/components/landing-v2/OtherAppsFailV2'));
 const WhatIsSparkyV2 = lazy(() => import('@/components/landing-v2/WhatIsSparkyV2'));
+const ComparisonV2 = lazy(() => import('@/components/landing-v2/ComparisonV2'));
 const HowItWorksV2 = lazy(() => import('@/components/landing-v2/HowItWorksV2'));
 const BrainsV2 = lazy(() => import('@/components/landing-v2/BrainsV2'));
 const DifferentV2 = lazy(() => import('@/components/landing-v2/DifferentV2'));
+const PricingV2 = lazy(() => import('@/components/landing-v2/PricingV2'));
 const PrivacyV2 = lazy(() => import('@/components/landing-v2/PrivacyV2'));
 const FinalCTAV2 = lazy(() => import('@/components/landing-v2/FinalCTAV2'));
 const FooterV2 = lazy(() => import('@/components/landing-v2/FooterV2'));
@@ -31,7 +34,13 @@ const LandingV2 = () => {
         <ProblemV2 />
       </Suspense>
       <Suspense fallback={<SectionLoader />}>
+        <OtherAppsFailV2 />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
         <WhatIsSparkyV2 />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <ComparisonV2 />
       </Suspense>
       <Suspense fallback={<SectionLoader />}>
         <HowItWorksV2 />
@@ -41,6 +50,9 @@ const LandingV2 = () => {
       </Suspense>
       <Suspense fallback={<SectionLoader />}>
         <DifferentV2 />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <PricingV2 />
       </Suspense>
       <Suspense fallback={<SectionLoader />}>
         <PrivacyV2 />
