@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, Check, Loader2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Check, Loader2 } from 'lucide-react';
 import { useEarlyAccess } from '@/hooks/useEarlyAccess';
 
 /**
@@ -55,40 +55,55 @@ const PricingV3 = () => {
           </p>
         </div>
 
-        {/* Launch offer banner */}
+        {/* Launch offer banner - New design */}
         <div className={`mb-12 transition-all duration-700 delay-100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="bg-gradient-to-r from-primary/10 to-amber-100/50 rounded-2xl p-6 text-center border border-primary/20">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Zap className="w-5 h-5 text-primary" />
-              <span className="font-bold text-gray-900">Oferta de lanzamiento</span>
+          <div className="bg-primary/10 rounded-3xl p-8 border border-primary/30">
+            {/* Badge */}
+            <div className="flex justify-center mb-4">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary-foreground text-sm font-bold rounded-full border border-primary/30">
+                🔥 Oferta de lanzamiento
+              </span>
             </div>
-            <p className="text-gray-600 mb-4">
-              Los primeros <strong>30 usuarios</strong> obtienen <strong>3 meses de Pro gratis</strong>
+            
+            {/* Copy */}
+            <p className="text-gray-700 text-center mb-6">
+              Los primeros <strong className="text-gray-900">100 usuarios</strong> tienen acceso completo a Sparky Pro gratis
+              durante <strong className="text-gray-900">2 meses</strong>. Sin compromiso. Sin tarjeta.
             </p>
             
+            {/* Counter display */}
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <div className="bg-white rounded-xl px-6 py-4 border border-gray-100 text-center">
+                <span className="text-3xl sm:text-4xl font-bold text-primary block">{spotsTaken}</span>
+                <span className="text-sm text-gray-500">plazas ocupadas</span>
+              </div>
+              <span className="text-2xl text-gray-300">/</span>
+              <div className="bg-white rounded-xl px-6 py-4 border border-gray-100 text-center">
+                <span className="text-3xl sm:text-4xl font-bold text-gray-900 block">{totalSpots}</span>
+                <span className="text-sm text-gray-500">plazas totales</span>
+              </div>
+            </div>
+            
             {/* Progress bar */}
-            <div className="max-w-xs mx-auto">
+            <div className="max-w-md mx-auto mb-6">
               <div className="h-3 bg-white rounded-full overflow-hidden border border-gray-200">
                 <div 
-                  className="h-full bg-gradient-to-r from-primary to-amber-400 transition-all duration-1000 rounded-full"
+                  className="h-full bg-primary transition-all duration-1000 rounded-full"
                   style={{ width: `${(spotsTaken / totalSpots) * 100}%` }}
                 />
               </div>
-              <div className="flex justify-between items-center mt-2 text-sm">
-                {loading ? (
-                  <span className="flex items-center gap-1 text-gray-400">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Cargando...
-                  </span>
-                ) : isAvailable ? (
-                  <span className="text-primary font-bold">
-                    ¡Quedan {spotsRemaining} plazas!
-                  </span>
-                ) : (
-                  <span className="text-gray-500">Plazas agotadas</span>
-                )}
-                <span className="text-gray-400">{spotsTaken}/{totalSpots}</span>
-              </div>
+            </div>
+            
+            {/* CTA */}
+            <div className="text-center">
+              <Link
+                to="/signup"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-medium text-lg rounded-xl hover:bg-primary/90 transition-all duration-200"
+              >
+                <Sparkles className="w-5 h-5" />
+                {isAvailable ? 'Entrar antes de que se llene' : 'Unirme a la lista de espera'}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </div>
