@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Problem V3 - Estilo Notion con cards
+ * Problem V3 - El 90% de tus ideas nunca llegan a nada
  */
 const ProblemV3 = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -18,50 +18,61 @@ const ProblemV3 = () => {
     return () => observer.disconnect();
   }, []);
 
-  const moments = [
-    { emoji: '💬', text: 'En medio de una conversación.' },
-    { emoji: '🚶', text: 'Dando un paseo.' },
-    { emoji: '🌙', text: 'Justo antes de dormir.' },
-  ];
-
   return (
     <section ref={sectionRef} className="py-24 md:py-32 px-6 bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className={`text-center mb-16 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4">
-            No te faltan ideas.
-          </h2>
-          <p className="text-2xl sm:text-3xl text-gray-400">
-            Te falta un lugar donde no se pierdan.
-          </p>
-        </div>
+      <div className="max-w-3xl mx-auto text-center">
+        {/* Title */}
+        <h2
+          className={`text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-12 transition-all duration-700 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
+          El 90% de tus ideas nunca llegan a nada.
+        </h2>
 
-        {/* Problem cards */}
-        <div className={`mb-12 transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <p className="text-center text-lg text-gray-500 mb-8">
-            Aparecen cuando no toca.
+        {/* Copy with staggered animation */}
+        <div className="space-y-6 text-lg sm:text-xl text-gray-500">
+          <p
+            className={`font-semibold text-gray-900 transition-all duration-700 delay-100 ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            No porque sean malas.
           </p>
-          
-          <div className="grid sm:grid-cols-3 gap-4">
-            {moments.map((item, i) => (
-              <div 
-                key={i}
-                className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-200"
-                style={{ transitionDelay: `${300 + i * 100}ms` }}
-              >
-                <span className="text-4xl mb-4 block">{item.emoji}</span>
-                <p className="text-gray-600">{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Conclusion */}
-        <div className={`text-center transition-all duration-700 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="inline-block bg-white rounded-2xl px-8 py-6 shadow-sm border border-gray-100">
-            <p className="text-lg text-gray-900 mb-2">Las apuntas rápido.</p>
-            <p className="text-lg text-gray-400">Y luego desaparecen. 💨</p>
+          <p
+            className={`transition-all duration-700 delay-200 ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            Sino porque las apuntas en una nota, las olvidas en una carpeta,
+            o directamente se evaporan antes de que llegues a escribirlas.
+          </p>
+
+          <p
+            className={`transition-all duration-700 delay-300 ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            Tienes <span className="text-primary font-bold">47 notas</span> en el móvil.{' '}
+            <span className="text-primary font-bold">12 documentos</span> abiertos.
+            Una idea brillante de hace 3 meses que sabes que era buena pero no encuentras.
+          </p>
+
+          <div
+            className={`pt-8 transition-all duration-700 delay-400 ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <div className="inline-block bg-white rounded-2xl px-8 py-6 shadow-sm border border-gray-100">
+              <p className="text-gray-900 font-medium mb-2">Y lo peor no es perderlas.</p>
+              <p className="text-gray-500 italic mb-4">
+                Lo peor es esa sensación a las 3 de la mañana:
+              </p>
+              <p className="text-2xl font-bold text-primary">
+                "¿Cómo se llamaba aquello que pensé?"
+              </p>
+            </div>
           </div>
         </div>
       </div>

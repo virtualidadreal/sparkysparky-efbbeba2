@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Ear, FolderSync, Bell } from 'lucide-react';
+import { Ear, FolderSync, Link2, Bell, Lightbulb, Mic } from 'lucide-react';
 
 /**
- * What Is Sparky V3 - Cards con iconos
+ * What Is Sparky V3 - 6 feature cards
  */
 const WhatIsSparkyV3 = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -20,38 +20,44 @@ const WhatIsSparkyV3 = () => {
   }, []);
 
   const features = [
-    { icon: Ear, text: 'Escucha tus ideas.', color: 'bg-violet-100 text-violet-600' },
-    { icon: FolderSync, text: 'Las ordena sin que tengas que hacerlo tú.', color: 'bg-amber-100 text-amber-600' },
-    { icon: Bell, text: 'Y vuelve a sacarlas cuando importa.', color: 'bg-emerald-100 text-emerald-600' },
+    { icon: Ear, emoji: '👂', title: 'Reconoce', desc: 'Entiende de qué hablas sin que tú se lo expliques.', color: 'bg-violet-100 text-violet-600' },
+    { icon: FolderSync, emoji: '📁', title: 'Organiza', desc: 'Clasifica y etiqueta automáticamente cada idea.', color: 'bg-amber-100 text-amber-600' },
+    { icon: Link2, emoji: '🔗', title: 'Conecta', desc: 'Encuentra relaciones entre ideas que tú no veías.', color: 'bg-blue-100 text-blue-600' },
+    { icon: Bell, emoji: '🔔', title: 'Recuerda', desc: 'Te avisa cuando una idea es relevante.', color: 'bg-emerald-100 text-emerald-600' },
+    { icon: Lightbulb, emoji: '💡', title: 'Sugiere', desc: 'Propone acciones basadas en lo que piensas.', color: 'bg-pink-100 text-pink-600' },
+    { icon: Mic, emoji: '🎤', title: 'Voice-first', desc: 'Habla y Sparky hace el resto.', color: 'bg-orange-100 text-orange-600' },
   ];
 
   return (
     <section ref={sectionRef} className="py-24 md:py-32 px-6 bg-white">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className={`text-center mb-16 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <p className="text-lg text-gray-400 mb-4">Sparky no es una app de notas.</p>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900">
-            Es un compañero para<br />pensar mejor.
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
+            Es un compañero para pensar mejor.
           </h2>
         </div>
 
-        {/* Feature cards */}
-        <div className="grid md:grid-cols-3 gap-6">
+        {/* Feature grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, i) => {
             const Icon = feature.icon;
             return (
               <div 
                 key={i}
-                className={`bg-gray-50 rounded-2xl p-8 text-center transition-all duration-700 hover:bg-gray-100 ${
+                className={`bg-gray-50 rounded-2xl p-6 transition-all duration-700 hover:bg-gray-100 hover:-translate-y-1 ${
                   isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 }`}
-                style={{ transitionDelay: `${200 + i * 150}ms` }}
+                style={{ transitionDelay: `${200 + i * 100}ms` }}
               >
-                <div className={`w-14 h-14 ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-                  <Icon className="w-7 h-7" />
+                <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center mb-4`}>
+                  <Icon className="w-6 h-6" />
                 </div>
-                <p className="text-lg text-gray-700 font-medium">{feature.text}</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  {feature.emoji} {feature.title}
+                </h3>
+                <p className="text-gray-500">{feature.desc}</p>
               </div>
             );
           })}

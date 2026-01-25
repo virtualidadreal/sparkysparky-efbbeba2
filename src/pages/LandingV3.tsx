@@ -3,10 +3,13 @@ import { lazy, Suspense } from 'react';
 // Lazy load sections
 const HeroV3 = lazy(() => import('@/components/landing-v3/HeroV3'));
 const ProblemV3 = lazy(() => import('@/components/landing-v3/ProblemV3'));
+const OtherAppsFailV3 = lazy(() => import('@/components/landing-v3/OtherAppsFailV3'));
 const WhatIsSparkyV3 = lazy(() => import('@/components/landing-v3/WhatIsSparkyV3'));
 const HowItWorksV3 = lazy(() => import('@/components/landing-v3/HowItWorksV3'));
 const BrainsV3 = lazy(() => import('@/components/landing-v3/BrainsV3'));
+const ComparisonV3 = lazy(() => import('@/components/landing-v3/ComparisonV3'));
 const DifferentV3 = lazy(() => import('@/components/landing-v3/DifferentV3'));
+const PricingV3 = lazy(() => import('@/components/landing-v3/PricingV3'));
 const PrivacyV3 = lazy(() => import('@/components/landing-v3/PrivacyV3'));
 const FinalCTAV3 = lazy(() => import('@/components/landing-v3/FinalCTAV3'));
 const FooterV3 = lazy(() => import('@/components/landing-v3/FooterV3'));
@@ -29,6 +32,9 @@ const LandingV3 = () => {
         <ProblemV3 />
       </Suspense>
       <Suspense fallback={<SectionLoader />}>
+        <OtherAppsFailV3 />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
         <WhatIsSparkyV3 />
       </Suspense>
       <Suspense fallback={<SectionLoader />}>
@@ -38,7 +44,13 @@ const LandingV3 = () => {
         <BrainsV3 />
       </Suspense>
       <Suspense fallback={<SectionLoader />}>
+        <ComparisonV3 />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
         <DifferentV3 />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <PricingV3 />
       </Suspense>
       <Suspense fallback={<SectionLoader />}>
         <PrivacyV3 />
