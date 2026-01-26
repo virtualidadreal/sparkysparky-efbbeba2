@@ -383,7 +383,25 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
         .then(({ data, error }) => {
           if (error) {
             console.error('Error processing audio:', error);
-            toast.error('Error al procesar el audio');
+            // Mensaje más específico según el tipo de error
+            let errorMessage = 'Error al procesar el audio';
+            if (error.message?.includes('quota') || error.message?.includes('límite')) {
+              errorMessage = 'Has alcanzado el límite mensual. Actualiza a Pro para continuar.';
+            } else if (error.message?.includes('timeout') || error.message?.includes('tiempo')) {
+              errorMessage = 'El procesamiento tardó demasiado. Intenta con un audio más corto.';
+            } else if (error.message?.includes('Whisper') || error.message?.includes('transcription')) {
+              errorMessage = 'Error al transcribir el audio. Verifica que hay voz clara en la grabación.';
+            } else if (error.message?.includes('size') || error.message?.includes('large')) {
+              errorMessage = 'El audio es demasiado largo. Máximo 5 minutos.';
+            } else if (error.message?.includes('speech') || error.message?.includes('detected')) {
+              errorMessage = 'No se detectó voz en el audio. Intenta hablar más cerca del micrófono.';
+            }
+            toast.error(errorMessage);
+            
+            // Limpiar la idea placeholder si hubo error
+            supabase.from('ideas').delete().eq('id', newIdea.id).then(() => {
+              queryClient.invalidateQueries({ queryKey: ['ideas'] });
+            });
           } else {
             const contentType = data?.type || 'idea';
             const entityId = data?.id || newIdea.id;
@@ -414,6 +432,14 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             queryClient.invalidateQueries({ queryKey: ['people'] });
           }
+        })
+        .catch((err) => {
+          console.error('Voice capture failed:', err);
+          toast.error('Error de conexión. Verifica tu internet e intenta de nuevo.');
+          // Limpiar la idea placeholder
+          supabase.from('ideas').delete().eq('id', newIdea.id).then(() => {
+            queryClient.invalidateQueries({ queryKey: ['ideas'] });
+          });
         });
 
       setIsOpen(false);

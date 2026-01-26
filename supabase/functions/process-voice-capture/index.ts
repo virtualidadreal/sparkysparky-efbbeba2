@@ -247,7 +247,18 @@ serve(async (req) => {
     if (!whisperResponse.ok) {
       const errorText = await whisperResponse.text();
       console.error('Whisper API error:', whisperResponse.status, errorText);
-      throw new Error(`Whisper transcription failed: ${errorText}`);
+      
+      // Mensaje de error más específico para el usuario
+      let userMessage = 'Error en la transcripción del audio';
+      if (whisperResponse.status === 429) {
+        userMessage = 'Demasiadas solicitudes. Espera unos segundos e intenta de nuevo.';
+      } else if (whisperResponse.status === 413 || errorText.includes('size')) {
+        userMessage = 'El audio es demasiado grande. Máximo 5 minutos.';
+      } else if (errorText.includes('Invalid file')) {
+        userMessage = 'Formato de audio no válido. Intenta grabar de nuevo.';
+      }
+      
+      throw new Error(userMessage);
     }
 
     const whisperResult = await whisperResponse.json();
@@ -677,8 +688,12 @@ INSTRUCCIONES:
 
   } catch (error) {
     console.error('Error in process-voice-capture:', error);
+    
+    // Mensaje más amigable para el usuario
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido al procesar el audio';
+    
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

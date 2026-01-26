@@ -122,7 +122,20 @@ export const DiaryEntryPopup = ({ trigger }: DiaryEntryPopupProps) => {
         .then(({ data, error }) => {
           if (error) {
             console.error('Error processing audio:', error);
-            toast.error('Error al procesar el audio');
+            // Mensaje más específico según el tipo de error
+            let errorMessage = 'Error al procesar el audio';
+            if (error.message?.includes('quota') || error.message?.includes('límite')) {
+              errorMessage = 'Has alcanzado el límite mensual. Actualiza a Pro para continuar.';
+            } else if (error.message?.includes('timeout') || error.message?.includes('tiempo')) {
+              errorMessage = 'El procesamiento tardó demasiado. Intenta con un audio más corto.';
+            } else if (error.message?.includes('Whisper') || error.message?.includes('transcription')) {
+              errorMessage = 'Error al transcribir el audio. Verifica que hay voz clara en la grabación.';
+            } else if (error.message?.includes('size') || error.message?.includes('large')) {
+              errorMessage = 'El audio es demasiado largo. Máximo 5 minutos.';
+            } else if (error.message?.includes('speech') || error.message?.includes('detected')) {
+              errorMessage = 'No se detectó voz en el audio. Intenta hablar más cerca del micrófono.';
+            }
+            toast.error(errorMessage);
           } else {
             if (data?.transcription) {
               supabase
@@ -137,6 +150,10 @@ export const DiaryEntryPopup = ({ trigger }: DiaryEntryPopupProps) => {
                 });
             }
           }
+        })
+        .catch((err) => {
+          console.error('Voice capture failed:', err);
+          toast.error('Error de conexión. Verifica tu internet e intenta de nuevo.');
         });
 
       setIsOpen(false);
