@@ -67,33 +67,114 @@ export const useRecordVoice = (): UseRecordVoice => {
       audioChunksRef.current = [];
       setRecordingTime(0);
 
+      // Verificar soporte de MediaRecorder
+      if (!navigator.mediaDevices || !window.MediaRecorder) {
+        setError('Tu navegador no soporta grabación de audio. Usa Chrome, Firefox o Safari actualizados.');
+        return;
+      }
+
       // Obtener stream (reutiliza el existente si está disponible)
-      const stream = await getStream();
+      let stream: MediaStream | null = null;
+      
+      try {
+        stream = await getStream();
+      } catch (streamError: any) {
+        console.error('Error getting stream:', streamError);
+        if (streamError.name === 'NotAllowedError' || streamError.name === 'PermissionDeniedError') {
+          setError('Permiso denegado para acceder al micrófono. Haz clic en el icono de candado 🔒 en la barra de direcciones.');
+          return;
+        }
+        throw streamError;
+      }
       
       if (!stream) {
         setError('No se pudo acceder al micrófono. Por favor permite el acceso.');
         return;
       }
 
+      // Verificar que el stream tiene tracks activos
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        setError('No se detectó ningún micrófono activo.');
+        return;
+      }
+
+      // Verificar que los tracks están vivos
+      const hasLiveTracks = audioTracks.some(track => track.readyState === 'live');
+      if (!hasLiveTracks) {
+        // Intentar obtener un nuevo stream
+        console.log('Stream tracks not live, requesting new stream...');
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              sampleRate: 44100,
+            }
+          });
+        } catch (retryError: any) {
+          console.error('Retry stream error:', retryError);
+          setError('Error al acceder al micrófono. Recarga la página e intenta de nuevo.');
+          return;
+        }
+      }
+
       activeStreamRef.current = stream;
 
-      // Crear MediaRecorder
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
-        ? 'audio/webm'
-        : 'audio/mp4';
+      // Determinar el mejor formato soportado
+      let mimeType = 'audio/webm';
+      if (!MediaRecorder.isTypeSupported('audio/webm')) {
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+          mimeType = 'audio/ogg';
+        } else {
+          // Usar el formato por defecto del navegador
+          mimeType = '';
+        }
+      }
       
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      // Crear MediaRecorder con manejo de errores
+      let mediaRecorder: MediaRecorder;
+      try {
+        mediaRecorder = mimeType 
+          ? new MediaRecorder(stream, { mimeType })
+          : new MediaRecorder(stream);
+      } catch (recorderError: any) {
+        console.error('MediaRecorder creation error:', recorderError);
+        setError('Error al iniciar la grabación. Tu navegador puede no ser compatible.');
+        return;
+      }
+      
       mediaRecorderRef.current = mediaRecorder;
+
+      // Manejar errores del MediaRecorder
+      mediaRecorder.onerror = (event: any) => {
+        console.error('MediaRecorder error:', event.error);
+        setError('Error durante la grabación. Por favor intenta de nuevo.');
+        setIsRecording(false);
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      };
 
       // Guardar chunks de audio
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       // Iniciar grabación
-      mediaRecorder.start(1000); // Guardar chunks cada segundo
+      try {
+        mediaRecorder.start(1000); // Guardar chunks cada segundo
+      } catch (startError: any) {
+        console.error('MediaRecorder start error:', startError);
+        setError('No se pudo iniciar la grabación. Verifica los permisos del micrófono.');
+        return;
+      }
+      
       setIsRecording(true);
 
       // Iniciar timer
@@ -117,8 +198,12 @@ export const useRecordVoice = (): UseRecordVoice => {
         setError('Permiso denegado para acceder al micrófono. Por favor permite el acceso en la configuración de tu navegador.');
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         setError('No se encontró ningún micrófono. Por favor conecta un micrófono.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        setError('El micrófono está siendo usado por otra aplicación. Ciérrala e intenta de nuevo.');
+      } else if (err.name === 'OverconstrainedError') {
+        setError('La configuración del micrófono no es compatible. Intenta con otro micrófono.');
       } else {
-        setError('Error al iniciar la grabación. Por favor intenta de nuevo.');
+        setError('Error al iniciar la grabación. Por favor recarga la página e intenta de nuevo.');
       }
     }
   }, [getStream]);

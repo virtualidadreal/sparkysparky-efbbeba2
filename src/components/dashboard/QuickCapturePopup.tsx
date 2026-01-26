@@ -328,6 +328,16 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
         throw new Error('Usuario no autenticado');
       }
 
+      // Verificar tamaño del audio (máximo 10MB)
+      if (audioBlob.size > 10 * 1024 * 1024) {
+        throw new Error('El audio es demasiado largo. Máximo 5 minutos.');
+      }
+
+      // Verificar que el blob tiene contenido
+      if (audioBlob.size < 1000) {
+        throw new Error('La grabación está vacía. Intenta hablar más cerca del micrófono.');
+      }
+
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(7);
       const fileName = `${user.id}/${timestamp}-${random}.webm`;
@@ -335,12 +345,13 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
       const { error: uploadError } = await supabase.storage
         .from('audio-recordings')
         .upload(fileName, audioBlob, {
-          contentType: 'audio/webm',
+          contentType: audioBlob.type || 'audio/webm',
           upsert: false,
         });
 
       if (uploadError) {
-        throw uploadError;
+        console.error('Upload error:', uploadError);
+        throw new Error('Error al subir el audio. Verifica tu conexión e intenta de nuevo.');
       }
 
       const { data: newIdea, error: createError } = await supabase

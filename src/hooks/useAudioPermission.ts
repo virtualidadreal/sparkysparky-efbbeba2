@@ -158,32 +158,72 @@ export const useAudioPermission = (): UseAudioPermission => {
     // Verificar si el stream actual sigue activo
     if (streamRef.current) {
       const tracks = streamRef.current.getTracks();
-      const hasActiveTracks = tracks.some(track => track.readyState === 'live');
+      const hasActiveTracks = tracks.some(track => track.readyState === 'live' && track.enabled);
       
       if (hasActiveTracks) {
         return streamRef.current;
+      } else {
+        // Limpiar stream muerto
+        tracks.forEach(track => track.stop());
+        streamRef.current = null;
       }
     }
 
-    // Crear nuevo stream
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100,
-        }
-      });
-
-      streamRef.current = stream;
-      setPermissionState('granted');
-      setIsPersistent(true);
-
-      return stream;
-    } catch (error) {
-      console.error('Error getting audio stream:', error);
+    // Verificar soporte del navegador
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error('getUserMedia not supported');
+      setPermissionState('denied');
       return null;
     }
+
+    // Crear nuevo stream con retry
+    const maxRetries = 2;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 44100,
+          }
+        });
+
+        // Verificar que el stream tiene tracks activos
+        const audioTracks = stream.getAudioTracks();
+        if (audioTracks.length === 0) {
+          stream.getTracks().forEach(t => t.stop());
+          throw new Error('No audio tracks available');
+        }
+
+        streamRef.current = stream;
+        setPermissionState('granted');
+        setIsPersistent(true);
+        localStorage.setItem('sparky_mic_permission', 'granted');
+
+        return stream;
+      } catch (error: any) {
+        console.error(`Audio stream attempt ${attempt + 1} failed:`, error);
+        lastError = error;
+        
+        // No reintentar si es un error de permisos
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          setPermissionState('denied');
+          localStorage.setItem('sparky_mic_permission', 'denied');
+          return null;
+        }
+        
+        // Esperar antes de reintentar
+        if (attempt < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    }
+
+    console.error('All audio stream attempts failed:', lastError);
+    return null;
   }, []);
 
   return {

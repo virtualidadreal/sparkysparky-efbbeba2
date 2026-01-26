@@ -223,7 +223,7 @@ serve(async (req) => {
     const binaryAudio = processBase64Chunks(audioBase64);
     console.log('Binary audio size:', binaryAudio.length);
 
-    // Transcribe using OpenAI Whisper
+    // Transcribe using OpenAI Whisper with timeout
     console.log('Transcribing with Whisper...');
     
     const formData = new FormData();
@@ -236,13 +236,30 @@ serve(async (req) => {
     formData.append('model', 'whisper-1');
     formData.append('language', 'es'); // Spanish by default
 
-    const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: formData,
-    });
+    // Crear AbortController para timeout
+    const whisperController = new AbortController();
+    const whisperTimeout = setTimeout(() => whisperController.abort(), 60000); // 60 segundos timeout
+
+    let whisperResponse: Response;
+    try {
+      whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: formData,
+        signal: whisperController.signal,
+      });
+    } catch (fetchError: any) {
+      clearTimeout(whisperTimeout);
+      if (fetchError.name === 'AbortError') {
+        console.error('Whisper API timeout');
+        throw new Error('La transcripción tardó demasiado. Intenta con un audio más corto.');
+      }
+      console.error('Whisper fetch error:', fetchError);
+      throw new Error('Error de conexión al transcribir. Verifica tu conexión e intenta de nuevo.');
+    }
+    clearTimeout(whisperTimeout);
 
     if (!whisperResponse.ok) {
       const errorText = await whisperResponse.text();
@@ -256,6 +273,10 @@ serve(async (req) => {
         userMessage = 'El audio es demasiado grande. Máximo 5 minutos.';
       } else if (errorText.includes('Invalid file')) {
         userMessage = 'Formato de audio no válido. Intenta grabar de nuevo.';
+      } else if (whisperResponse.status === 400) {
+        userMessage = 'El audio no se pudo procesar. Verifica que grabaste correctamente.';
+      } else if (whisperResponse.status >= 500) {
+        userMessage = 'El servicio de transcripción no está disponible. Intenta en unos minutos.';
       }
       
       throw new Error(userMessage);
