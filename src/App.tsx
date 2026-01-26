@@ -52,6 +52,7 @@ const App = () => {
               <Route path="/landing-v4" element={<LandingV4 />} />
               <Route path="/landing-v3" element={<LandingV3 />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/reset-password" element={<ResetPassword />} />
