@@ -68,6 +68,12 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const waveformIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isPausedRef = useRef(false); // Ref para evitar closure obsoleto
+
+  // Sincronizar ref con estado
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
 
   // Formatear tiempo
   const formatTime = (seconds: number): string => {
@@ -117,7 +123,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
       updateLevel();
 
       waveformIntervalRef.current = setInterval(() => {
-        if (!analyserRef.current || isPaused) return;
+        if (!analyserRef.current || isPausedRef.current) return;
         
         analyserRef.current.getByteFrequencyData(dataArray);
         
@@ -142,7 +148,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
       console.error('Error accessing microphone for visualization:', err);
       // Si falla la visualización, simulamos ondas aleatorias
       waveformIntervalRef.current = setInterval(() => {
-        if (isPaused) return;
+        if (isPausedRef.current) return;
         const fakeLevel = 0.2 + Math.random() * 0.5;
         setCurrentLevel(fakeLevel);
         setWaveformHistory(prev => {
@@ -154,7 +160,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
         });
       }, 60);
     }
-  }, [isPaused]);
+  }, []);
 
   // Detener visualización
   const stopVisualization = useCallback(() => {

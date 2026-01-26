@@ -172,11 +172,6 @@ export const VoiceRecordModal = ({
 
   // Versión estable del loop que verifica el estado antes de continuar
   const loopDrawStable = useCallback(() => {
-    // No continuar si está pausado
-    if (isPausedRef.current) {
-      return;
-    }
-    
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
     const audioCtx = audioCtxRef.current;
@@ -184,6 +179,18 @@ export const VoiceRecordModal = ({
     // Verificar que todo sigue activo
     if (!canvas || !analyser || !audioCtx || audioCtx.state === 'closed') {
       return;
+    }
+
+    // Si está pausado, solo re-dibujar sin actualizar tiempo ni programar siguiente frame
+    if (isPausedRef.current) {
+      const ctx2d = canvas.getContext('2d');
+      if (ctx2d) {
+        const dpr = window.devicePixelRatio || 1;
+        const w = Math.floor(canvas.clientWidth * dpr);
+        const h = Math.floor(canvas.clientHeight * dpr);
+        drawWaveform(ctx2d, w, h, ampsRef.current);
+      }
+      return; // No programar siguiente frame
     }
 
     const ctx2d = canvas.getContext('2d');
