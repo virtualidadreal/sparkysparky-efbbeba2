@@ -236,9 +236,13 @@ serve(async (req) => {
     formData.append('model', 'whisper-1');
     formData.append('language', 'es'); // Spanish by default
 
-    // Crear AbortController para timeout
+    // Crear AbortController para timeout - 120 segundos para audios largos (hasta 5 min)
     const whisperController = new AbortController();
-    const whisperTimeout = setTimeout(() => whisperController.abort(), 60000); // 60 segundos timeout
+    // Timeout escalado según tamaño del audio: mínimo 60s, máximo 180s
+    const audioSizeMB = binaryAudio.length / (1024 * 1024);
+    const whisperTimeoutMs = Math.min(180000, Math.max(60000, audioSizeMB * 30000)); // ~30s por MB
+    console.log('Whisper timeout set to:', whisperTimeoutMs / 1000, 'seconds for', audioSizeMB.toFixed(2), 'MB audio');
+    const whisperTimeout = setTimeout(() => whisperController.abort(), whisperTimeoutMs);
 
     let whisperResponse: Response;
     try {
@@ -456,22 +460,38 @@ INSTRUCCIONES:
       }
     };
     
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Clasifica esta transcripción. Si habla de su día, experiencias personales o emociones, es "diary". Transcripción:\n\n${transcription}` }
-        ],
-        tools: [classificationTool],
-        tool_choice: { type: "function", function: { name: "classify_content" } }
-      }),
-    });
+    // Timeout para AI classification (30 segundos)
+    const aiController = new AbortController();
+    const aiTimeout = setTimeout(() => aiController.abort(), 30000);
+    
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Clasifica esta transcripción. Si habla de su día, experiencias personales o emociones, es "diary". Transcripción:\n\n${transcription}` }
+          ],
+          tools: [classificationTool],
+          tool_choice: { type: "function", function: { name: "classify_content" } }
+        }),
+        signal: aiController.signal,
+      });
+    } catch (fetchError: any) {
+      clearTimeout(aiTimeout);
+      if (fetchError.name === 'AbortError') {
+        console.error('AI classification timeout');
+        throw new Error('La clasificación tardó demasiado. Intenta de nuevo.');
+      }
+      throw fetchError;
+    }
+    clearTimeout(aiTimeout);
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();

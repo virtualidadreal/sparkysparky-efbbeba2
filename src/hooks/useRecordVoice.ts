@@ -159,10 +159,17 @@ export const useRecordVoice = (): UseRecordVoice => {
         }
       };
 
-      // Guardar chunks de audio
+      // Guardar chunks de audio con límite de memoria
+      const MAX_CHUNKS = 600; // ~10 minutos a 1 chunk/segundo - límite de seguridad
       mediaRecorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
+          // Verificar límite de chunks para evitar memory issues
+          if (audioChunksRef.current.length < MAX_CHUNKS) {
+            audioChunksRef.current.push(event.data);
+          } else {
+            console.warn('Max audio chunks reached, stopping recording');
+            stopRecording();
+          }
         }
       };
 
