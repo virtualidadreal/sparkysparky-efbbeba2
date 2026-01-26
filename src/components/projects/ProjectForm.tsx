@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon, PlusIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/common';
@@ -21,14 +21,34 @@ interface ProjectFormProps {
  * Modal para crear o editar proyectos con soporte para tags y keywords
  */
 export const ProjectForm = ({ isOpen, onClose, project }: ProjectFormProps) => {
-  const [title, setTitle] = useState(project?.title || '');
-  const [description, setDescription] = useState(project?.description || '');
-  const [status, setStatus] = useState(project?.status || 'active');
-  const [dueDate, setDueDate] = useState(project?.due_date || '');
-  const [tags, setTags] = useState<string[]>(project?.tags || []);
-  const [keywords, setKeywords] = useState<string[]>(project?.keywords || []);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('active');
+  const [dueDate, setDueDate] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
+
+  // Sincronizar estado cuando cambia el proyecto o se abre el modal
+  useEffect(() => {
+    if (isOpen && project) {
+      setTitle(project.title || '');
+      setDescription(project.description || '');
+      setStatus(project.status || 'active');
+      setDueDate(project.due_date || '');
+      setTags(project.tags || []);
+      setKeywords(project.keywords || []);
+    } else if (isOpen && !project) {
+      // Reset para nuevo proyecto
+      setTitle('');
+      setDescription('');
+      setStatus('active');
+      setDueDate('');
+      setTags([]);
+      setKeywords([]);
+    }
+  }, [isOpen, project]);
 
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();

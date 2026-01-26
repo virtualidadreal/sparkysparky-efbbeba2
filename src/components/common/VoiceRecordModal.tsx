@@ -162,8 +162,21 @@ export const VoiceRecordModal = ({
     }
   }
 
+  // Ref para controlar si está pausado (evita problemas con closures)
+  const isPausedRef = useRef(false);
+  
+  // Sincronizar ref con estado
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+
   // Versión estable del loop que verifica el estado antes de continuar
   const loopDrawStable = useCallback(() => {
+    // No continuar si está pausado
+    if (isPausedRef.current) {
+      return;
+    }
+    
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
     const audioCtx = audioCtxRef.current;

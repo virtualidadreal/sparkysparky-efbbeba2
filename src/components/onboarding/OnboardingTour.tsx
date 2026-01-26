@@ -149,7 +149,7 @@ export const OnboardingTour = ({ onComplete, userName }: OnboardingTourProps) =>
               {step.description}
             </p>
             {step.tip && (
-              <p className="mt-4 text-sm text-primary/80 bg-primary/5 rounded-lg px-4 py-2 inline-block">
+              <p className="mt-4 text-sm text-foreground bg-muted border border-border rounded-lg px-4 py-2 inline-block">
                 💡 {step.tip}
               </p>
             )}

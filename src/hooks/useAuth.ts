@@ -19,17 +19,28 @@ export const useAuth = () => {
     }
   };
 
-  // Send welcome email to new users
+  // Send welcome email to new users (with deduplication)
+  const welcomeEmailSentRef = new Set<string>();
+  
   const sendWelcomeEmail = async (email: string, name?: string) => {
+    // Deduplication: Don't send if already sent in this session
+    if (welcomeEmailSentRef.has(email)) {
+      console.log('[AUTH] Welcome email already sent to:', email);
+      return;
+    }
+    welcomeEmailSentRef.add(email);
+    
     try {
       const { error } = await supabase.functions.invoke('send-welcome-email', {
         body: { email, name }
       });
       if (error) {
         console.error('Error sending welcome email:', error);
+        welcomeEmailSentRef.delete(email); // Allow retry on error
       }
     } catch (err) {
       console.error('Failed to send welcome email:', err);
+      welcomeEmailSentRef.delete(email); // Allow retry on error
     }
   };
 
