@@ -433,12 +433,10 @@ export const VoiceRecordModal = ({
               <span className="text-sm text-muted-foreground">
                 {isPaused ? 'En pausa' : 'Grabando...'}
               </span>
-            </div>
-            {elapsedMs > 240000 && ( // Mostrar advertencia después de 4 minutos
-              <span className="text-xs text-amber-500">
-                Máximo 5 minutos ({Math.ceil((300000 - elapsedMs) / 1000)}s restantes)
+              <span className="text-xs text-muted-foreground/50">
+                (máx. 5 min)
               </span>
-            )}
+            </div>
           </div>
         </div>
       </DialogContent>
