@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+
+// Module-level Set para deduplicar emails entre renders y re-mounts
+const globalWelcomeEmailSent = new Set<string>();
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Track processed users to avoid duplicate processing
+  const processedUsersRef = useRef(new Set<string>());
 
   // Create Stripe customer for new users
   const createStripeCustomer = async () => {
@@ -19,16 +25,14 @@ export const useAuth = () => {
     }
   };
 
-  // Send welcome email to new users (with deduplication)
-  const welcomeEmailSentRef = new Set<string>();
-  
+  // Send welcome email to new users (with global deduplication)
   const sendWelcomeEmail = async (email: string, name?: string) => {
-    // Deduplication: Don't send if already sent in this session
-    if (welcomeEmailSentRef.has(email)) {
+    // Deduplication: Don't send if already sent in this browser session
+    if (globalWelcomeEmailSent.has(email)) {
       console.log('[AUTH] Welcome email already sent to:', email);
       return;
     }
-    welcomeEmailSentRef.add(email);
+    globalWelcomeEmailSent.add(email);
     
     try {
       const { error } = await supabase.functions.invoke('send-welcome-email', {
@@ -36,24 +40,36 @@ export const useAuth = () => {
       });
       if (error) {
         console.error('Error sending welcome email:', error);
-        welcomeEmailSentRef.delete(email); // Allow retry on error
+        globalWelcomeEmailSent.delete(email); // Allow retry on error
       }
     } catch (err) {
       console.error('Failed to send welcome email:', err);
-      welcomeEmailSentRef.delete(email); // Allow retry on error
+      globalWelcomeEmailSent.delete(email); // Allow retry on error
     }
   };
 
   useEffect(() => {
+    let isMounted = true;
+    
     // Configurar listener PRIMERO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
 
         // Create Stripe customer on sign up or first OAuth login
         if (event === 'SIGNED_IN' && session?.user) {
+          const userId = session.user.id;
+          
+          // Avoid processing the same user multiple times
+          if (processedUsersRef.current.has(userId)) {
+            return;
+          }
+          processedUsersRef.current.add(userId);
+          
           // Use setTimeout to avoid blocking the auth flow
           setTimeout(() => createStripeCustomer(), 0);
           
@@ -76,12 +92,16 @@ export const useAuth = () => {
 
     // LUEGO verificar sesión existente
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {

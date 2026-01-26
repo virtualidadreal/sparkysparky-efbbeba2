@@ -34,11 +34,18 @@ export const useAudioPermission = (): UseAudioPermission => {
 
   // Verificar estado del permiso al montar usando Permissions API (sin solicitar)
   useEffect(() => {
+    let isMounted = true;
+    let localStatus: PermissionStatus | null = null;
+    
     const checkPermission = async () => {
       try {
         // Usar Permissions API si está disponible (esto NO solicita permiso, solo consulta)
         if ('permissions' in navigator) {
           const status = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          
+          if (!isMounted) return;
+          
+          localStatus = status;
           permissionStatusRef.current = status;
           
           // Actualizar estado basado en la API del navegador
@@ -53,8 +60,10 @@ export const useAudioPermission = (): UseAudioPermission => {
             localStorage.setItem('sparky_mic_permission', 'denied');
           }
 
-          // Escuchar cambios en el permiso
-          status.onchange = () => {
+          // Handler para cambios en el permiso
+          const handleChange = () => {
+            if (!isMounted) return;
+            
             const newState = status.state as PermissionState;
             setPermissionState(newState);
             setIsPersistent(newState === 'granted');
@@ -74,6 +83,11 @@ export const useAudioPermission = (): UseAudioPermission => {
               streamRef.current = null;
             }
           };
+          
+          status.addEventListener('change', handleChange);
+          
+          // Guardar referencia para cleanup
+          (status as any)._handleChange = handleChange;
         }
         // Si Permissions API no está disponible, mantenemos el estado de localStorage
       } catch (error) {
@@ -86,6 +100,13 @@ export const useAudioPermission = (): UseAudioPermission => {
 
     // Cleanup al desmontar
     return () => {
+      isMounted = false;
+      if (localStatus) {
+        const handler = (localStatus as any)._handleChange;
+        if (handler) {
+          localStatus.removeEventListener('change', handler);
+        }
+      }
       if (permissionStatusRef.current) {
         permissionStatusRef.current.onchange = null;
       }
