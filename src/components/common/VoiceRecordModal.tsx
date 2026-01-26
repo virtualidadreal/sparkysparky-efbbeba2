@@ -426,12 +426,19 @@ export const VoiceRecordModal = ({
             </div>
           </div>
 
-          {/* Indicador de grabación */}
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-500' : 'bg-red-500 animate-pulse'}`} />
-            <span className="text-sm text-muted-foreground">
-              {isPaused ? 'En pausa' : 'Grabando...'}
-            </span>
+          {/* Indicador de grabación con límite de tiempo */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-500' : 'bg-red-500 animate-pulse'}`} />
+              <span className="text-sm text-muted-foreground">
+                {isPaused ? 'En pausa' : 'Grabando...'}
+              </span>
+            </div>
+            {elapsedMs > 240000 && ( // Mostrar advertencia después de 4 minutos
+              <span className="text-xs text-amber-500">
+                Máximo 5 minutos ({Math.ceil((300000 - elapsedMs) / 1000)}s restantes)
+              </span>
+            )}
           </div>
         </div>
       </DialogContent>
