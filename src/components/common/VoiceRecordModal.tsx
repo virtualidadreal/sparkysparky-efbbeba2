@@ -102,20 +102,46 @@ export const VoiceRecordModal = ({
     setIsPaused(false);
 
     try {
+      // Verificar soporte del navegador
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('getUserMedia not supported');
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
+          autoGainControl: true,
           sampleRate: 44100,
         } 
       });
+      
+      // Verificar que tenemos tracks de audio
+      if (stream.getAudioTracks().length === 0) {
+        console.error('No audio tracks in stream');
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
+      
       mediaStreamRef.current = stream;
 
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) {
+        console.error('AudioContext not supported');
+        return;
+      }
+      
       const ctx: AudioContext = new AudioCtx({ sampleRate: 44100 });
       audioCtxRef.current = ctx;
 
-      if (ctx.state === 'suspended') await ctx.resume();
+      if (ctx.state === 'suspended') {
+        try {
+          await ctx.resume();
+        } catch (resumeErr) {
+          console.error('Failed to resume AudioContext:', resumeErr);
+        }
+      }
 
       const source = ctx.createMediaStreamSource(stream);
       sourceRef.current = source;
@@ -129,8 +155,10 @@ export const VoiceRecordModal = ({
 
       startedAtRef.current = performance.now();
       requestAnimationFrame(loopDrawStable);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error starting visualization:', err);
+      // Continuar sin visualización en caso de error
+      // La grabación puede funcionar aunque la visualización falle
     }
   }
 
@@ -271,8 +299,14 @@ export const VoiceRecordModal = ({
   useEffect(() => {
     if (isOpen && !isRecording && permissionState !== 'denied') {
       const start = async () => {
-        await startRecording();
-        await startVisualization();
+        try {
+          await startRecording();
+          await startVisualization();
+        } catch (err) {
+          console.error('Error starting recording:', err);
+          toast.error('Error al iniciar la grabación. Verifica los permisos del micrófono.');
+          onClose();
+        }
       };
       start();
     }
@@ -289,17 +323,28 @@ export const VoiceRecordModal = ({
   // Enviar grabación
   const handleSend = async () => {
     stopVisualization();
-    const audioBlob = await stopRecording();
-    if (audioBlob) {
-      onRecordingComplete(audioBlob);
+    try {
+      const audioBlob = await stopRecording();
+      if (audioBlob && audioBlob.size > 0) {
+        onRecordingComplete(audioBlob);
+      } else {
+        toast.error('La grabación está vacía. Intenta de nuevo.');
+      }
+    } catch (err) {
+      console.error('Error stopping recording:', err);
+      toast.error('Error al finalizar la grabación.');
     }
     onClose();
   };
 
   // Cancelar y cerrar
   const handleCancel = () => {
-    stopVisualization();
-    cancelRecording();
+    try {
+      stopVisualization();
+      cancelRecording();
+    } catch (err) {
+      console.error('Error cancelling recording:', err);
+    }
     onClose();
   };
 
