@@ -19,20 +19,40 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get('action') || 'stats';
 
-    // GET: Get early access stats (public)
+    // GET: Get early access stats (public) - Now counts actual registered users
     if (req.method === 'GET' && action === 'stats') {
-      console.log('Fetching early access stats...');
+      console.log('Fetching early access stats (counting registered users)...');
       
-      const { data, error } = await supabase.rpc('get_early_access_stats');
+      // Get total spots from settings
+      const { data: settingsData } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'early_access_limit')
+        .single();
       
-      if (error) {
-        console.error('Error fetching stats:', error);
-        throw error;
+      const totalSpots = settingsData?.value ? parseInt(String(settingsData.value)) : 30;
+      
+      // Count actual registered users from profiles table
+      const { count: userCount, error: countError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+      
+      if (countError) {
+        console.error('Error counting users:', countError);
+        throw countError;
       }
 
-      console.log('Early access stats:', data);
+      const spotsTaken = userCount || 0;
+      const result = {
+        spots_taken: spotsTaken,
+        total_spots: totalSpots,
+        spots_remaining: Math.max(0, totalSpots - spotsTaken),
+        is_available: spotsTaken < totalSpots
+      };
+
+      console.log('Early access stats:', result);
       
-      return new Response(JSON.stringify(data), {
+      return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
