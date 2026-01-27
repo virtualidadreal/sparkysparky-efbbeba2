@@ -612,7 +612,18 @@ INSTRUCCIONES:
     if (contentType === 'task') {
       // Determine task list ID
       // Priority: AI detected list > heuristic detected list name > null (inbox)
-      let taskListId: string | null = parsedData.task_list_id || null;
+      // IMPORTANT: AI may return "null" as string, so we need to sanitize it
+      let taskListId: string | null = null;
+      
+      // Sanitize AI response - handle "null" string and validate UUID
+      const aiTaskListId = parsedData.task_list_id;
+      if (aiTaskListId && 
+          typeof aiTaskListId === 'string' && 
+          aiTaskListId !== 'null' && 
+          aiTaskListId !== '' &&
+          UUID_REGEX.test(aiTaskListId)) {
+        taskListId = aiTaskListId;
+      }
       
       // If AI didn't detect a list but we have a mentioned list name from heuristic, try to match it
       if (!taskListId && mentionedListName && userTaskLists && userTaskLists.length > 0) {
@@ -627,7 +638,7 @@ INSTRUCCIONES:
         }
       }
       
-      console.log('Creating task with list_id:', taskListId || 'inbox (null)');
+      console.log('Creating task with list_id:', taskListId ? taskListId : 'inbox (null)');
       
       // Create task instead of idea
       const { data: task, error: taskError } = await supabase
