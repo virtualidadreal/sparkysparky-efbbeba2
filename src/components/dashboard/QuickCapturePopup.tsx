@@ -48,6 +48,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
   const [waveformHistory, setWaveformHistory] = useState<number[]>([]);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0); // Timer local que respeta pausa
   
   const queryClient = useQueryClient();
   
@@ -69,11 +70,33 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const waveformIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isPausedRef = useRef(false); // Ref para evitar closure obsoleto
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null); // Timer local
 
   // Sincronizar ref con estado
   useEffect(() => {
     isPausedRef.current = isPaused;
   }, [isPaused]);
+
+  // Timer local que respeta la pausa
+  useEffect(() => {
+    if (isRecording && !isPaused) {
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    }
+    
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, [isRecording, isPaused]);
 
   // Formatear tiempo
   const formatTime = (seconds: number): string => {
@@ -218,6 +241,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
       }
       setContent('');
       setIsPaused(false);
+      setElapsedSeconds(0); // Resetear timer local
     }
   }, [isOpen, isRecording, cancelRecording, stopVisualization, startInTextMode]);
 
@@ -656,7 +680,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                       : 'bg-destructive animate-pulse shadow-destructive/30'
                   )} />
                   <span className="text-xl font-mono font-semibold text-foreground tracking-wider">
-                    {formatTime(recordingTime)}
+                    {formatTime(elapsedSeconds)}
                   </span>
                   <span className="text-xs text-muted-foreground font-medium">/ 05:00</span>
                 </div>
@@ -685,7 +709,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
                   {/* Botón Enviar - Principal */}
                   <button
                     onClick={handleSendRecording}
-                    disabled={!isRecording || recordingTime === 0}
+                    disabled={!isRecording || elapsedSeconds === 0}
                     className={clsx(
                       'w-18 h-18 rounded-full flex items-center justify-center transition-all duration-200',
                       'bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25',
