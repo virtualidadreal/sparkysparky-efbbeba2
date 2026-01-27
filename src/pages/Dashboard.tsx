@@ -38,6 +38,7 @@ const Dashboard = () => {
   } = useProactiveInsights();
 
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+  const [dismissedSuggestion, setDismissedSuggestion] = useState(false);
 
   useEffect(() => {
     if (initialized) {
@@ -81,9 +82,15 @@ const Dashboard = () => {
   // En tu cabeza - proyectos activos
   const activeProjects = projects?.filter(p => p.status === 'active').slice(0, 4) || [];
 
-  // Sparky message - usar suggestion si existe, sino mensaje default
-  const sparkyMessage = suggestions?.[0]?.description || 
+  // Sparky message - usar suggestion si existe y no está dismisseada
+  const currentSuggestion = suggestions?.[0];
+  const sparkyMessage = (!dismissedSuggestion && currentSuggestion?.description) || 
     "¿Tienes alguna idea nueva que quieras explorar conmigo?";
+  
+  // Mensaje para enviar a Sparky cuando el usuario dice "Sí, cuéntame"
+  const sparkyInitialMessage = currentSuggestion && !dismissedSuggestion
+    ? `Cuéntame más sobre: "${currentSuggestion.description}"`
+    : undefined;
 
   const getRelativeTime = (dateStr: string) => {
     // Si es solo una fecha (YYYY-MM-DD), parsearla como fecha local (no UTC)
@@ -136,8 +143,10 @@ const Dashboard = () => {
                         Sí, cuéntame
                       </button>
                     }
+                    initialMessage={sparkyInitialMessage}
                   />
                   <button
+                    onClick={() => setDismissedSuggestion(true)}
                     className="px-5 py-2.5 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl font-medium text-sm transition-colors"
                   >
                     Ahora no
