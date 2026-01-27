@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
+import sparkyLogo from '@/assets/sparky-logo.png';
 
 /**
- * Footer Final - With logo image
+ * Footer Final - With Sparky yellow logo
  */
 const FooterFinal = () => {
   return (
@@ -10,19 +11,11 @@ const FooterFinal = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-[#FACD1A] flex items-center justify-center shadow-lg shadow-[#FACD1A]/20">
-              <img
-                src="/favicon.png"
-                alt="Sparky"
-                className="w-6 h-6"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                }}
-              />
-              <span className="hidden text-gray-900 text-lg font-bold">S</span>
-            </div>
-            <span className="text-xl font-semibold text-gray-900">Sparky</span>
+            <img
+              src={sparkyLogo}
+              alt="Sparky"
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Links */}
