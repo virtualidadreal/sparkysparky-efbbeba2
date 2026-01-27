@@ -95,7 +95,7 @@ const ComparisonFinalAlt = () => {
                 }`}>
                   {row.notion.bad && <X className="w-3.5 h-3.5" />}
                   {row.notion.neutral && <Minus className="w-3.5 h-3.5" />}
-                  {row.notion.good && <Check className="w-3.5 h-3.5" />}
+                  {!row.notion.bad && !row.notion.neutral && <Check className="w-3.5 h-3.5" />}
                   <span className="font-medium">{row.notion.text}</span>
                 </div>
               </div>
@@ -109,7 +109,7 @@ const ComparisonFinalAlt = () => {
                 }`}>
                   {row.notas.bad && <X className="w-3.5 h-3.5" />}
                   {row.notas.neutral && <Minus className="w-3.5 h-3.5" />}
-                  {row.notas.good && <Check className="w-3.5 h-3.5" />}
+                  {!row.notas.bad && !row.notas.neutral && <Check className="w-3.5 h-3.5" />}
                   <span className="font-medium">{row.notas.text}</span>
                 </div>
               </div>
