@@ -42,7 +42,7 @@ const PricingFinal = () => {
             <div>
               <p className="text-sm font-semibold text-[#FACD1A] mb-2">Oferta de lanzamiento</p>
               <p className="text-white">
-                Los primeros <span className="font-semibold">100 usuarios</span> tienen Sparky Pro gratis <span className="font-semibold">2 meses</span>.
+                Los primeros <span className="font-semibold">30 usuarios</span> tienen Sparky Pro gratis <span className="font-semibold">3 meses</span>.
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 Porque necesitamos feedback real.
@@ -94,7 +94,7 @@ const PricingFinal = () => {
             {isAvailable && (
               <div className="absolute -top-3 left-8">
                 <span className="px-3 py-1 text-xs font-bold bg-[#FACD1A] text-gray-900 rounded-full shadow-lg shadow-[#FACD1A]/25">
-                  2 meses gratis
+                  3 meses gratis
                 </span>
               </div>
             )}
