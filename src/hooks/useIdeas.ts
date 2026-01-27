@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Idea, CreateIdeaInput, UpdateIdeaInput, IdeasFilters, parseIdea } from '@/types/Idea.types';
 import toast from 'react-hot-toast';
@@ -26,9 +27,42 @@ const transformIdea = (data: any): Idea => ({
 });
 
 /**
+ * Hook para suscripción realtime a ideas
+ */
+const useIdeasRealtime = () => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('ideas-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ideas',
+        },
+        (payload) => {
+          console.log('Ideas realtime update:', payload.eventType);
+          // Invalidar todas las queries de ideas para refrescar datos
+          queryClient.invalidateQueries({ queryKey: ['ideas'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+};
+
+/**
  * Hook para listar ideas del usuario
  */
 export const useIdeas = (filters?: IdeasFilters) => {
+  // Suscribirse a cambios en tiempo real
+  useIdeasRealtime();
+
   return useQuery({
     queryKey: QUERY_KEYS.ideas(filters),
     queryFn: async () => {

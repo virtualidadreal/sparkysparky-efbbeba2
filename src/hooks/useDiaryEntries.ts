@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { 
   DiaryEntry, 
@@ -17,9 +18,43 @@ const QUERY_KEYS = {
 };
 
 /**
+ * Hook para suscripción realtime a entradas de diario
+ */
+const useDiaryEntriesRealtime = () => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('diary-entries-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'diary_entries',
+        },
+        (payload) => {
+          console.log('Diary entries realtime update:', payload.eventType);
+          queryClient.invalidateQueries({ queryKey: ['diary-entries'] });
+          queryClient.invalidateQueries({ queryKey: ['diary'] });
+          queryClient.invalidateQueries({ queryKey: ['diaryEntries'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+};
+
+/**
  * Hook para listar entradas de diario del usuario
  */
 export const useDiaryEntries = (filters?: DiaryEntriesFilters) => {
+  // Suscribirse a cambios en tiempo real
+  useDiaryEntriesRealtime();
+
   return useQuery({
     queryKey: QUERY_KEYS.diaryEntries(filters),
     queryFn: async () => {
