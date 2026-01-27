@@ -23,9 +23,9 @@ const LandingFinal = () => {
       <HeroFinal />
       <ProblemFinal />
       <AgitationFinal />
-      <OtherAppsFail />
       <SolutionFinal />
       <HowItWorksFinal />
+      <OtherAppsFail />
       <ComparisonFinal />
       <WhySparkyFinal />
       <IsForYouFinal />
