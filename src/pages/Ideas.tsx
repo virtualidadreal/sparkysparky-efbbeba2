@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { IdeaList } from '@/components/ideas';
+import { IdeaPreviewModal } from '@/components/ideas/IdeaPreviewModal';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { IdeasFilters } from '@/types/Idea.types';
+import { useIdeas } from '@/hooks/useIdeas';
 import { SparkyChat } from '@/components/chat/SparkyChat';
 import { MobileFooter } from '@/components/layout/MobileFooter';
 import { FloatingCaptureButton } from '@/components/layout/FloatingCaptureButton';
@@ -14,7 +17,29 @@ import { Mic } from 'lucide-react';
  * Vista principal del módulo de ideas con estilo Dashboard
  */
 const Ideas = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [highlightedIdeaId, setHighlightedIdeaId] = useState<string | null>(null);
+  
+  const { data: ideas } = useIdeas();
+
+  // Manejar el parámetro highlight en la URL
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    if (highlightId && ideas) {
+      const ideaToHighlight = ideas.find(idea => idea.id === highlightId);
+      if (ideaToHighlight) {
+        setHighlightedIdeaId(highlightId);
+        // Limpiar el parámetro de la URL
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, ideas, setSearchParams]);
+
+  // Obtener la idea seleccionada para el modal
+  const selectedIdea = highlightedIdeaId 
+    ? ideas?.find(idea => idea.id === highlightedIdeaId) || null
+    : null;
 
   // Construir filtros
   const filters: IdeasFilters = {
@@ -101,6 +126,15 @@ const Ideas = () => {
 
       {/* Floating Capture Button - Desktop */}
       <FloatingCaptureButton />
+
+      {/* Modal de preview para idea destacada */}
+      {selectedIdea && (
+        <IdeaPreviewModal
+          idea={selectedIdea}
+          isOpen={!!highlightedIdeaId}
+          onClose={() => setHighlightedIdeaId(null)}
+        />
+      )}
     </div>
   );
 };
