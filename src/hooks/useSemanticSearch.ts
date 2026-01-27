@@ -100,7 +100,35 @@ export const useIntelligentConnections = () => {
 
       if (error) throw error;
       
-      const foundConnections: Connection[] = (data || []).map((c: any) => ({
+      // Filter out connections to deleted/archived ideas
+      const rawConnections = data || [];
+      
+      // Get unique idea target IDs to verify they still exist and are active
+      const ideaTargetIds = rawConnections
+        .filter((c: any) => c.target_type === 'idea')
+        .map((c: any) => c.target_id);
+      
+      let validIdeaIds = new Set<string>();
+      
+      if (ideaTargetIds.length > 0) {
+        const { data: validIdeas } = await supabase
+          .from('ideas')
+          .select('id')
+          .in('id', ideaTargetIds)
+          .eq('status', 'active');
+        
+        validIdeaIds = new Set((validIdeas || []).map((i: any) => i.id));
+      }
+      
+      // Filter connections: keep non-idea types, and only active ideas
+      const filteredConnections = rawConnections.filter((c: any) => {
+        if (c.target_type === 'idea') {
+          return validIdeaIds.has(c.target_id);
+        }
+        return true; // Keep other types (tasks, projects, people, diary)
+      });
+      
+      const foundConnections: Connection[] = filteredConnections.map((c: any) => ({
         sourceId: c.source_id,
         sourceType: c.source_type,
         targetId: c.target_id,
