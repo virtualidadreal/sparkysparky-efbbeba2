@@ -143,12 +143,14 @@ MessageBubble.displayName = 'MessageBubble';
 
 interface SparkyChatProps {
   trigger?: React.ReactNode;
+  initialMessage?: string; // Mensaje inicial para enviar automáticamente al abrir
 }
 
-export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
+export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger, initialMessage }) => {
   const { messages, isLoading, sendMessage, clearChat } = useSparkyChat();
   const [input, setInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [hasSentInitial, setHasSentInitial] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -174,6 +176,24 @@ export const SparkyChat: React.FC<SparkyChatProps> = ({ trigger }) => {
   useEffect(() => {
     if (isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  // Enviar mensaje inicial cuando se abre el chat
+  useEffect(() => {
+    if (isOpen && initialMessage && !hasSentInitial && !isLoading) {
+      setHasSentInitial(true);
+      // Pequeño delay para que el modal se renderice primero
+      setTimeout(() => {
+        sendMessage(initialMessage);
+      }, 200);
+    }
+  }, [isOpen, initialMessage, hasSentInitial, isLoading, sendMessage]);
+
+  // Reset hasSentInitial cuando se cierra el modal
+  useEffect(() => {
+    if (!isOpen) {
+      setHasSentInitial(false);
     }
   }, [isOpen]);
 
