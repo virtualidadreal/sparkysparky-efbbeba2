@@ -100,30 +100,33 @@ export const useIntelligentConnections = () => {
 
       if (error) throw error;
       
-      // Filter out connections to deleted/archived ideas
       const rawConnections = data || [];
       
-      // Get unique idea target IDs to verify they still exist and are active
+      // Get unique idea target IDs to fetch decrypted titles and verify they exist
       const ideaTargetIds = rawConnections
         .filter((c: any) => c.target_type === 'idea')
         .map((c: any) => c.target_id);
       
-      let validIdeaIds = new Set<string>();
+      // Map to store decrypted titles for ideas
+      const ideaTitlesMap = new Map<string, string>();
       
       if (ideaTargetIds.length > 0) {
+        // Fetch from decrypted view to get actual titles and verify active status
         const { data: validIdeas } = await supabase
-          .from('ideas')
-          .select('id')
+          .from('ideas_decrypted')
+          .select('id, title')
           .in('id', ideaTargetIds)
           .eq('status', 'active');
         
-        validIdeaIds = new Set((validIdeas || []).map((i: any) => i.id));
+        (validIdeas || []).forEach((i: any) => {
+          ideaTitlesMap.set(i.id, i.title);
+        });
       }
       
-      // Filter connections: keep non-idea types, and only active ideas
+      // Filter connections: keep non-idea types, and only active ideas with valid titles
       const filteredConnections = rawConnections.filter((c: any) => {
         if (c.target_type === 'idea') {
-          return validIdeaIds.has(c.target_id);
+          return ideaTitlesMap.has(c.target_id);
         }
         return true; // Keep other types (tasks, projects, people, diary)
       });
@@ -133,7 +136,10 @@ export const useIntelligentConnections = () => {
         sourceType: c.source_type,
         targetId: c.target_id,
         targetType: c.target_type as SearchResultType,
-        targetTitle: c.target_title,
+        // Use decrypted title for ideas, fallback to stored title for other types
+        targetTitle: c.target_type === 'idea' 
+          ? ideaTitlesMap.get(c.target_id) || c.target_title 
+          : c.target_title,
         relationship: c.relationship,
         strength: Number(c.strength),
         reasoning: c.reasoning,
