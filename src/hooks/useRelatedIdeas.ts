@@ -24,8 +24,9 @@ export const useRelatedIdeas = (ideaId: string, tags: string[], limit = 5) => {
     queryFn: async () => {
       if (!tags || tags.length === 0) return [];
 
+      // Use decrypted view to get readable titles
       const { data, error } = await supabase
-        .from('ideas')
+        .from('ideas_decrypted')
         .select('*')
         .neq('id', ideaId)
         .overlaps('tags', tags)

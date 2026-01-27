@@ -348,12 +348,17 @@ export const IdeaPreviewModal = ({ isOpen, onClose, idea }: IdeaPreviewModalProp
                         </h3>
                         <div className="space-y-2">
                           {relatedIdeas.slice(0, 3).map((related) => (
-                            <div
+                            <button
                               key={related.id}
-                              className="px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground hover:bg-muted transition-colors cursor-pointer"
+                              onClick={() => {
+                                onClose();
+                                // Navigate to ideas page with highlight parameter
+                                window.location.href = `/ideas?highlight=${related.id}`;
+                              }}
+                              className="w-full text-left px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground hover:bg-muted hover:border-primary/30 transition-colors cursor-pointer"
                             >
                               {related.title}
-                            </div>
+                            </button>
                           ))}
                         </div>
                       </div>
