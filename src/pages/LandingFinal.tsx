@@ -2,7 +2,6 @@ import HeaderFinal from '@/components/landing-final/HeaderFinal';
 import HeroFinal from '@/components/landing-final/HeroFinal';
 import ProblemFinal from '@/components/landing-final/ProblemFinal';
 import AgitationFinal from '@/components/landing-final/AgitationFinal';
-import OtherAppsFail from '@/components/landing-final/OtherAppsFail';
 import SolutionFinal from '@/components/landing-final/SolutionFinal';
 import HowItWorksFinal from '@/components/landing-final/HowItWorksFinal';
 import ComparisonFinal from '@/components/landing-final/ComparisonFinal';
@@ -25,7 +24,6 @@ const LandingFinal = () => {
       <AgitationFinal />
       <SolutionFinal />
       <HowItWorksFinal />
-      <OtherAppsFail />
       <ComparisonFinal />
       <WhySparkyFinal />
       <IsForYouFinal />
