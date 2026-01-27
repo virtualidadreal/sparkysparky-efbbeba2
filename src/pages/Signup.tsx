@@ -5,6 +5,7 @@ import { usePasswordCheck } from '@/hooks/usePasswordCheck';
 import { useEarlyAccess } from '@/hooks/useEarlyAccess';
 import { Sparkles, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { PasswordStrengthIndicator, validatePasswordStrength } from '@/components/common/PasswordStrengthIndicator';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -46,8 +47,11 @@ const Signup = () => {
 
     if (!password) {
       newErrors.password = 'La contraseña es requerida';
-    } else if (password.length < 8) {
-      newErrors.password = 'Mínimo 8 caracteres';
+    } else {
+      const strengthResult = validatePasswordStrength(password);
+      if (!strengthResult.isValid) {
+        newErrors.password = 'La contraseña no cumple todos los requisitos';
+      }
     }
 
     if (password !== confirmPassword) {
@@ -209,11 +213,19 @@ const Signup = () => {
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setPasswordWarning(null);
+                  // Clear password error when user starts typing
+                  if (errors.password) {
+                    setErrors(prev => ({ ...prev, password: '' }));
+                  }
                 }}
                 disabled={loading || isChecking}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-                placeholder="Mínimo 8 caracteres"
+                placeholder="Crea una contraseña segura"
               />
+              
+              {/* Password strength indicator */}
+              <PasswordStrengthIndicator password={password} />
+              
               {errors.password && (
                 <p className="mt-1 text-sm text-destructive">{errors.password}</p>
               )}
