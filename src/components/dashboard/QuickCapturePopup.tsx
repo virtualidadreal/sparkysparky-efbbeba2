@@ -491,10 +491,19 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
             if (contentType === 'diary') {
               queryClient.invalidateQueries({ queryKey: ['diary'] });
               queryClient.invalidateQueries({ queryKey: ['diaryEntries'] });
+            } else if (contentType === 'task') {
+              // Invalidate all task-related queries
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['tasks-with-subtasks'] });
+              queryClient.invalidateQueries({ queryKey: ['task-counts'] });
+              queryClient.invalidateQueries({ queryKey: ['task-lists-with-counts'] });
             } else {
               queryClient.invalidateQueries({ queryKey: ['ideas'] });
             }
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['tasks-with-subtasks'] });
+            queryClient.invalidateQueries({ queryKey: ['task-counts'] });
+            queryClient.invalidateQueries({ queryKey: ['task-lists-with-counts'] });
             queryClient.invalidateQueries({ queryKey: ['people'] });
           }
         })
