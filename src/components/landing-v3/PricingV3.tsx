@@ -67,8 +67,8 @@ const PricingV3 = () => {
             
             {/* Copy */}
             <p className="text-gray-700 text-center mb-6">
-              Los primeros <strong className="text-gray-900">100 usuarios</strong> tienen acceso completo a Sparky Pro gratis
-              durante <strong className="text-gray-900">2 meses</strong>. Sin compromiso. Sin tarjeta.
+              Los primeros <strong className="text-gray-900">30 usuarios</strong> tienen acceso completo a Sparky Pro gratis
+              durante <strong className="text-gray-900">3 meses</strong>. Sin compromiso. Sin tarjeta.
             </p>
             
             {/* Counter display */}
