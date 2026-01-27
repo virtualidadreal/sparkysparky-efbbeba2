@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { XMarkIcon, EyeIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
@@ -12,7 +11,7 @@ export interface GlassToastProps {
 }
 
 /**
- * Toast con estilo glassmorphism y botón de ver
+ * Toast con estilo glassmorphism elegante tipo cápsula
  */
 export const GlassToast = ({
   message,
@@ -73,27 +72,25 @@ export const GlassToast = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 px-6 py-5 min-w-[320px] max-w-[420px] rounded-3xl border border-white/30 dark:border-white/10 bg-white/80 dark:bg-card/80 backdrop-blur-2xl shadow-2xl">
-      <span className="text-base font-semibold text-foreground text-center">{message}</span>
+    <div className="flex items-center gap-4 px-6 py-3 rounded-full border border-white/40 dark:border-white/15 bg-white/70 dark:bg-card/70 backdrop-blur-xl shadow-lg shadow-black/5">
+      <span className="text-sm font-medium text-foreground whitespace-nowrap">{message}</span>
       
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {showViewButton && (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={handleView}
-            className="h-9 px-4 text-sm font-medium text-primary border-primary/30 hover:text-primary hover:bg-primary/10 gap-2"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-primary hover:text-primary/80 rounded-full bg-primary/10 hover:bg-primary/15 transition-colors"
           >
-            <EyeIcon className="h-4 w-4" />
+            <EyeIcon className="h-3.5 w-3.5" />
             {getViewLabel()}
-          </Button>
+          </button>
         )}
         
         <button
           onClick={handleDismiss}
-          className="p-1.5 rounded-full hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+          className="p-1 rounded-full hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <XMarkIcon className="h-5 w-5" />
+          <XMarkIcon className="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -107,7 +104,7 @@ export const showGlassToast = (props: Omit<GlassToastProps, 'toastId'>) => {
   return toast.custom(
     (t) => <GlassToast {...props} toastId={t.id} />,
     { 
-      duration: 5000,
+      duration: 4000,
       position: 'top-center',
     }
   );
