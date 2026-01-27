@@ -10,6 +10,8 @@ const Landing = lazy(() => import('@/pages/Landing'));
 const LandingV2 = lazy(() => import('@/pages/LandingV2'));
 const LandingV3 = lazy(() => import('@/pages/LandingV3'));
 const LandingV4 = lazy(() => import('@/pages/LandingV4'));
+const LandingFinal = lazy(() => import('@/pages/LandingFinal'));
+const LandingFinalAlt = lazy(() => import('@/pages/LandingFinalAlt'));
 const Auth = lazy(() => import('@/pages/Auth'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Ideas = lazy(() => import('@/pages/Ideas'));
@@ -51,6 +53,8 @@ const App = () => {
               <Route path="/landing-v2" element={<LandingV2 />} />
               <Route path="/landing-v4" element={<LandingV4 />} />
               <Route path="/landing-v3" element={<LandingV3 />} />
+              <Route path="/landing-final" element={<LandingFinal />} />
+              <Route path="/landing-final-alt" element={<LandingFinalAlt />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/privacy" element={<Privacy />} />
