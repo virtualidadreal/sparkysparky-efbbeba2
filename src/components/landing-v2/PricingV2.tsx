@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Zap, Flame, Sparkles } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEarlyAccess } from '@/hooks/useEarlyAccess';
 
 /**
  * Pricing Section V2 - Empieza gratis. Crece cuando lo necesites.
@@ -10,8 +10,10 @@ import { supabase } from '@/integrations/supabase/client';
 const PricingV2 = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [spotsUsed, setSpotsUsed] = useState(0);
-  const [maxSpots] = useState(30);
+  const { stats } = useEarlyAccess();
+  
+  const spotsUsed = stats?.spots_taken ?? 0;
+  const maxSpots = stats?.total_spots ?? 30;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -28,16 +30,6 @@ const PricingV2 = () => {
     }
 
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const fetchSpots = async () => {
-      const { count } = await supabase
-        .from('early_access_signups')
-        .select('*', { count: 'exact', head: true });
-      setSpotsUsed(count || 0);
-    };
-    fetchSpots();
   }, []);
 
   const spotsAvailable = Math.max(0, maxSpots - spotsUsed);
@@ -145,13 +137,14 @@ const PricingV2 = () => {
             <p className="text-slate-400 text-sm mb-6">Desbloquea todo el potencial</p>
             
             <div className="flex items-baseline gap-1 mb-2">
-              <span className="font-serif text-5xl font-medium text-primary">€3.99</span>
+              <span className="font-serif text-5xl font-medium text-primary">€2,99</span>
               <span className="text-slate-400">/mes</span>
             </div>
+            <p className="text-sm text-slate-500 mb-2">Precio de lanzamiento</p>
             
             <div className="flex items-center gap-2 text-primary text-sm mb-8">
               <Flame className="w-4 h-4" />
-              <span>3 meses gratis para los primeros 30</span>
+              <span>3 meses gratis para los primeros {maxSpots}</span>
             </div>
 
             <ul className="space-y-4 mb-8">

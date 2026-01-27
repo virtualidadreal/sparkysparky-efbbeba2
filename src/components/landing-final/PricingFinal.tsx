@@ -102,9 +102,10 @@ const PricingFinal = () => {
             <div className="mb-8">
               <h3 className="text-lg font-medium text-[#FACD1A] mb-2">Sparky Pro</h3>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-semibold text-gray-900">5€</span>
+                <span className="text-5xl font-semibold text-gray-900">2,99€</span>
                 <span className="text-gray-500">/mes</span>
               </div>
+              <p className="text-sm text-gray-500 mt-1">Precio de lanzamiento</p>
             </div>
 
             <ul className="space-y-4 mb-10">

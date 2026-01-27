@@ -147,9 +147,10 @@ const PricingV3 = () => {
                 <div>
                   <h3 className="text-xl font-bold text-white mb-2">Sparky Pro</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-white">5€</span>
+                    <span className="text-4xl font-bold text-white">2,99€</span>
                     <span className="text-gray-400">/mes</span>
                   </div>
+                  <p className="text-sm text-gray-500 mt-1">Precio de lanzamiento</p>
                 </div>
                 {isAvailable && (
                   <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-bold rounded-full">

@@ -154,8 +154,9 @@ const PricingV4 = () => {
             <h3 className="text-xl font-bold text-[#FAFAFA] mb-2">Sparky Pro</h3>
             <p className="text-[#636E72] mb-6">Desbloquea todo el potencial</p>
             <div className="text-4xl font-bold text-[#FAFAFA] mb-2">
-              €3.99<span className="text-lg font-normal text-[#636E72]">/mes</span>
+              €2,99<span className="text-lg font-normal text-[#636E72]">/mes</span>
             </div>
+            <p className="text-sm text-[#636E72]">Precio de lanzamiento</p>
             {isAvailable ? (
               <p className="text-sm text-[#FF6B35] mb-6">
                 🔥 3 meses gratis para los primeros {totalSpots}

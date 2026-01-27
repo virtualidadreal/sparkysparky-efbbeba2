@@ -9,7 +9,7 @@ const PricingFinalAlt = () => {
   const { stats } = useEarlyAccess();
 
   const spotsTaken = stats?.spots_taken ?? 0;
-  const totalSpots = stats?.total_spots ?? 100;
+  const totalSpots = stats?.total_spots ?? 30;
   const spotsRemaining = totalSpots - spotsTaken;
   const isAvailable = spotsRemaining > 0;
   const percentageFilled = (spotsTaken / totalSpots) * 100;
@@ -42,11 +42,11 @@ const PricingFinalAlt = () => {
             <div className="flex-1">
               <p className="text-sm font-semibold text-[#FACD1A] mb-2">Oferta de lanzamiento</p>
               <p className="text-white mb-3">
-                Los primeros <span className="font-semibold">100 usuarios</span> tienen Sparky Pro gratis <span className="font-semibold">2 meses</span>.
+                Los primeros <span className="font-semibold">30 usuarios</span> tienen Sparky Pro gratis <span className="font-semibold">3 meses</span>.
               </p>
               {/* MEJORADO: Razón más creíble */}
               <p className="text-sm text-gray-400 leading-relaxed">
-                ¿Por qué? Porque los primeros 100 usuarios definen el producto.
+                ¿Por qué? Porque los primeros 30 usuarios definen el producto.
                 <br />
                 Queremos gente que lo use de verdad, no curiosos.
                 <br />
@@ -67,7 +67,7 @@ const PricingFinalAlt = () => {
           {/* NUEVO: Urgencia específica */}
           {isAvailable && (
             <p className="mt-4 pt-4 border-t border-[#FACD1A]/20 text-sm text-gray-400">
-              Cuando se llenen las 100 plazas, el precio sube a <span className="text-white font-medium">9€/mes</span>. Sin excepciones.
+              Cuando se llenen las 30 plazas, el precio sube a <span className="text-white font-medium">5€/mes</span>. Sin excepciones.
             </p>
           )}
         </div>
@@ -106,7 +106,7 @@ const PricingFinalAlt = () => {
             {isAvailable && (
               <div className="absolute -top-3 left-8">
                 <span className="px-3 py-1 text-xs font-bold bg-[#FACD1A] text-gray-900 rounded-full shadow-lg shadow-[#FACD1A]/25">
-                  2 meses gratis
+                  3 meses gratis
                 </span>
               </div>
             )}
@@ -114,12 +114,13 @@ const PricingFinalAlt = () => {
             <div className="mb-8">
               <h3 className="text-lg font-medium text-[#FACD1A] mb-2">Sparky Pro</h3>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-semibold text-gray-900">5€</span>
+                <span className="text-5xl font-semibold text-gray-900">2,99€</span>
                 <span className="text-gray-500">/mes</span>
                 {isAvailable && (
-                  <span className="ml-2 text-sm text-gray-400 line-through">9€</span>
+                  <span className="ml-2 text-sm text-gray-400 line-through">5€</span>
                 )}
               </div>
+              <p className="text-sm text-gray-500 mt-1">Precio de lanzamiento</p>
             </div>
 
             <ul className="space-y-4 mb-10">
