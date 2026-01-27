@@ -729,12 +729,47 @@ INSTRUCCIONES:
 
   } catch (error) {
     console.error('Error in process-voice-capture:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
     
-    // Mensaje más amigable para el usuario
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido al procesar el audio';
+    // Mensaje más amigable para el usuario con contexto
+    let errorMessage = 'Error al procesar el audio. Intenta de nuevo.';
+    let errorCode = 'UNKNOWN_ERROR';
+    
+    if (error instanceof Error) {
+      const msg = error.message.toLowerCase();
+      
+      // Preservar mensajes ya formateados del flujo
+      if (error.message.includes('límite') || error.message.includes('Pro')) {
+        errorMessage = error.message;
+        errorCode = 'QUOTA_EXCEEDED';
+      } else if (error.message.includes('tardó') || error.message.includes('timeout')) {
+        errorMessage = error.message;
+        errorCode = 'TIMEOUT';
+      } else if (error.message.includes('transcri')) {
+        errorMessage = error.message;
+        errorCode = 'TRANSCRIPTION_ERROR';
+      } else if (msg.includes('not found') || msg.includes('idea not found')) {
+        errorMessage = 'No se encontró la idea. Intenta de nuevo.';
+        errorCode = 'IDEA_NOT_FOUND';
+      } else if (msg.includes('forbidden') || msg.includes('own this')) {
+        errorMessage = 'No tienes permiso para esta acción.';
+        errorCode = 'FORBIDDEN';
+      } else if (msg.includes('failed to create') || msg.includes('failed to update')) {
+        errorMessage = 'Error al guardar. Verifica tu conexión e intenta de nuevo.';
+        errorCode = 'DATABASE_ERROR';
+      } else if (msg.includes('ai processing')) {
+        errorMessage = 'Error al clasificar el contenido. Intenta de nuevo.';
+        errorCode = 'AI_ERROR';
+      } else {
+        // Usar mensaje original si es descriptivo
+        errorMessage = error.message.length > 5 ? error.message : 'Error al procesar el audio. Intenta de nuevo.';
+      }
+    }
+    
+    console.error('Returning error to client:', { errorCode, errorMessage });
     
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, code: errorCode }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

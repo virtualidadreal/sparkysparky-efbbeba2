@@ -424,18 +424,34 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
         .then(({ data, error }) => {
           if (error) {
             console.error('Error processing audio:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            
             // Mensaje más específico según el tipo de error
-            let errorMessage = 'Error al procesar el audio';
-            if (error.message?.includes('quota') || error.message?.includes('límite')) {
+            let errorMessage = 'Error al procesar el audio. Intenta de nuevo.';
+            const errorMsg = error.message?.toLowerCase() || '';
+            const errorContext = JSON.stringify(error).toLowerCase();
+            
+            if (errorMsg.includes('quota') || errorMsg.includes('límite') || errorContext.includes('quota_exceeded')) {
               errorMessage = 'Has alcanzado el límite mensual. Actualiza a Pro para continuar.';
-            } else if (error.message?.includes('timeout') || error.message?.includes('tiempo')) {
+            } else if (errorMsg.includes('timeout') || errorMsg.includes('tiempo') || errorMsg.includes('tardó')) {
               errorMessage = 'El procesamiento tardó demasiado. Intenta con un audio más corto.';
-            } else if (error.message?.includes('Whisper') || error.message?.includes('transcription')) {
-              errorMessage = 'Error al transcribir el audio. Verifica que hay voz clara en la grabación.';
-            } else if (error.message?.includes('size') || error.message?.includes('large')) {
+            } else if (errorMsg.includes('transcripción') || errorMsg.includes('transcrib')) {
+              errorMessage = 'Error al transcribir. Verifica que hay voz clara en la grabación.';
+            } else if (errorMsg.includes('size') || errorMsg.includes('large') || errorMsg.includes('grande')) {
               errorMessage = 'El audio es demasiado largo. Máximo 5 minutos.';
-            } else if (error.message?.includes('speech') || error.message?.includes('detected')) {
-              errorMessage = 'No se detectó voz en el audio. Intenta hablar más cerca del micrófono.';
+            } else if (errorMsg.includes('speech') || errorMsg.includes('detected') || errorMsg.includes('detectó')) {
+              errorMessage = 'No se detectó voz. Intenta hablar más cerca del micrófono.';
+            } else if (errorMsg.includes('autent') || errorMsg.includes('auth') || errorMsg.includes('401')) {
+              errorMessage = 'Sesión expirada. Recarga la página e intenta de nuevo.';
+            } else if (errorMsg.includes('formato') || errorMsg.includes('format') || errorMsg.includes('invalid')) {
+              errorMessage = 'Formato de audio no válido. Intenta grabar de nuevo.';
+            } else if (errorMsg.includes('conexión') || errorMsg.includes('network') || errorMsg.includes('fetch')) {
+              errorMessage = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
+            } else if (errorMsg.includes('servicio') || errorMsg.includes('service') || errorMsg.includes('503')) {
+              errorMessage = 'Servicio temporalmente no disponible. Intenta en unos minutos.';
+            } else if (error.message && error.message.length > 10) {
+              // Si hay un mensaje específico del servidor, usarlo
+              errorMessage = error.message;
             }
             toast.error(errorMessage);
             
