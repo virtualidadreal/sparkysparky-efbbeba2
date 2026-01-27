@@ -60,16 +60,26 @@ export const RemindersPanel: React.FC<RemindersPanelProps> = ({ reminders, onDis
     }
   };
 
-  if (reminders.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <Bell className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-muted-foreground">No hay recordatorios pendientes.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Always show "Coming Soon" state
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Bell className="h-5 w-5 text-primary" />
+          Recordatorios Inteligentes
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="py-8 text-center">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+          <Bell className="h-6 w-6 text-primary" />
+        </div>
+        <p className="text-muted-foreground font-medium mb-1">Próximamente</p>
+        <p className="text-sm text-muted-foreground">
+          Recordatorios inteligentes basados en tu actividad.
+        </p>
+      </CardContent>
+    </Card>
+  );
 
   // Group by timing
   const groupedReminders = reminders.reduce((acc, reminder) => {
