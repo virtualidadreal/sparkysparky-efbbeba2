@@ -24,7 +24,7 @@ const ComparisonFinal = () => {
       featureDesc: 'Cuándo te avisa',
       notion: { text: 'Tú configuras', neutral: true },
       notas: { text: 'Básicos', bad: true },
-      sparky: { text: 'Inteligentes', good: true }
+      sparky: { text: 'Próximamente', coming: true }
     },
     {
       feature: 'Captura por voz',
@@ -116,9 +116,19 @@ const ComparisonFinal = () => {
 
               {/* Sparky */}
               <div className="p-6 flex items-center justify-center border-l border-gray-50 bg-[#FACD1A]/5">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm bg-[#FACD1A]/20 text-gray-900">
-                  <Check className="w-4 h-4 text-[#FACD1A]" strokeWidth={3} />
-                  <span className="font-semibold">{row.sparky.text}</span>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
+                  row.sparky.coming 
+                    ? 'bg-gray-100 text-gray-500' 
+                    : 'bg-[#FACD1A]/20 text-gray-900'
+                }`}>
+                  {row.sparky.coming ? (
+                    <span className="font-medium italic">{row.sparky.text}</span>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 text-[#FACD1A]" strokeWidth={3} />
+                      <span className="font-semibold">{row.sparky.text}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
