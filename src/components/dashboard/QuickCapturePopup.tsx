@@ -421,7 +421,7 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
             audioBase64,
           },
         })
-        .then(({ data, error }) => {
+        .then(async ({ data, error }) => {
           if (error) {
             console.error('Error processing audio:', error);
             console.error('Error details:', JSON.stringify(error, null, 2));
@@ -431,8 +431,16 @@ export const QuickCapturePopup = ({ trigger, startInTextMode = false }: QuickCap
             const errorMsg = error.message?.toLowerCase() || '';
             const errorContext = JSON.stringify(error).toLowerCase();
             
-            if (errorMsg.includes('quota') || errorMsg.includes('límite') || errorContext.includes('quota_exceeded')) {
-              errorMessage = 'Has alcanzado el límite mensual. Actualiza a Pro para continuar.';
+            // Check for quota/403 errors - this is the most common issue
+            const isQuotaError = errorMsg.includes('quota') || 
+                                 errorMsg.includes('límite') || 
+                                 errorContext.includes('quota_exceeded') ||
+                                 errorContext.includes('403') ||
+                                 errorMsg.includes('forbidden') ||
+                                 errorMsg.includes('actualiza a pro');
+            
+            if (isQuotaError) {
+              errorMessage = 'Has alcanzado el límite mensual de 10 capturas. Actualiza a Pro para continuar sin límites.';
             } else if (errorMsg.includes('timeout') || errorMsg.includes('tiempo') || errorMsg.includes('tardó')) {
               errorMessage = 'El procesamiento tardó demasiado. Intenta con un audio más corto.';
             } else if (errorMsg.includes('transcripción') || errorMsg.includes('transcrib')) {
