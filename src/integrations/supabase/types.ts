@@ -1055,6 +1055,57 @@ export type Database = {
           },
         ]
       }
+      people_decrypted: {
+        Row: {
+          category: string | null
+          company: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          how_we_met: string | null
+          id: string | null
+          last_contact_date: string | null
+          nickname: string | null
+          notes: string | null
+          phone: string | null
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          company?: string | null
+          created_at?: string | null
+          email?: never
+          full_name?: string | null
+          how_we_met?: string | null
+          id?: string | null
+          last_contact_date?: string | null
+          nickname?: string | null
+          notes?: string | null
+          phone?: never
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          company?: string | null
+          created_at?: string | null
+          email?: never
+          full_name?: string | null
+          how_we_met?: string | null
+          id?: string | null
+          last_contact_date?: string | null
+          nickname?: string | null
+          notes?: string | null
+          phone?: never
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sparky_messages_decrypted: {
         Row: {
           brain: string | null
