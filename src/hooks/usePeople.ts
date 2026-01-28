@@ -13,9 +13,8 @@ export const usePeople = (filters?: PeopleFilters) => {
   return useQuery({
     queryKey: ['people', filters],
     queryFn: async () => {
-      // Use decrypted view to automatically decrypt email and phone fields
       let query = supabase
-        .from('people_decrypted')
+        .from('people')
         .select('*')
         .order('full_name', { ascending: true });
 
@@ -41,9 +40,8 @@ export const usePerson = (id: string) => {
   return useQuery({
     queryKey: ['person', id],
     queryFn: async () => {
-      // Use decrypted view to automatically decrypt email and phone fields
       const { data, error } = await supabase
-        .from('people_decrypted')
+        .from('people')
         .select('*')
         .eq('id', id)
         .maybeSingle();

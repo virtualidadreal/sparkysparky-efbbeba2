@@ -23,6 +23,7 @@ const FooterFinal = () => {
             <Link to="/privacy" className="hover:text-gray-900 transition-colors">Privacidad</Link>
             <Link to="/terms" className="hover:text-gray-900 transition-colors">Términos</Link>
             <a href="mailto:hola@soysparky.com" className="hover:text-gray-900 transition-colors">Contacto</a>
+            <a href="https://twitter.com/soysparky" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">Twitter</a>
           </div>
 
           {/* Copyright */}

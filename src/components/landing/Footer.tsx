@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, Linkedin, Mail } from 'lucide-react';
+import { Sparkles, Twitter, Linkedin, Mail } from 'lucide-react';
 
 /**
  * Footer - Links y copyright
@@ -39,6 +39,14 @@ const Footer = () => {
 
           {/* Social Links */}
           <div className="flex items-center gap-4">
+            <a 
+              href="https://twitter.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+            >
+              <Twitter className="w-4 h-4" />
+            </a>
             <a 
               href="https://linkedin.com" 
               target="_blank" 

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Linkedin, Flame } from 'lucide-react';
+import { Linkedin, Twitter, Flame } from 'lucide-react';
 import sparkyLogo from '@/assets/sparky-logo.png';
 
 const FooterV4 = () => {
@@ -35,6 +35,14 @@ const FooterV4 = () => {
               className="w-10 h-10 rounded-full bg-[#FAFAFA]/10 flex items-center justify-center text-[#FAFAFA]/60 hover:bg-[#FFB800] hover:text-white transition-all"
             >
               <Linkedin className="w-5 h-5" />
+            </a>
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-[#FAFAFA]/10 flex items-center justify-center text-[#FAFAFA]/60 hover:bg-[#FFB800] hover:text-white transition-all"
+            >
+              <Twitter className="w-5 h-5" />
             </a>
           </div>
         </div>
