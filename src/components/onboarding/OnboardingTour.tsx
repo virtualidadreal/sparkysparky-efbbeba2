@@ -219,21 +219,27 @@ export const useOnboarding = () => {
   const [isChecked, setIsChecked] = useState(false);
 
   useEffect(() => {
-    // Check if user has completed onboarding
+    // Check localStorage synchronously to prevent flicker
     const hasCompletedOnboarding = localStorage.getItem('sparky_onboarding_completed');
     
-    if (!hasCompletedOnboarding) {
-      // Small delay to let the dashboard load first
-      const timer = setTimeout(() => {
-        setShowOnboarding(true);
-      }, 500);
-      return () => clearTimeout(timer);
+    if (hasCompletedOnboarding === 'true') {
+      // User has completed onboarding, don't show
+      setShowOnboarding(false);
+      setIsChecked(true);
+      return;
     }
     
-    setIsChecked(true);
+    // Only show onboarding for new users after a small delay
+    const timer = setTimeout(() => {
+      setShowOnboarding(true);
+      setIsChecked(true);
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const completeOnboarding = () => {
+    // Immediately update localStorage
     localStorage.setItem('sparky_onboarding_completed', 'true');
     setShowOnboarding(false);
     setIsChecked(true);
