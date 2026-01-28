@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable';
 
 // Module-level Set para deduplicar emails entre renders y re-mounts
 const globalWelcomeEmailSent = new Set<string>();
@@ -144,13 +145,10 @@ export const useAuth = () => {
   };
 
   const signInWithGoogle = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
+    const result = await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin,
     });
-    return { data, error };
+    return { data: null, error: result.error };
   };
 
   return {
