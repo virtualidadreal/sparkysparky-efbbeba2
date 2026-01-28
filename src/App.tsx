@@ -29,6 +29,7 @@ const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const Signup = lazy(() => import('@/pages/Signup'));
 const BetaSignup = lazy(() => import('@/pages/BetaSignup'));
 const SubscriptionSuccess = lazy(() => import('@/pages/SubscriptionSuccess'));
+const MobileCallback = lazy(() => import('@/pages/MobileCallback'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading fallback component
@@ -62,6 +63,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/beta" element={<BetaSignup />} />
+              <Route path="/auth/mobile-callback" element={<MobileCallback />} />
               <Route path="/subscription-success" element={<ProtectedRoute><SubscriptionSuccess /></ProtectedRoute>} />
 
               {/* Rutas protegidas */}
