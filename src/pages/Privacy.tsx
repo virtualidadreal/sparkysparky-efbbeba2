@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { SEOHead } from '@/components/seo';
 
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Política de Privacidad"
+        description="Conoce cómo Sparky protege tus datos. Tu información es tuya: sin almacenamiento externo, cifrado de extremo a extremo y control total de tu historial."
+        canonical="/privacy"
+        noindex={false}
+      />
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">

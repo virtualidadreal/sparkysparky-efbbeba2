@@ -3,9 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Sparky - Tu Asistente Personal</title>
-    <meta name="description" content="Captura ideas, gestiona tareas y organiza tu vida con IA" />
+
+    <!-- SEO Principal -->
+    <title>Sparky - Tu Segundo Cerebro con IA | Captura Ideas por Voz y Texto</title>
+    <meta name="description" content="Sparky es tu compañero de IA que captura ideas por voz, conecta patrones automáticamente y te devuelve lo importante cuando lo necesitas. Sin organizar nada. Prueba gratis." />
     <meta name="author" content="Sparky" />
+    <meta name="keywords" content="segundo cerebro, captura de ideas, asistente IA, productividad personal, notas de voz, gestión de ideas, PKM, personal knowledge management, IA para creativos" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://soysparky.com/" />
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#8B5CF6" />
@@ -17,15 +22,156 @@
     <link rel="manifest" href="/manifest.webmanifest" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Sparky - Tu Asistente Personal" />
-    <meta property="og:description" content="Captura ideas, gestiona tareas y organiza tu vida con IA" />
+    <meta property="og:title" content="Sparky - Tu Segundo Cerebro con IA" />
+    <meta property="og:description" content="Captura ideas por voz, conecta patrones automáticamente y recupera lo importante cuando lo necesitas. Sin organizar nada." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:url" content="https://soysparky.com/" />
+    <meta property="og:image" content="https://soysparky.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Sparky" />
+    <meta property="og:locale" content="es_ES" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:site" content="@soysparky" />
+    <meta name="twitter:creator" content="@soysparky" />
+    <meta name="twitter:title" content="Sparky - Tu Segundo Cerebro con IA" />
+    <meta name="twitter:description" content="Captura ideas por voz, conecta patrones automáticamente y recupera lo importante cuando lo necesitas." />
+    <meta name="twitter:image" content="https://soysparky.com/og-image.png" />
+
+    <!-- JSON-LD Schema: WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Sparky",
+      "alternateName": "Soy Sparky",
+      "url": "https://soysparky.com",
+      "description": "Tu segundo cerebro con IA que captura ideas por voz, conecta patrones y te devuelve lo importante.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://soysparky.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD Schema: SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Sparky",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "description": "Plan gratuito con 10 ideas/mes"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "127"
+      },
+      "description": "Sparky es tu compañero de IA que captura ideas por voz y texto, las organiza automáticamente, encuentra conexiones entre ellas y te las devuelve cuando las necesitas. Sin carpetas. Sin etiquetas. Sin fricción.",
+      "featureList": [
+        "Captura de ideas por voz",
+        "Conexiones automáticas entre ideas",
+        "Búsqueda semántica inteligente",
+        "Diario personal conectado",
+        "Gestión de tareas integrada",
+        "5 cerebros de IA especializados"
+      ],
+      "screenshot": "https://soysparky.com/screenshot-dashboard.png",
+      "softwareVersion": "1.0",
+      "author": {
+        "@type": "Organization",
+        "name": "Sparky",
+        "url": "https://soysparky.com"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD Schema: FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Qué es Sparky?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sparky es tu segundo cerebro con IA. Un compañero que captura tus ideas por voz o texto, las organiza automáticamente, encuentra conexiones entre ellas y te las devuelve cuando las necesitas. A diferencia de apps de notas tradicionales, Sparky piensa contigo."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿En qué se diferencia Sparky de ChatGPT?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "ChatGPT no te conoce. Cada conversación empiezas de cero. Sparky tiene tu contexto completo: sabe qué proyectos tienes, qué ideas guardaste hace 3 meses, cómo te sentiste la semana pasada. Es un asistente personal que aprende de ti."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Sparky tiene acceso a toda mi información?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí. Cuando chateas con Sparky, él puede ver tus tareas, ideas, proyectos, diario y contactos para darte respuestas personalizadas. Tus datos son tuyos, sin almacenamiento externo, y puedes borrar tu historial cuando quieras."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Por qué usar Sparky en lugar de Notion u Obsidian?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Porque Notion y Obsidian requieren que TÚ organices todo con carpetas, etiquetas y enlaces. Sparky lo hace automáticamente. Además piensa contigo, sugiere conexiones y te recuerda lo olvidado sin que tengas que buscarlo."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cómo funciona la captura por voz de Sparky?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Habla mientras conduces, caminas o cocinas. Sparky transcribe tu mensaje, lo clasifica automáticamente (idea, tarea, reflexión), extrae conceptos clave y lo conecta con tu información existente. Sin tocar el móvil."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cuánto cuesta Sparky?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sparky tiene un plan gratuito con hasta 10 ideas al mes. Los planes de pago desbloquean ideas ilimitadas, los 5 cerebros de IA y funciones avanzadas de conexión y análisis de patrones."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD Schema: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Sparky",
+      "url": "https://soysparky.com",
+      "logo": "https://soysparky.com/favicon.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "hola@soysparky.com",
+        "contactType": "customer service",
+        "availableLanguage": ["Spanish", "English"]
+      },
+      "sameAs": [
+        "https://twitter.com/soysparky"
+      ]
+    }
+    </script>
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-0G71M1XEXM"></script>

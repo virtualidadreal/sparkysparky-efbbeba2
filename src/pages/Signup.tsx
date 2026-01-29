@@ -6,6 +6,7 @@ import { useEarlyAccess } from '@/hooks/useEarlyAccess';
 import { Sparkles, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PasswordStrengthIndicator, validatePasswordStrength } from '@/components/common/PasswordStrengthIndicator';
+import { SEOHead } from '@/components/seo';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -137,6 +138,11 @@ const Signup = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <SEOHead
+        title="Crear Cuenta Gratis"
+        description="Regístrate en Sparky y empieza a capturar tus ideas por voz. Plan gratuito con 10 ideas al mes. Sin tarjeta de crédito."
+        canonical="/signup"
+      />
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-foreground">Sparky</h1>

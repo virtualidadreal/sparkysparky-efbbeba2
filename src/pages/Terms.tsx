@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { SEOHead } from '@/components/seo';
 
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Términos de Servicio"
+        description="Términos y condiciones de uso de Sparky. Lee nuestros términos de servicio antes de crear tu cuenta."
+        canonical="/terms"
+        noindex={false}
+      />
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">

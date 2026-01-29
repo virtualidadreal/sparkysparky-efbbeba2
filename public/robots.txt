@@ -1,0 +1,35 @@
+# Robots.txt para Sparky - soysparky.com
+# GEO optimizado para motores de búsqueda y LLMs
+
+User-agent: *
+Allow: /
+
+# Páginas públicas permitidas
+Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /beta
+Allow: /signup
+
+# Páginas de app (requieren auth)
+Disallow: /dashboard
+Disallow: /ideas
+Disallow: /projects
+Disallow: /tasks
+Disallow: /people
+Disallow: /diary
+Disallow: /estadisticas
+Disallow: /settings
+Disallow: /memory
+Disallow: /admin
+
+# Assets y archivos técnicos
+Disallow: /assets/
+Allow: /favicon.png
+Allow: /apple-touch-icon.png
+
+# Sitemap
+Sitemap: https://soysparky.com/sitemap.xml
+
+# Crawl-delay para ser amable con los servidores
+Crawl-delay: 1
