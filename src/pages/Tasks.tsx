@@ -496,12 +496,6 @@ const TaskRow = ({ task, onToggle, onClick, dragMode, level }: TaskRowProps) => 
           ))}
         </>
       )}
-
-      {/* Mobile Footer */}
-      <MobileFooter />
-
-      {/* Floating Capture Button - Desktop */}
-      <FloatingCaptureButton />
     </>
   );
 };
