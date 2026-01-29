@@ -51,8 +51,9 @@ export const MobileFooter = () => {
   const { data: visibility } = useSidebarVisibility();
 
   // Filter navigation items based on visibility settings
+  // Show all items while loading (visibility undefined), then filter once loaded
   const visibleItems = navigationItems.filter(item => {
-    if (!visibility) return false; // Hide all while loading
+    if (!visibility) return true; // Show all while loading
     return visibility[item.key] !== false;
   });
 
