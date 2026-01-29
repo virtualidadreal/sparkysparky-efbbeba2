@@ -374,6 +374,12 @@ const Tasks = () => {
           }}
         />
       )}
+
+      {/* Mobile Footer */}
+      <MobileFooter />
+
+      {/* Floating Capture Button - Desktop */}
+      <FloatingCaptureButton />
     </div>
   );
 };
